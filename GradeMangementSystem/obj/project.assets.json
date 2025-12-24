@@ -453,11 +453,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\bm941\\source\\repos\\GradeMangementSystem\\GradeMangementSystem.csproj",
+      "projectUniqueName": "C:\\Users\\bm941\\Source\\Repos\\Backend_Project\\GradeMangementSystem\\GradeMangementSystem.csproj",
       "projectName": "GradeMangementSystem",
-      "projectPath": "C:\\Users\\bm941\\source\\repos\\GradeMangementSystem\\GradeMangementSystem.csproj",
+      "projectPath": "C:\\Users\\bm941\\Source\\Repos\\Backend_Project\\GradeMangementSystem\\GradeMangementSystem.csproj",
       "packagesPath": "C:\\Users\\bm941\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\bm941\\source\\repos\\GradeMangementSystem\\obj\\",
+      "outputPath": "C:\\Users\\bm941\\Source\\Repos\\Backend_Project\\GradeMangementSystem\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
