@@ -17,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text("Login", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text("Log", style: TextStyle(fontWeight: FontWeight.bold)),
         leading: Icon(Icons.menu),
         actions: [Icon(Icons.settings)],
       ),
