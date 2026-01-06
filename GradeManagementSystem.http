@@ -1,0 +1,6 @@
+@GradeManagementSystem_HostAddress = http://localhost:5283
+
+GET {{GradeManagementSystem_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
