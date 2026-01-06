@@ -1,17 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36616.10
+VisualStudioVersion = 17.14.36616.10 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagementSystem", "GradeManagementSystem.csproj", "{261F13E0-B060-49B3-83E0-D6A68F3C7504}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagementSystem.Domain", "GradeManagementSystem.Domain\GradeManagementSystem.Domain.csproj", "{7FFC58DE-8AB8-4D84-9D47-08E5671DF701}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagementSystem.Application", "GradeManagementSystem.Application\GradeManagementSystem.Application.csproj", "{69350C1E-02ED-4711-B0E3-038D9F5E9A6F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagementSystem.Persistence", "GradeManagementSystem.Persistence\GradeManagementSystem.Persistence.csproj", "{1CD30D81-7B7C-4ABD-89AD-B9D9682016E0}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GradeManagementSystem.Infrastructure", "GradeManagementSystem.Infrastructure\GradeManagementSystem.Infrastructure.csproj", "{7F1864AC-2B4A-4D66-8BB3-2D26647A9B4D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,22 +15,6 @@ Global
 		{261F13E0-B060-49B3-83E0-D6A68F3C7504}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{261F13E0-B060-49B3-83E0-D6A68F3C7504}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{261F13E0-B060-49B3-83E0-D6A68F3C7504}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7FFC58DE-8AB8-4D84-9D47-08E5671DF701}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7FFC58DE-8AB8-4D84-9D47-08E5671DF701}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7FFC58DE-8AB8-4D84-9D47-08E5671DF701}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7FFC58DE-8AB8-4D84-9D47-08E5671DF701}.Release|Any CPU.Build.0 = Release|Any CPU
-		{69350C1E-02ED-4711-B0E3-038D9F5E9A6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{69350C1E-02ED-4711-B0E3-038D9F5E9A6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{69350C1E-02ED-4711-B0E3-038D9F5E9A6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{69350C1E-02ED-4711-B0E3-038D9F5E9A6F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1CD30D81-7B7C-4ABD-89AD-B9D9682016E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1CD30D81-7B7C-4ABD-89AD-B9D9682016E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1CD30D81-7B7C-4ABD-89AD-B9D9682016E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1CD30D81-7B7C-4ABD-89AD-B9D9682016E0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7F1864AC-2B4A-4D66-8BB3-2D26647A9B4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7F1864AC-2B4A-4D66-8BB3-2D26647A9B4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7F1864AC-2B4A-4D66-8BB3-2D26647A9B4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7F1864AC-2B4A-4D66-8BB3-2D26647A9B4D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

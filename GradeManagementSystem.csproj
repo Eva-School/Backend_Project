@@ -10,9 +10,4 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="GradeManagementSystem.Application\GradeManagementSystem.Application.csproj" />
-    <ProjectReference Include="GradeManagementSystem.Infrastructure\GradeManagementSystem.Infrastructure.csproj" />
-  </ItemGroup>
-
 </Project>
