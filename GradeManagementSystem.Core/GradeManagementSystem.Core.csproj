@@ -8,9 +8,6 @@
 
   <ItemGroup>
     <Folder Include="Entities\Common\" />
-    <Folder Include="Entities\Identities\" />
-    <Folder Include="Entities\Domain\" />
-    <Folder Include="Entities\Enums\" />
     <Folder Include="Interfaces\Services\" />
     <Folder Include="Interfaces\Repositories\" />
     <Folder Include="DTOs\" />
