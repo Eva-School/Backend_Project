@@ -1,5 +1,5 @@
 ﻿using GradeManagementSystem.Core.Entities.Domain;
-using GradeManagementSystem.Core.Entities.Identities;
+using GradeManagementSystem.Core.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;

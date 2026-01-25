@@ -1,7 +1,6 @@
 ﻿using GradeManagementSystem.Core.Entities.Domain;
-using GradeManagementSystem.Core.Entities.Identities;
+using GradeManagementSystem.Core.Entities.Identity;
 using GradeManagementSystem.Repository.Data.Configurations;
-using GradeManagementSystem.Repository.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -12,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace GradeManagementSystem.Repository.Data
 {
-    public class GradeDbContext : IdentityDbContext<ApplicationIdentityUser, ApplicationIdentityRole, int>
+    public class GradeDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, int>
     {
         public GradeDbContext(DbContextOptions<GradeDbContext> options) : base(options)
         {
@@ -38,9 +37,6 @@ namespace GradeManagementSystem.Repository.Data
         public DbSet<ResultApproval> ResultApprovals { get; set; }
         public DbSet<StudentPromotion> StudentPromotions { get; set; }
 
-        // Domain entities
-        public DbSet<ApplicationUser> Users { get; set; }
-        public DbSet<ApplicationRole> Roles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,8 +45,7 @@ namespace GradeManagementSystem.Repository.Data
             // Apply all configurations
             modelBuilder.ApplyConfiguration(new ApplicationUserConfiguration());
             modelBuilder.ApplyConfiguration(new ApplicationRoleConfiguration());
-            modelBuilder.ApplyConfiguration(new ApplicationIdentityUserConfiguration());
-            modelBuilder.ApplyConfiguration(new ApplicationIdentityRoleConfiguration());
+         
 
             modelBuilder.ApplyConfiguration(new StudentConfiguration());
             modelBuilder.ApplyConfiguration(new GuardianConfiguration());

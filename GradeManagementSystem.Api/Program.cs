@@ -1,6 +1,6 @@
 
+using GradeManagementSystem.Core.Entities.Identity;
 using GradeManagementSystem.Repository.Data;
-using GradeManagementSystem.Repository.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,7 +24,7 @@ namespace GradeManagementSystem.Api
             builder.Services.AddSwaggerGen();
 
             // Identity Configuration
-            builder.Services.AddIdentity<ApplicationIdentityUser, ApplicationIdentityRole>(options =>
+            builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
                 // Password settings
                 options.Password.RequireDigit = true;

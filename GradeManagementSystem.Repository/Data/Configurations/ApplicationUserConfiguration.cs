@@ -1,5 +1,5 @@
 ﻿using GradeManagementSystem.Core.Entities.Domain;
-using GradeManagementSystem.Core.Entities.Identities;
+using GradeManagementSystem.Core.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -14,7 +14,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<ApplicationUser> builder)
         {
-            builder.ToTable("Users");
+            builder.ToTable("AspNetUsers");
 
             // Primary Key
             builder.HasKey(u => u.UserId);
