@@ -1,4 +1,4 @@
-﻿using GradeManagementSystem.Core.Entities.Identities;
+﻿using GradeManagementSystem.Core.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -13,7 +13,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<ApplicationRole> builder)
         {
-            builder.ToTable("Roles");
+            builder.ToTable("AspNetRoles");
 
             // Primary Key
             builder.HasKey(r => r.RoleId);

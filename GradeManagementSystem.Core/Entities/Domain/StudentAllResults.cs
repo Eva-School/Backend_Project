@@ -34,6 +34,8 @@ namespace GradeManagementSystem.Core.Entities.Domain
 
         public OverallTermStatus? OverallTermStatus { get; set; }
 
+        public GradeLevel? Grade { get; set; }
+
         public DateTime? GeneratedAt { get; set; }
 
         public DateTime? ApprovedAt { get; set; }

@@ -410,6 +410,9 @@ namespace GradeManagementSystem.Repository.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETDATE()");
 
+                    b.Property<int?>("Grade")
+                        .HasColumnType("int");
+
                     b.Property<string>("OverallTermStatus")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -744,7 +747,7 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.ToTable("Terms", (string)null);
                 });
 
-            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Identities.ApplicationRole", b =>
+            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Identity.ApplicationRole", b =>
                 {
                     b.Property<int>("RoleId")
                         .ValueGeneratedOnAdd()
@@ -753,8 +756,23 @@ namespace GradeManagementSystem.Repository.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RoleId"));
 
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Description")
                         .HasColumnType("text");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("RoleName")
                         .IsRequired()
@@ -763,10 +781,15 @@ namespace GradeManagementSystem.Repository.Migrations
 
                     b.HasKey("RoleId");
 
-                    b.ToTable("Roles", (string)null);
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles", (string)null);
                 });
 
-            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Identities.ApplicationUser", b =>
+            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Identity.ApplicationUser", b =>
                 {
                     b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
@@ -775,10 +798,24 @@ namespace GradeManagementSystem.Repository.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
 
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -789,6 +826,9 @@ namespace GradeManagementSystem.Repository.Migrations
                         .IsRequired()
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -803,84 +843,15 @@ namespace GradeManagementSystem.Repository.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("MiddleName")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int")
-                        .HasColumnName("RoleID");
-
-                    b.HasKey("UserId");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("Users", (string)null);
-                });
-
-            modelBuilder.Entity("GradeManagementSystem.Repository.Identity.ApplicationIdentityRole", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
-
-                    b.HasIndex("RoleId")
-                        .IsUnique();
-
-                    b.ToTable("AspNetRoles", (string)null);
-                });
-
-            modelBuilder.Entity("GradeManagementSystem.Repository.Identity.ApplicationIdentityUser", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("MiddleName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -899,20 +870,21 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int")
+                        .HasColumnName("RoleID");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -922,8 +894,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -1139,7 +1110,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         .HasForeignKey("MajorID")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("GradeManagementSystem.Core.Entities.Identities.ApplicationUser", null)
+                    b.HasOne("GradeManagementSystem.Core.Entities.Identity.ApplicationUser", null)
                         .WithOne("Student")
                         .HasForeignKey("GradeManagementSystem.Core.Entities.Domain.Student", "UserID")
                         .OnDelete(DeleteBehavior.Restrict);
@@ -1271,7 +1242,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         .HasForeignKey("DepartmentID")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("GradeManagementSystem.Core.Entities.Identities.ApplicationUser", null)
+                    b.HasOne("GradeManagementSystem.Core.Entities.Identity.ApplicationUser", null)
                         .WithOne("Teacher")
                         .HasForeignKey("GradeManagementSystem.Core.Entities.Domain.Teacher", "UserID")
                         .OnDelete(DeleteBehavior.Cascade);
@@ -1324,9 +1295,9 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.Navigation("AcademicYear");
                 });
 
-            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Identities.ApplicationUser", b =>
+            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Identity.ApplicationUser", b =>
                 {
-                    b.HasOne("GradeManagementSystem.Core.Entities.Identities.ApplicationRole", "Role")
+                    b.HasOne("GradeManagementSystem.Core.Entities.Identity.ApplicationRole", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1335,31 +1306,9 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("GradeManagementSystem.Repository.Identity.ApplicationIdentityRole", b =>
-                {
-                    b.HasOne("GradeManagementSystem.Core.Entities.Identities.ApplicationRole", "ApplicationRole")
-                        .WithOne()
-                        .HasForeignKey("GradeManagementSystem.Repository.Identity.ApplicationIdentityRole", "RoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ApplicationRole");
-                });
-
-            modelBuilder.Entity("GradeManagementSystem.Repository.Identity.ApplicationIdentityUser", b =>
-                {
-                    b.HasOne("GradeManagementSystem.Core.Entities.Identities.ApplicationUser", "ApplicationUser")
-                        .WithOne()
-                        .HasForeignKey("GradeManagementSystem.Repository.Identity.ApplicationIdentityUser", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ApplicationUser");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
-                    b.HasOne("GradeManagementSystem.Repository.Identity.ApplicationIdentityRole", null)
+                    b.HasOne("GradeManagementSystem.Core.Entities.Identity.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1368,7 +1317,7 @@ namespace GradeManagementSystem.Repository.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
                 {
-                    b.HasOne("GradeManagementSystem.Repository.Identity.ApplicationIdentityUser", null)
+                    b.HasOne("GradeManagementSystem.Core.Entities.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1377,7 +1326,7 @@ namespace GradeManagementSystem.Repository.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
-                    b.HasOne("GradeManagementSystem.Repository.Identity.ApplicationIdentityUser", null)
+                    b.HasOne("GradeManagementSystem.Core.Entities.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1386,13 +1335,13 @@ namespace GradeManagementSystem.Repository.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
                 {
-                    b.HasOne("GradeManagementSystem.Repository.Identity.ApplicationIdentityRole", null)
+                    b.HasOne("GradeManagementSystem.Core.Entities.Identity.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GradeManagementSystem.Repository.Identity.ApplicationIdentityUser", null)
+                    b.HasOne("GradeManagementSystem.Core.Entities.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1401,7 +1350,7 @@ namespace GradeManagementSystem.Repository.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
                 {
-                    b.HasOne("GradeManagementSystem.Repository.Identity.ApplicationIdentityUser", null)
+                    b.HasOne("GradeManagementSystem.Core.Entities.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1507,12 +1456,12 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.Navigation("SubjectTermResults");
                 });
 
-            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Identities.ApplicationRole", b =>
+            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Identity.ApplicationRole", b =>
                 {
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Identities.ApplicationUser", b =>
+            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Identity.ApplicationUser", b =>
                 {
                     b.Navigation("Student");
 

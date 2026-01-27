@@ -1,13 +1,14 @@
 ﻿using GradeManagementSystem.Core.Entities.Domain;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GradeManagementSystem.Core.Entities.Identities
+namespace GradeManagementSystem.Core.Entities.Identity
 {
-    public class ApplicationUser
+    public class ApplicationUser : IdentityUser<int>
     {
         public int UserId { get; set; }
         public string FirstName { get; set; }
