@@ -18,6 +18,8 @@ namespace GradeManagementSystem.Core.Entities.Identity
         public bool IsActive { get; set; }
         public DateTime? LastLoginAt { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiryTime { get; set; }
 
         public int RoleId { get; set; }  // FK
 

@@ -787,6 +787,48 @@ namespace GradeManagementSystem.Repository.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            RoleId = 1,
+                            ConcurrencyStamp = "a4ad1430-5bfb-431d-9007-d5bb34062c7a",
+                            Description = "System Administrator",
+                            Id = 1,
+                            Name = "Admin",
+                            NormalizedName = "ADMIN",
+                            RoleName = "Admin"
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            ConcurrencyStamp = "c7f32415-88a6-44e8-a143-aac8a34ab076",
+                            Description = "Student Affairs Officer",
+                            Id = 2,
+                            Name = "StudentAffairs",
+                            NormalizedName = "STUDENTAFFAIRS",
+                            RoleName = "Student Affairs"
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            ConcurrencyStamp = "a73a65b8-a5dd-44ab-b6a2-6006d9908df3",
+                            Description = "Teacher Role",
+                            Id = 3,
+                            Name = "Teacher",
+                            NormalizedName = "TEACHER",
+                            RoleName = "Teacher"
+                        },
+                        new
+                        {
+                            RoleId = 4,
+                            ConcurrencyStamp = "b5286d98-e7c9-4d3d-8124-aaebbf4c8ffb",
+                            Description = "Student Role",
+                            Id = 4,
+                            Name = "Student",
+                            NormalizedName = "STUDENT",
+                            RoleName = "Student"
+                        });
                 });
 
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Identity.ApplicationUser", b =>
@@ -870,6 +912,12 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RefreshTokenExpiryTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("RoleId")
                         .HasColumnType("int")
                         .HasColumnName("RoleID");
@@ -897,6 +945,54 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "62a66bc2-4466-48b0-94f0-dbd548474661",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "admin@system.com",
+                            EmailConfirmed = true,
+                            FirstName = "System",
+                            FullName = "System Admin",
+                            Id = 1,
+                            IsActive = true,
+                            LastName = "Admin",
+                            LockoutEnabled = false,
+                            NormalizedEmail = "ADMIN@SYSTEM.COM",
+                            NormalizedUserName = "ADMIN",
+                            PasswordHash = "AQAAAAIAAYagAAAAEOXAis16Qs9q02kRgZJHCRUxv85zLDcLYpf/mCNRFcbzMzLPd0PndOY75v0nke+Prg==",
+                            PhoneNumberConfirmed = false,
+                            RoleId = 1,
+                            SecurityStamp = "351e7a52-9c6b-40a4-b215-65be6ec60b6f",
+                            TwoFactorEnabled = false,
+                            UserName = "admin"
+                        },
+                        new
+                        {
+                            UserId = 2,
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "48d8f524-9c30-4ecf-9d28-a5a34d839a1c",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "staff@system.com",
+                            EmailConfirmed = true,
+                            FirstName = "Student",
+                            FullName = "Student Affairs",
+                            Id = 2,
+                            IsActive = true,
+                            LastName = "Affairs",
+                            LockoutEnabled = false,
+                            NormalizedEmail = "STAFF@SYSTEM.COM",
+                            NormalizedUserName = "STAFF",
+                            PasswordHash = "AQAAAAIAAYagAAAAEF7xisn4uA/kYyMXol4Uvh7DKqRRNllBI4q7az5zzmaVaI1crXpbk/qx1eaPnV+UEQ==",
+                            PhoneNumberConfirmed = false,
+                            RoleId = 2,
+                            SecurityStamp = "e8e573e7-535a-4199-b48d-b252984a22b4",
+                            TwoFactorEnabled = false,
+                            UserName = "staff"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>

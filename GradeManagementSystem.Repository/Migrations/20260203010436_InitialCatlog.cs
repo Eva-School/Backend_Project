@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace GradeManagementSystem.Repository.Migrations
 {
     /// <inheritdoc />
@@ -118,6 +120,8 @@ namespace GradeManagementSystem.Repository.Migrations
                     IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
                     LastLoginAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RefreshTokenExpiryTime = table.Column<DateTime>(type: "datetime2", nullable: true),
                     RoleID = table.Column<int>(type: "int", nullable: false),
                     Id = table.Column<int>(type: "int", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -702,6 +706,26 @@ namespace GradeManagementSystem.Repository.Migrations
                         principalTable: "Teachers",
                         principalColumn: "TeacherID",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.InsertData(
+                table: "AspNetRoles",
+                columns: new[] { "RoleID", "ConcurrencyStamp", "Description", "Id", "Name", "NormalizedName", "RoleName" },
+                values: new object[,]
+                {
+                    { 1, "a4ad1430-5bfb-431d-9007-d5bb34062c7a", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
+                    { 2, "c7f32415-88a6-44e8-a143-aac8a34ab076", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
+                    { 3, "a73a65b8-a5dd-44ab-b6a2-6006d9908df3", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
+                    { 4, "b5286d98-e7c9-4d3d-8124-aaebbf4c8ffb", "Student Role", 4, "Student", "STUDENT", "Student" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "AspNetUsers",
+                columns: new[] { "UserID", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "FullName", "Id", "IsActive", "LastLoginAt", "LastName", "LockoutEnabled", "LockoutEnd", "MiddleName", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RefreshToken", "RefreshTokenExpiryTime", "RoleID", "SecurityStamp", "TwoFactorEnabled", "UserName" },
+                values: new object[,]
+                {
+                    { 1, 0, "62a66bc2-4466-48b0-94f0-dbd548474661", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEOXAis16Qs9q02kRgZJHCRUxv85zLDcLYpf/mCNRFcbzMzLPd0PndOY75v0nke+Prg==", null, false, null, null, 1, "351e7a52-9c6b-40a4-b215-65be6ec60b6f", false, "admin" },
+                    { 2, 0, "48d8f524-9c30-4ecf-9d28-a5a34d839a1c", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEF7xisn4uA/kYyMXol4Uvh7DKqRRNllBI4q7az5zzmaVaI1crXpbk/qx1eaPnV+UEQ==", null, false, null, null, 2, "e8e573e7-535a-4199-b48d-b252984a22b4", false, "staff" }
                 });
 
             migrationBuilder.CreateIndex(
