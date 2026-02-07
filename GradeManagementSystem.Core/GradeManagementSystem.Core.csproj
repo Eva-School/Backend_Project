@@ -7,10 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="DTOs\Auth\" />
     <Folder Include="Entities\Common\" />
     <Folder Include="Interfaces\Services\" />
     <Folder Include="Interfaces\Repositories\" />
-    <Folder Include="DTOs\" />
     <Folder Include="Specifications\" />
   </ItemGroup>
 

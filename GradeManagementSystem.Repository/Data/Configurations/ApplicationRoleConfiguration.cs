@@ -1,11 +1,6 @@
 ﻿using GradeManagementSystem.Core.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GradeManagementSystem.Repository.Data.Configurations
 {
@@ -35,26 +30,48 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Seed Default Roles
-            //builder.HasData(
-            //    new ApplicationRole
-            //    {
-            //        RoleId = 1,
-            //        RoleName = "Admin",
-            //        Description = "System Administrator"
-            //    },
-            //    new ApplicationRole
-            //    {
-            //        RoleId = 2,
-            //        RoleName = "Teacher",
-            //        Description = "Teacher Role"
-            //    },
-            //    new ApplicationRole
-            //    {
-            //        RoleId = 3,
-            //        RoleName = "Student",
-            //        Description = "Student Role"
-            //    }
-            //);
+            builder.HasData(
+                new ApplicationRole
+                {
+                    RoleId = 1,
+                    Id = 1,
+                    Name = "Admin",
+                    NormalizedName = "ADMIN",
+                    RoleName = "Admin",
+                    Description = "System Administrator",
+                    ConcurrencyStamp = Guid.NewGuid().ToString()
+                },
+                new ApplicationRole
+                {
+                    RoleId = 2,
+                    Id = 2,
+                    Name = "StudentAffairs",
+                    NormalizedName = "STUDENTAFFAIRS",
+                    RoleName = "Student Affairs",
+                    Description = "Student Affairs Officer",
+                    ConcurrencyStamp = Guid.NewGuid().ToString()
+                },
+                new ApplicationRole
+                {
+                    RoleId = 3,
+                    Id = 3,
+                    Name = "Teacher",
+                    NormalizedName = "TEACHER",
+                    RoleName = "Teacher",
+                    Description = "Teacher Role",
+                    ConcurrencyStamp = Guid.NewGuid().ToString()
+                },
+                new ApplicationRole
+                {
+                    RoleId = 4,
+                    Id = 4,
+                    Name = "Student",
+                    NormalizedName = "STUDENT",
+                    RoleName = "Student",
+                    Description = "Student Role",
+                    ConcurrencyStamp = Guid.NewGuid().ToString()
+                }
+            );
         }
     }
 }
