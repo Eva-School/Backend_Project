@@ -9,5 +9,6 @@ namespace GradeManagementSystem.Core.Interfaces
         Task<AuthResponse?> RefreshTokenAsync(string refreshToken);
         Task<bool> LogoutAsync(string refreshToken);
         Task<UserInfoResponse?> GetUserInfoAsync(int userId);
+        Task<object> RegisterTeacherAsync(GradeManagementSystem.Core.DTOs.Teacher.TeacherRegisterRequest request);
     }
 }

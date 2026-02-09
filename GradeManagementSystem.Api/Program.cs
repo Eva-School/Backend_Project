@@ -28,6 +28,7 @@ namespace GradeManagementSystem.Api
 
             // Register Services
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddAutoMapper(typeof(AuthMappingProfile));
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
