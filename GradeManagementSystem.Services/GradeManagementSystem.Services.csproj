@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GradeManagementSystem.Core\GradeManagementSystem.Core.csproj" />
+    <ProjectReference Include="..\GradeManagementSystem.Repository\GradeManagementSystem.Repository.csproj" />
   </ItemGroup>
 
 </Project>

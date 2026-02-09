@@ -1,7 +1,10 @@
 using AutoMapper;
 using GradeManagementSystem.Core.DTOs.Auth;
+using GradeManagementSystem.Core.DTOs.Teacher;
+using GradeManagementSystem.Core.Entities.Domain;
 using GradeManagementSystem.Core.Entities.Identity;
 using GradeManagementSystem.Core.Interfaces;
+using GradeManagementSystem.Repository.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -16,17 +19,26 @@ namespace GradeManagementSystem.Services.Services
     public class AuthService : IAuthService
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
+        private readonly IEmailService _emailService;
+        private readonly GradeDbContext _context;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
+            RoleManager<ApplicationRole> roleManager,
             IConfiguration configuration,
-            IMapper mapper)
+            IMapper mapper,
+            IEmailService emailService,
+            GradeDbContext context)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _configuration = configuration;
             _mapper = mapper;
+            _emailService = emailService;
+            _context = context;
         }
 
         public async Task<AuthResponse?> LoginAsync(LoginRequest request)
@@ -137,6 +149,128 @@ namespace GradeManagementSystem.Services.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public async Task<object> RegisterTeacherAsync(TeacherRegisterRequest request)
+        {
+            // 1. Generate Username and Password
+            // Generate username from FullName: firstName.lastName + random number
+            string baseUsername = $"{request.FullName.FirstName.ToLower()}.{request.FullName.LastName.ToLower()}".Replace(" ", "");
+            string username = baseUsername + new Random().Next(100, 999);
+            string password = GenerateRandomPassword();
+
+            var existingUser = await _userManager.FindByEmailAsync(request.Email);
+            if (existingUser != null)
+            {
+                return new { success = false, message = "Email is already registered" };
+            }
+
+            // 2. Find Role and Department
+            var role = await _roleManager.Roles.FirstOrDefaultAsync(r => r.RoleName == request.Role);
+            if (role == null)
+            {
+                return new { success = false, message = $"Role '{request.Role}' not found" };
+            }
+
+            var department = await _context.Departments.FirstOrDefaultAsync(d => d.DepartmentName == request.Department);
+            if (department == null)
+            {
+                return new { success = false, message = $"Department '{request.Department}' not found" };
+            }
+
+            // Start Transaction to ensure both user and teacher are created or neither
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // 3. Create ApplicationUser
+                var user = new ApplicationUser
+                {
+                    UserName = username,
+                    Email = request.Email,
+                    FirstName = request.FullName.FirstName,
+                    MiddleName = request.FullName.MiddleName,
+                    LastName = request.FullName.LastName,
+                    FullName = $"{request.FullName.FirstName} {(string.IsNullOrEmpty(request.FullName.MiddleName) ? "" : request.FullName.MiddleName + " ")}{request.FullName.LastName}",
+                    PhoneNumber = request.Phone,
+                    RoleId = role.RoleId,
+                    IsActive = true,
+                    CreatedAt = DateTime.Now
+                };
+
+                var result = await _userManager.CreateAsync(user, password);
+                if (!result.Succeeded)
+                {
+                    await transaction.RollbackAsync();
+                    return new { success = false, message = string.Join(", ", result.Errors.Select(e => e.Description)) };
+                }
+
+                // 4. If Role is Teacher, create Teacher record
+                if (request.Role.Equals("Teacher", StringComparison.OrdinalIgnoreCase))
+                {
+                    var teacher = new Teacher
+                    {
+                        UserID = user.UserId,
+                        HireDate = request.HireDate,
+                        DepartmentID = department.DepartmentID,
+                        Qualifications = request.Qualifications,
+                        IsActive = true,
+                        EmployeeCode = "TCH-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper()
+                    };
+
+                    _context.Teachers.Add(teacher);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Commit transaction if everything is successful
+                await transaction.CommitAsync();
+
+                // 5. Send Email (After commit, so we are sure data is saved)
+                string emailBody = $@"
+                    <h3>Welcome to Grade Management System</h3>
+                    <p>Hello {user.FullName},</p>
+                    <p>Your account has been created successfully.</p>
+                    <p><b>Username:</b> {username}</p>
+                    <p><b>Password:</b> {password}</p>
+                    <p>Please change your password after your first login.</p>";
+
+                try
+                {
+                    await _emailService.SendEmailAsync(user.Email, "Your Account Credentials", emailBody);
+                }
+                catch (Exception ex)
+                {
+                    // Log email error but don't fail the whole process as DB is already updated
+                }
+
+                return new { success = true, data = new TeacherResponse { Id = user.UserId.ToString(), FullName = user.FullName } };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return new { success = false, message = "An error occurred during registration: " + ex.Message };
+            }
+        }
+
+        private string GenerateRandomPassword()
+        {
+            // Simple random password generator meeting identity requirements
+            string upper = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
+            string lower = "abcdefghijkmnopqrstuvwxyz";
+            string digits = "0123456789";
+            string nonAlphanumeric = "!@#$%^&*";
+            Random random = new Random();
+
+            return new string(new[]
+            {
+                upper[random.Next(upper.Length)],
+                lower[random.Next(lower.Length)],
+                digits[random.Next(digits.Length)],
+                nonAlphanumeric[random.Next(nonAlphanumeric.Length)],
+                lower[random.Next(lower.Length)],
+                digits[random.Next(digits.Length)],
+                upper[random.Next(upper.Length)],
+                lower[random.Next(lower.Length)]
+            });
         }
 
         private string GenerateRefreshToken()
