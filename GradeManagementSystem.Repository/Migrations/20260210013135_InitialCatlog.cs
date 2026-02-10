@@ -20,8 +20,8 @@ namespace GradeManagementSystem.Repository.Migrations
                     AcademicYearID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     YearName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    OrderNumber = table.Column<int>(type: "int", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                    Stage = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -70,8 +70,8 @@ namespace GradeManagementSystem.Repository.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     SubjectName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     AcademicYearID = table.Column<int>(type: "int", nullable: true),
-                    MaxFinalScore = table.Column<int>(type: "int", nullable: false),
-                    MaxQuarterScore = table.Column<int>(type: "int", nullable: false),
+                    MaxFinalScore = table.Column<int>(type: "int", nullable: true),
+                    MaxQuarterScore = table.Column<int>(type: "int", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
@@ -709,14 +709,38 @@ namespace GradeManagementSystem.Repository.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "AcademicYears",
+                columns: new[] { "AcademicYearID", "IsActive", "Stage", "YearName" },
+                values: new object[,]
+                {
+                    { 1, false, "Junior", "2022-2023" },
+                    { 2, false, "Wheeler", "2023-2024" },
+                    { 3, true, "Senior", "2024-2025" },
+                    { 4, true, "Junior", "2024-2025" },
+                    { 5, true, "Wheeler", "2024-2025" }
+                });
+
+            migrationBuilder.InsertData(
                 table: "AspNetRoles",
                 columns: new[] { "RoleID", "ConcurrencyStamp", "Description", "Id", "Name", "NormalizedName", "RoleName" },
                 values: new object[,]
                 {
-                    { 1, "a4ad1430-5bfb-431d-9007-d5bb34062c7a", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
-                    { 2, "c7f32415-88a6-44e8-a143-aac8a34ab076", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
-                    { 3, "a73a65b8-a5dd-44ab-b6a2-6006d9908df3", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
-                    { 4, "b5286d98-e7c9-4d3d-8124-aaebbf4c8ffb", "Student Role", 4, "Student", "STUDENT", "Student" }
+                    { 1, "3926128b-0f1d-49b7-82f5-95f3a70dd093", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
+                    { 2, "95bb0072-d50b-4b34-b597-d3c15512df45", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
+                    { 3, "8fa4aeab-2b81-4d75-8586-618bcb5010c5", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
+                    { 4, "bde5fb2e-64a9-4374-a956-db63ba39f323", "Student Role", 4, "Student", "STUDENT", "Student" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Departments",
+                columns: new[] { "DepartmentID", "CreatedAt", "DepartmentName", "Description", "IsActive" },
+                values: new object[,]
+                {
+                    { 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Mathematics", "Mathematics Department", true },
+                    { 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Science", "Science Department", true },
+                    { 3, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "English", "English Language Department", true },
+                    { 4, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Social Studies", "Social Studies Department", true },
+                    { 5, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Physical Education", "Physical Education Department", true }
                 });
 
             migrationBuilder.InsertData(
@@ -724,21 +748,9 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "UserID", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "FullName", "Id", "IsActive", "LastLoginAt", "LastName", "LockoutEnabled", "LockoutEnd", "MiddleName", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RefreshToken", "RefreshTokenExpiryTime", "RoleID", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
-                    { 1, 0, "62a66bc2-4466-48b0-94f0-dbd548474661", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEOXAis16Qs9q02kRgZJHCRUxv85zLDcLYpf/mCNRFcbzMzLPd0PndOY75v0nke+Prg==", null, false, null, null, 1, "351e7a52-9c6b-40a4-b215-65be6ec60b6f", false, "admin" },
-                    { 2, 0, "48d8f524-9c30-4ecf-9d28-a5a34d839a1c", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEF7xisn4uA/kYyMXol4Uvh7DKqRRNllBI4q7az5zzmaVaI1crXpbk/qx1eaPnV+UEQ==", null, false, null, null, 2, "e8e573e7-535a-4199-b48d-b252984a22b4", false, "staff" }
+                    { 1, 0, "9bd09fda-a286-4852-97cb-67390a362d2f", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEGfK3D8x1mX7Miv4+6QgErOb9rfIhkedxnN8jpvQz8EHIf7siJ1gyOC73PXLGLfPCg==", null, false, null, null, 1, "b7e3a09d-044f-46a4-8506-8cb87cd87c71", false, "admin" },
+                    { 2, 0, "1f6ee93a-4acd-4ab8-b459-cb4591f59012", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEO6EKXPLhpt4dbzPXzclly2hpQEhQPDbpsGYydqhzsC5d9LH07W2odglYCZjf7192A==", null, false, null, null, 2, "b5ddf4b4-5d63-48bc-a886-06686559f335", false, "staff" }
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AcademicYears_OrderNumber",
-                table: "AcademicYears",
-                column: "OrderNumber",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AcademicYears_YearName",
-                table: "AcademicYears",
-                column: "YearName",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "RoleNameIndex",
