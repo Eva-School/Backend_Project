@@ -1,11 +1,7 @@
 ﻿using GradeManagementSystem.Core.Entities.Domain;
+using GradeManagementSystem.Core.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GradeManagementSystem.Repository.Data.Configurations
 {
@@ -18,18 +14,54 @@ namespace GradeManagementSystem.Repository.Data.Configurations
             builder.HasKey(a => a.AcademicYearID);
 
             builder.Property(a => a.YearName)
-                .IsRequired()
-                .HasMaxLength(100);
+                   .IsRequired()
+                   .HasMaxLength(100);
 
-            builder.Property(a => a.OrderNumber)
-                .IsRequired();
+            builder.Property(a => a.Stage)
+                   .HasConversion<string>()
+                   .IsRequired();
 
             builder.Property(a => a.IsActive)
-                .IsRequired()
-                .HasDefaultValue(true);
+                   .IsRequired();
 
-            builder.HasIndex(a => a.YearName).IsUnique();
-            builder.HasIndex(a => a.OrderNumber).IsUnique();
+            builder.HasData(
+                new AcademicYear
+                {
+                    AcademicYearID = 1,
+                    YearName = "2022-2023",
+                    Stage = EducationStage.Junior,
+                    IsActive = false
+                },
+                new AcademicYear
+                {
+                    AcademicYearID = 2,
+                    YearName = "2023-2024",
+                    Stage = EducationStage.Wheeler,
+                    IsActive = false
+                },
+                new AcademicYear
+                {
+                    AcademicYearID = 3,
+                    YearName = "2024-2025",
+                    Stage = EducationStage.Senior,
+                    IsActive = true
+                },
+                new AcademicYear
+                {
+                    AcademicYearID = 4,
+                    YearName = "2024-2025",
+                    Stage = EducationStage.Junior,
+                    IsActive = true
+                }
+                ,
+                new AcademicYear
+                {
+                    AcademicYearID = 5,
+                    YearName = "2024-2025",
+                    Stage = EducationStage.Wheeler,
+                    IsActive = true
+                }
+            );
         }
     }
 }

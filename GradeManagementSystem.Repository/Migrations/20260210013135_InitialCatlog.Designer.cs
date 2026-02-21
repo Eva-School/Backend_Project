@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GradeManagementSystem.Repository.Migrations
 {
     [DbContext(typeof(GradeDbContext))]
-    [Migration("20260203010436_InitialCatlog")]
+    [Migration("20260210013135_InitialCatlog")]
     partial class InitialCatlog
     {
         /// <inheritdoc />
@@ -34,12 +34,11 @@ namespace GradeManagementSystem.Repository.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AcademicYearID"));
 
                     b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
+                        .HasColumnType("bit");
 
-                    b.Property<int>("OrderNumber")
-                        .HasColumnType("int");
+                    b.Property<string>("Stage")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("YearName")
                         .IsRequired()
@@ -48,13 +47,44 @@ namespace GradeManagementSystem.Repository.Migrations
 
                     b.HasKey("AcademicYearID");
 
-                    b.HasIndex("OrderNumber")
-                        .IsUnique();
-
-                    b.HasIndex("YearName")
-                        .IsUnique();
-
                     b.ToTable("AcademicYears", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            AcademicYearID = 1,
+                            IsActive = false,
+                            Stage = "Junior",
+                            YearName = "2022-2023"
+                        },
+                        new
+                        {
+                            AcademicYearID = 2,
+                            IsActive = false,
+                            Stage = "Wheeler",
+                            YearName = "2023-2024"
+                        },
+                        new
+                        {
+                            AcademicYearID = 3,
+                            IsActive = true,
+                            Stage = "Senior",
+                            YearName = "2024-2025"
+                        },
+                        new
+                        {
+                            AcademicYearID = 4,
+                            IsActive = true,
+                            Stage = "Junior",
+                            YearName = "2024-2025"
+                        },
+                        new
+                        {
+                            AcademicYearID = 5,
+                            IsActive = true,
+                            Stage = "Wheeler",
+                            YearName = "2024-2025"
+                        });
                 });
 
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.Class", b =>
@@ -207,6 +237,48 @@ namespace GradeManagementSystem.Repository.Migrations
                         .IsUnique();
 
                     b.ToTable("Departments", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            DepartmentID = 1,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DepartmentName = "Mathematics",
+                            Description = "Mathematics Department",
+                            IsActive = true
+                        },
+                        new
+                        {
+                            DepartmentID = 2,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DepartmentName = "Science",
+                            Description = "Science Department",
+                            IsActive = true
+                        },
+                        new
+                        {
+                            DepartmentID = 3,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DepartmentName = "English",
+                            Description = "English Language Department",
+                            IsActive = true
+                        },
+                        new
+                        {
+                            DepartmentID = 4,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DepartmentName = "Social Studies",
+                            Description = "Social Studies Department",
+                            IsActive = true
+                        },
+                        new
+                        {
+                            DepartmentID = 5,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DepartmentName = "Physical Education",
+                            Description = "Physical Education Department",
+                            IsActive = true
+                        });
                 });
 
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.Guardian", b =>
@@ -616,11 +688,9 @@ namespace GradeManagementSystem.Repository.Migrations
                         .HasDefaultValue(true);
 
                     b.Property<int?>("MaxFinalScore")
-                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<int?>("MaxQuarterScore")
-                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<string>("SubjectName")
@@ -795,7 +865,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 1,
-                            ConcurrencyStamp = "a4ad1430-5bfb-431d-9007-d5bb34062c7a",
+                            ConcurrencyStamp = "3926128b-0f1d-49b7-82f5-95f3a70dd093",
                             Description = "System Administrator",
                             Id = 1,
                             Name = "Admin",
@@ -805,7 +875,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 2,
-                            ConcurrencyStamp = "c7f32415-88a6-44e8-a143-aac8a34ab076",
+                            ConcurrencyStamp = "95bb0072-d50b-4b34-b597-d3c15512df45",
                             Description = "Student Affairs Officer",
                             Id = 2,
                             Name = "StudentAffairs",
@@ -815,7 +885,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 3,
-                            ConcurrencyStamp = "a73a65b8-a5dd-44ab-b6a2-6006d9908df3",
+                            ConcurrencyStamp = "8fa4aeab-2b81-4d75-8586-618bcb5010c5",
                             Description = "Teacher Role",
                             Id = 3,
                             Name = "Teacher",
@@ -825,7 +895,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 4,
-                            ConcurrencyStamp = "b5286d98-e7c9-4d3d-8124-aaebbf4c8ffb",
+                            ConcurrencyStamp = "bde5fb2e-64a9-4374-a956-db63ba39f323",
                             Description = "Student Role",
                             Id = 4,
                             Name = "Student",
@@ -954,7 +1024,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         {
                             UserId = 1,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "62a66bc2-4466-48b0-94f0-dbd548474661",
+                            ConcurrencyStamp = "9bd09fda-a286-4852-97cb-67390a362d2f",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin@system.com",
                             EmailConfirmed = true,
@@ -966,10 +1036,10 @@ namespace GradeManagementSystem.Repository.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@SYSTEM.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEOXAis16Qs9q02kRgZJHCRUxv85zLDcLYpf/mCNRFcbzMzLPd0PndOY75v0nke+Prg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEGfK3D8x1mX7Miv4+6QgErOb9rfIhkedxnN8jpvQz8EHIf7siJ1gyOC73PXLGLfPCg==",
                             PhoneNumberConfirmed = false,
                             RoleId = 1,
-                            SecurityStamp = "351e7a52-9c6b-40a4-b215-65be6ec60b6f",
+                            SecurityStamp = "b7e3a09d-044f-46a4-8506-8cb87cd87c71",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         },
@@ -977,7 +1047,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         {
                             UserId = 2,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "48d8f524-9c30-4ecf-9d28-a5a34d839a1c",
+                            ConcurrencyStamp = "1f6ee93a-4acd-4ab8-b459-cb4591f59012",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "staff@system.com",
                             EmailConfirmed = true,
@@ -989,10 +1059,10 @@ namespace GradeManagementSystem.Repository.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "STAFF@SYSTEM.COM",
                             NormalizedUserName = "STAFF",
-                            PasswordHash = "AQAAAAIAAYagAAAAEF7xisn4uA/kYyMXol4Uvh7DKqRRNllBI4q7az5zzmaVaI1crXpbk/qx1eaPnV+UEQ==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEO6EKXPLhpt4dbzPXzclly2hpQEhQPDbpsGYydqhzsC5d9LH07W2odglYCZjf7192A==",
                             PhoneNumberConfirmed = false,
                             RoleId = 2,
-                            SecurityStamp = "e8e573e7-535a-4199-b48d-b252984a22b4",
+                            SecurityStamp = "b5ddf4b4-5d63-48bc-a886-06686559f335",
                             TwoFactorEnabled = false,
                             UserName = "staff"
                         });

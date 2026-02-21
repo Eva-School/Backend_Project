@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GradeManagementSystem.Core.Entities.Enums;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -17,8 +18,7 @@ namespace GradeManagementSystem.Core.Entities.Domain
         [StringLength(100)]
         public string YearName { get; set; }
 
-        [Required]
-        public int OrderNumber { get; set; }
+        public EducationStage Stage { get; set; }
 
         [Required]
         public bool IsActive { get; set; }

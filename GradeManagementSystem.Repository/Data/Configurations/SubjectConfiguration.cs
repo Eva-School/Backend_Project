@@ -21,11 +21,9 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                 .IsRequired()
                 .HasMaxLength(200);
 
-            builder.Property(s => s.MaxFinalScore)
-                .IsRequired();
+            builder.Property(s => s.MaxFinalScore);
 
-            builder.Property(s => s.MaxQuarterScore)
-                .IsRequired();
+            builder.Property(s => s.MaxQuarterScore);
 
             builder.Property(s => s.IsActive)
                 .IsRequired()
