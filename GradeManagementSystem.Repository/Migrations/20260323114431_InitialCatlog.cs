@@ -725,10 +725,10 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "RoleID", "ConcurrencyStamp", "Description", "Id", "Name", "NormalizedName", "RoleName" },
                 values: new object[,]
                 {
-                    { 1, "3926128b-0f1d-49b7-82f5-95f3a70dd093", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
-                    { 2, "95bb0072-d50b-4b34-b597-d3c15512df45", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
-                    { 3, "8fa4aeab-2b81-4d75-8586-618bcb5010c5", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
-                    { 4, "bde5fb2e-64a9-4374-a956-db63ba39f323", "Student Role", 4, "Student", "STUDENT", "Student" }
+                    { 1, "1cbfd7a3-ba51-4882-80c0-c4e0c66b7fbc", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
+                    { 2, "249b4fba-064c-461b-bf83-ef778eb15232", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
+                    { 3, "d1579d04-c43b-4f28-8a3c-e5d2c110d964", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
+                    { 4, "156f7b7a-940e-40a8-9cc8-6833e8e4a397", "Student Role", 4, "Student", "STUDENT", "Student" }
                 });
 
             migrationBuilder.InsertData(
@@ -744,12 +744,40 @@ namespace GradeManagementSystem.Repository.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "Teachers",
+                columns: new[] { "TeacherID", "DepartmentID", "EmployeeCode", "HireDate", "IsActive", "Qualifications", "UserID" },
+                values: new object[,]
+                {
+                    { 1, null, "TCH001", new DateTime(2020, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), true, "B.Sc. Mathematics", null },
+                    { 2, null, "TCH002", new DateTime(2021, 5, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), true, "B.A. English", null }
+                });
+
+            migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "UserID", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "FullName", "Id", "IsActive", "LastLoginAt", "LastName", "LockoutEnabled", "LockoutEnd", "MiddleName", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RefreshToken", "RefreshTokenExpiryTime", "RoleID", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
-                    { 1, 0, "9bd09fda-a286-4852-97cb-67390a362d2f", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEGfK3D8x1mX7Miv4+6QgErOb9rfIhkedxnN8jpvQz8EHIf7siJ1gyOC73PXLGLfPCg==", null, false, null, null, 1, "b7e3a09d-044f-46a4-8506-8cb87cd87c71", false, "admin" },
-                    { 2, 0, "1f6ee93a-4acd-4ab8-b459-cb4591f59012", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEO6EKXPLhpt4dbzPXzclly2hpQEhQPDbpsGYydqhzsC5d9LH07W2odglYCZjf7192A==", null, false, null, null, 2, "b5ddf4b4-5d63-48bc-a886-06686559f335", false, "staff" }
+                    { 1, 0, "44629734-3f20-47b5-85e7-cae3f9372e8c", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEGQ3LMson98ccSje7dn2mA/YwBb1qlrUXA2OmI37/W1g1QMhEve/gQilHuFUBI6uJg==", null, false, null, null, 1, "a23a30b5-8f8e-45a7-9f33-86072a592e0d", false, "admin" },
+                    { 2, 0, "bd91d500-0e4e-4869-8637-fdbff7a19b3a", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEDdBsPAa23UmH0f8srnsi1CS6PhmVnHWr25g/Vz4MjknJpgmUwfGSQ1/blCPM7+8pw==", null, false, null, null, 2, "fefcb4cb-90c6-4b1a-a439-fcfecf25f6ad", false, "staff" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Classes",
+                columns: new[] { "ClassID", "AcademicYearID", "Capacity", "ClassName", "DepartmentID", "IsActive" },
+                values: new object[,]
+                {
+                    { 1, 3, 30, "Class 1A", null, true },
+                    { 2, 3, 30, "Class 1B", null, true },
+                    { 3, 3, 30, "Class 2A", null, true }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Subjects",
+                columns: new[] { "SubjectID", "AcademicYearID", "IsActive", "MaxFinalScore", "MaxQuarterScore", "SubjectName" },
+                values: new object[,]
+                {
+                    { 1, 3, true, 100, 25, "Mathematics" },
+                    { 2, 3, true, 100, 25, "English" }
                 });
 
             migrationBuilder.CreateIndex(
