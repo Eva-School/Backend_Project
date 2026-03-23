@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GradeManagementSystem.Repository.Migrations
 {
     [DbContext(typeof(GradeDbContext))]
-    [Migration("20260210013135_InitialCatlog")]
+    [Migration("20260323114431_InitialCatlog")]
     partial class InitialCatlog
     {
         /// <inheritdoc />
@@ -125,6 +125,32 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.HasIndex("DepartmentID");
 
                     b.ToTable("Classes", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            ClassID = 1,
+                            AcademicYearID = 3,
+                            Capacity = 30,
+                            ClassName = "Class 1A",
+                            IsActive = true
+                        },
+                        new
+                        {
+                            ClassID = 2,
+                            AcademicYearID = 3,
+                            Capacity = 30,
+                            ClassName = "Class 1B",
+                            IsActive = true
+                        },
+                        new
+                        {
+                            ClassID = 3,
+                            AcademicYearID = 3,
+                            Capacity = 30,
+                            ClassName = "Class 2A",
+                            IsActive = true
+                        });
                 });
 
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.Competency", b =>
@@ -703,6 +729,26 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.HasIndex("AcademicYearID");
 
                     b.ToTable("Subjects", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            SubjectID = 1,
+                            AcademicYearID = 3,
+                            IsActive = true,
+                            MaxFinalScore = 100,
+                            MaxQuarterScore = 25,
+                            SubjectName = "Mathematics"
+                        },
+                        new
+                        {
+                            SubjectID = 2,
+                            AcademicYearID = 3,
+                            IsActive = true,
+                            MaxFinalScore = 100,
+                            MaxQuarterScore = 25,
+                            SubjectName = "English"
+                        });
                 });
 
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.Teacher", b =>
@@ -748,6 +794,24 @@ namespace GradeManagementSystem.Repository.Migrations
                         .HasFilter("[UserID] IS NOT NULL");
 
                     b.ToTable("Teachers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            TeacherID = 1,
+                            EmployeeCode = "TCH001",
+                            HireDate = new DateTime(2020, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            Qualifications = "B.Sc. Mathematics"
+                        },
+                        new
+                        {
+                            TeacherID = 2,
+                            EmployeeCode = "TCH002",
+                            HireDate = new DateTime(2021, 5, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            Qualifications = "B.A. English"
+                        });
                 });
 
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.TeacherAssignment", b =>
@@ -865,7 +929,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 1,
-                            ConcurrencyStamp = "3926128b-0f1d-49b7-82f5-95f3a70dd093",
+                            ConcurrencyStamp = "1cbfd7a3-ba51-4882-80c0-c4e0c66b7fbc",
                             Description = "System Administrator",
                             Id = 1,
                             Name = "Admin",
@@ -875,7 +939,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 2,
-                            ConcurrencyStamp = "95bb0072-d50b-4b34-b597-d3c15512df45",
+                            ConcurrencyStamp = "249b4fba-064c-461b-bf83-ef778eb15232",
                             Description = "Student Affairs Officer",
                             Id = 2,
                             Name = "StudentAffairs",
@@ -885,7 +949,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 3,
-                            ConcurrencyStamp = "8fa4aeab-2b81-4d75-8586-618bcb5010c5",
+                            ConcurrencyStamp = "d1579d04-c43b-4f28-8a3c-e5d2c110d964",
                             Description = "Teacher Role",
                             Id = 3,
                             Name = "Teacher",
@@ -895,7 +959,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 4,
-                            ConcurrencyStamp = "bde5fb2e-64a9-4374-a956-db63ba39f323",
+                            ConcurrencyStamp = "156f7b7a-940e-40a8-9cc8-6833e8e4a397",
                             Description = "Student Role",
                             Id = 4,
                             Name = "Student",
@@ -1024,7 +1088,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         {
                             UserId = 1,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "9bd09fda-a286-4852-97cb-67390a362d2f",
+                            ConcurrencyStamp = "44629734-3f20-47b5-85e7-cae3f9372e8c",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin@system.com",
                             EmailConfirmed = true,
@@ -1036,10 +1100,10 @@ namespace GradeManagementSystem.Repository.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@SYSTEM.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEGfK3D8x1mX7Miv4+6QgErOb9rfIhkedxnN8jpvQz8EHIf7siJ1gyOC73PXLGLfPCg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEGQ3LMson98ccSje7dn2mA/YwBb1qlrUXA2OmI37/W1g1QMhEve/gQilHuFUBI6uJg==",
                             PhoneNumberConfirmed = false,
                             RoleId = 1,
-                            SecurityStamp = "b7e3a09d-044f-46a4-8506-8cb87cd87c71",
+                            SecurityStamp = "a23a30b5-8f8e-45a7-9f33-86072a592e0d",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         },
@@ -1047,7 +1111,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         {
                             UserId = 2,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "1f6ee93a-4acd-4ab8-b459-cb4591f59012",
+                            ConcurrencyStamp = "bd91d500-0e4e-4869-8637-fdbff7a19b3a",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "staff@system.com",
                             EmailConfirmed = true,
@@ -1059,10 +1123,10 @@ namespace GradeManagementSystem.Repository.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "STAFF@SYSTEM.COM",
                             NormalizedUserName = "STAFF",
-                            PasswordHash = "AQAAAAIAAYagAAAAEO6EKXPLhpt4dbzPXzclly2hpQEhQPDbpsGYydqhzsC5d9LH07W2odglYCZjf7192A==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEDdBsPAa23UmH0f8srnsi1CS6PhmVnHWr25g/Vz4MjknJpgmUwfGSQ1/blCPM7+8pw==",
                             PhoneNumberConfirmed = false,
                             RoleId = 2,
-                            SecurityStamp = "b5ddf4b4-5d63-48bc-a886-06686559f335",
+                            SecurityStamp = "fefcb4cb-90c6-4b1a-a439-fcfecf25f6ad",
                             TwoFactorEnabled = false,
                             UserName = "staff"
                         });
