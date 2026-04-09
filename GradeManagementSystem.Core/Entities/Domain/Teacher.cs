@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GradeManagementSystem.Core.Entities.Identity;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -15,6 +16,7 @@ namespace GradeManagementSystem.Core.Entities.Domain
 
         public int? UserID { get; set; }
 
+
         [StringLength(50)]
         public string EmployeeCode { get; set; }
 
@@ -30,6 +32,7 @@ namespace GradeManagementSystem.Core.Entities.Domain
 
         // Navigation Properties
         public virtual Department? Department { get; set; }
+        public ApplicationUser? User { get; set; }
         public virtual ICollection<TeacherAssignment> TeacherAssignments { get; set; } = new List<TeacherAssignment>();
         public virtual ICollection<CompetencyAttempt> EvaluatedCompetencies { get; set; } = new List<CompetencyAttempt>();
     }

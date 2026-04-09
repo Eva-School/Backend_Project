@@ -1,6 +1,7 @@
 using GradeManagementSystem.Core.Entities.Identity;
 using GradeManagementSystem.Core.Interfaces;
 using GradeManagementSystem.Repository.Data;
+using GradeManagementSystem.Repository.Repositories;
 using GradeManagementSystem.Services.Mapping;
 using GradeManagementSystem.Services.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -25,6 +26,7 @@ namespace GradeManagementSystem.Api
                 (builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddControllers();
+            builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
             // Register Services
             builder.Services.AddScoped<IAuthService, AuthService>();
