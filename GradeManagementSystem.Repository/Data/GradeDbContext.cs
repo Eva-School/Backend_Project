@@ -36,6 +36,7 @@ namespace GradeManagementSystem.Repository.Data
         public DbSet<StudentAllResults> StudentAllResults { get; set; }
         public DbSet<ResultApproval> ResultApprovals { get; set; }
         public DbSet<StudentPromotion> StudentPromotions { get; set; }
+        public DbSet<Grade> Grades { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -65,6 +66,7 @@ namespace GradeManagementSystem.Repository.Data
             modelBuilder.ApplyConfiguration(new StudentAllResultsConfiguration());
             modelBuilder.ApplyConfiguration(new ResultApprovalConfiguration());
             modelBuilder.ApplyConfiguration(new StudentPromotionConfiguration());
+            modelBuilder.ApplyConfiguration(new GradeConfiguration());
 
             // Configure Identity table names
             modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserRole<int>>()

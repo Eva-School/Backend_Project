@@ -33,11 +33,6 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                 .WithMany(a => a.Subjects)
                 .HasForeignKey(s => s.AcademicYearID)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            builder.HasData(
-                new Subject { SubjectID = 1, SubjectName = "Mathematics", AcademicYearID = 3, MaxFinalScore = 100, MaxQuarterScore = 25, IsActive = true },
-                new Subject { SubjectID = 2, SubjectName = "English", AcademicYearID = 3, MaxFinalScore = 100, MaxQuarterScore = 25, IsActive = true }
-            );
         }
     }
 }

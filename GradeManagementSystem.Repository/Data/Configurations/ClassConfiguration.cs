@@ -39,12 +39,6 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasIndex(c => c.ClassName).IsUnique();
-
-            builder.HasData(
-                new Class { ClassID = 1, ClassName = "Class 1A", AcademicYearID = 3, Capacity = 30, IsActive = true },
-                new Class { ClassID = 2, ClassName = "Class 1B", AcademicYearID = 3, Capacity = 30, IsActive = true },
-                new Class { ClassID = 3, ClassName = "Class 2A", AcademicYearID = 3, Capacity = 30, IsActive = true }
-            );
         }
     }
 }
