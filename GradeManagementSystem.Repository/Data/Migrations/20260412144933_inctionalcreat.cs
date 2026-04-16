@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace GradeManagementSystem.Repository.Migrations
+namespace GradeManagementSystem.Repository.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCatlog : Migration
+    public partial class inctionalcreat : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -446,6 +446,55 @@ namespace GradeManagementSystem.Repository.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Grades",
+                columns: table => new
+                {
+                    GradeID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    StudentID = table.Column<int>(type: "int", nullable: false),
+                    ClassID = table.Column<int>(type: "int", nullable: false),
+                    SubjectID = table.Column<int>(type: "int", nullable: false),
+                    AcademicYearID = table.Column<int>(type: "int", nullable: true),
+                    TermID = table.Column<int>(type: "int", nullable: true),
+                    Score = table.Column<decimal>(type: "decimal(8,2)", nullable: false),
+                    GradeType = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Grades", x => x.GradeID);
+                    table.ForeignKey(
+                        name: "FK_Grades_AcademicYears_AcademicYearID",
+                        column: x => x.AcademicYearID,
+                        principalTable: "AcademicYears",
+                        principalColumn: "AcademicYearID",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Grades_Classes_ClassID",
+                        column: x => x.ClassID,
+                        principalTable: "Classes",
+                        principalColumn: "ClassID",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Grades_Students_StudentID",
+                        column: x => x.StudentID,
+                        principalTable: "Students",
+                        principalColumn: "StudentID",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Grades_Subjects_SubjectID",
+                        column: x => x.SubjectID,
+                        principalTable: "Subjects",
+                        principalColumn: "SubjectID",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Grades_Terms_TermID",
+                        column: x => x.TermID,
+                        principalTable: "Terms",
+                        principalColumn: "TermID",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Guardians",
                 columns: table => new
                 {
@@ -725,10 +774,10 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "RoleID", "ConcurrencyStamp", "Description", "Id", "Name", "NormalizedName", "RoleName" },
                 values: new object[,]
                 {
-                    { 1, "1cbfd7a3-ba51-4882-80c0-c4e0c66b7fbc", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
-                    { 2, "249b4fba-064c-461b-bf83-ef778eb15232", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
-                    { 3, "d1579d04-c43b-4f28-8a3c-e5d2c110d964", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
-                    { 4, "156f7b7a-940e-40a8-9cc8-6833e8e4a397", "Student Role", 4, "Student", "STUDENT", "Student" }
+                    { 1, "f4cec486-1951-4682-9122-77fd6c3bcb9d", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
+                    { 2, "77a09ad8-1cd9-4c39-8488-53127497bb38", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
+                    { 3, "43722309-bc06-4b68-aea3-809648f490bf", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
+                    { 4, "08f3ea02-8003-498d-9180-179fae904ae3", "Student Role", 4, "Student", "STUDENT", "Student" }
                 });
 
             migrationBuilder.InsertData(
@@ -744,40 +793,12 @@ namespace GradeManagementSystem.Repository.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "Teachers",
-                columns: new[] { "TeacherID", "DepartmentID", "EmployeeCode", "HireDate", "IsActive", "Qualifications", "UserID" },
-                values: new object[,]
-                {
-                    { 1, null, "TCH001", new DateTime(2020, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), true, "B.Sc. Mathematics", null },
-                    { 2, null, "TCH002", new DateTime(2021, 5, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), true, "B.A. English", null }
-                });
-
-            migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "UserID", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "FullName", "Id", "IsActive", "LastLoginAt", "LastName", "LockoutEnabled", "LockoutEnd", "MiddleName", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RefreshToken", "RefreshTokenExpiryTime", "RoleID", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
-                    { 1, 0, "44629734-3f20-47b5-85e7-cae3f9372e8c", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEGQ3LMson98ccSje7dn2mA/YwBb1qlrUXA2OmI37/W1g1QMhEve/gQilHuFUBI6uJg==", null, false, null, null, 1, "a23a30b5-8f8e-45a7-9f33-86072a592e0d", false, "admin" },
-                    { 2, 0, "bd91d500-0e4e-4869-8637-fdbff7a19b3a", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEDdBsPAa23UmH0f8srnsi1CS6PhmVnHWr25g/Vz4MjknJpgmUwfGSQ1/blCPM7+8pw==", null, false, null, null, 2, "fefcb4cb-90c6-4b1a-a439-fcfecf25f6ad", false, "staff" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Classes",
-                columns: new[] { "ClassID", "AcademicYearID", "Capacity", "ClassName", "DepartmentID", "IsActive" },
-                values: new object[,]
-                {
-                    { 1, 3, 30, "Class 1A", null, true },
-                    { 2, 3, 30, "Class 1B", null, true },
-                    { 3, 3, 30, "Class 2A", null, true }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Subjects",
-                columns: new[] { "SubjectID", "AcademicYearID", "IsActive", "MaxFinalScore", "MaxQuarterScore", "SubjectName" },
-                values: new object[,]
-                {
-                    { 1, 3, true, 100, 25, "Mathematics" },
-                    { 2, 3, true, 100, 25, "English" }
+                    { 1, 0, "16687d6c-be63-4e07-acec-b378c11f8638", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEKjv14t04O97K+CH7j4I9jm9ulfgn/1v6whXHepnKtLmkxNGudlGer3zmaLKNMLIeQ==", null, false, null, null, 1, "98bda441-5cc5-4d23-86f6-93d8539da621", false, "admin" },
+                    { 2, 0, "b2b861b2-35ed-40de-bbbc-fb6fb46e09d7", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEMNHEqhOgEYaq5qTXtCqUqib56KRGLiwTts7OdAJoZeIypVhptaiAUWQOjYQ2QCyWA==", null, false, null, null, 2, "a632f2ae-7600-4ae0-ab61-73e2391b15c2", false, "staff" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -845,6 +866,31 @@ namespace GradeManagementSystem.Repository.Migrations
                 table: "Departments",
                 column: "DepartmentName",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Grades_AcademicYearID",
+                table: "Grades",
+                column: "AcademicYearID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Grades_ClassID",
+                table: "Grades",
+                column: "ClassID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Grades_StudentID",
+                table: "Grades",
+                column: "StudentID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Grades_SubjectID",
+                table: "Grades",
+                column: "SubjectID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Grades_TermID",
+                table: "Grades",
+                column: "TermID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Guardians_StudentID",
@@ -1042,6 +1088,9 @@ namespace GradeManagementSystem.Repository.Migrations
         {
             migrationBuilder.DropTable(
                 name: "CompetencyAttempts");
+
+            migrationBuilder.DropTable(
+                name: "Grades");
 
             migrationBuilder.DropTable(
                 name: "Guardians");

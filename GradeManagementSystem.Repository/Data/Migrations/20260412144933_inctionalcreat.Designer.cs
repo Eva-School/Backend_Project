@@ -9,11 +9,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace GradeManagementSystem.Repository.Migrations
+namespace GradeManagementSystem.Repository.Data.Migrations
 {
     [DbContext(typeof(GradeDbContext))]
-    [Migration("20260323114431_InitialCatlog")]
-    partial class InitialCatlog
+    [Migration("20260412144933_inctionalcreat")]
+    partial class inctionalcreat
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -125,32 +125,6 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.HasIndex("DepartmentID");
 
                     b.ToTable("Classes", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            ClassID = 1,
-                            AcademicYearID = 3,
-                            Capacity = 30,
-                            ClassName = "Class 1A",
-                            IsActive = true
-                        },
-                        new
-                        {
-                            ClassID = 2,
-                            AcademicYearID = 3,
-                            Capacity = 30,
-                            ClassName = "Class 1B",
-                            IsActive = true
-                        },
-                        new
-                        {
-                            ClassID = 3,
-                            AcademicYearID = 3,
-                            Capacity = 30,
-                            ClassName = "Class 2A",
-                            IsActive = true
-                        });
                 });
 
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.Competency", b =>
@@ -305,6 +279,50 @@ namespace GradeManagementSystem.Repository.Migrations
                             Description = "Physical Education Department",
                             IsActive = true
                         });
+                });
+
+            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.Grade", b =>
+                {
+                    b.Property<int>("GradeID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("GradeID"));
+
+                    b.Property<int?>("AcademicYearID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ClassID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GradeType")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Score")
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<int>("StudentID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubjectID")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TermID")
+                        .HasColumnType("int");
+
+                    b.HasKey("GradeID");
+
+                    b.HasIndex("AcademicYearID");
+
+                    b.HasIndex("ClassID");
+
+                    b.HasIndex("StudentID");
+
+                    b.HasIndex("SubjectID");
+
+                    b.HasIndex("TermID");
+
+                    b.ToTable("Grades");
                 });
 
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.Guardian", b =>
@@ -729,26 +747,6 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.HasIndex("AcademicYearID");
 
                     b.ToTable("Subjects", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            SubjectID = 1,
-                            AcademicYearID = 3,
-                            IsActive = true,
-                            MaxFinalScore = 100,
-                            MaxQuarterScore = 25,
-                            SubjectName = "Mathematics"
-                        },
-                        new
-                        {
-                            SubjectID = 2,
-                            AcademicYearID = 3,
-                            IsActive = true,
-                            MaxFinalScore = 100,
-                            MaxQuarterScore = 25,
-                            SubjectName = "English"
-                        });
                 });
 
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.Teacher", b =>
@@ -794,24 +792,6 @@ namespace GradeManagementSystem.Repository.Migrations
                         .HasFilter("[UserID] IS NOT NULL");
 
                     b.ToTable("Teachers", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            TeacherID = 1,
-                            EmployeeCode = "TCH001",
-                            HireDate = new DateTime(2020, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            Qualifications = "B.Sc. Mathematics"
-                        },
-                        new
-                        {
-                            TeacherID = 2,
-                            EmployeeCode = "TCH002",
-                            HireDate = new DateTime(2021, 5, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsActive = true,
-                            Qualifications = "B.A. English"
-                        });
                 });
 
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.TeacherAssignment", b =>
@@ -929,7 +909,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 1,
-                            ConcurrencyStamp = "1cbfd7a3-ba51-4882-80c0-c4e0c66b7fbc",
+                            ConcurrencyStamp = "f4cec486-1951-4682-9122-77fd6c3bcb9d",
                             Description = "System Administrator",
                             Id = 1,
                             Name = "Admin",
@@ -939,7 +919,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 2,
-                            ConcurrencyStamp = "249b4fba-064c-461b-bf83-ef778eb15232",
+                            ConcurrencyStamp = "77a09ad8-1cd9-4c39-8488-53127497bb38",
                             Description = "Student Affairs Officer",
                             Id = 2,
                             Name = "StudentAffairs",
@@ -949,7 +929,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 3,
-                            ConcurrencyStamp = "d1579d04-c43b-4f28-8a3c-e5d2c110d964",
+                            ConcurrencyStamp = "43722309-bc06-4b68-aea3-809648f490bf",
                             Description = "Teacher Role",
                             Id = 3,
                             Name = "Teacher",
@@ -959,7 +939,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 4,
-                            ConcurrencyStamp = "156f7b7a-940e-40a8-9cc8-6833e8e4a397",
+                            ConcurrencyStamp = "08f3ea02-8003-498d-9180-179fae904ae3",
                             Description = "Student Role",
                             Id = 4,
                             Name = "Student",
@@ -1088,7 +1068,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         {
                             UserId = 1,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "44629734-3f20-47b5-85e7-cae3f9372e8c",
+                            ConcurrencyStamp = "16687d6c-be63-4e07-acec-b378c11f8638",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin@system.com",
                             EmailConfirmed = true,
@@ -1100,10 +1080,10 @@ namespace GradeManagementSystem.Repository.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@SYSTEM.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEGQ3LMson98ccSje7dn2mA/YwBb1qlrUXA2OmI37/W1g1QMhEve/gQilHuFUBI6uJg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEKjv14t04O97K+CH7j4I9jm9ulfgn/1v6whXHepnKtLmkxNGudlGer3zmaLKNMLIeQ==",
                             PhoneNumberConfirmed = false,
                             RoleId = 1,
-                            SecurityStamp = "a23a30b5-8f8e-45a7-9f33-86072a592e0d",
+                            SecurityStamp = "98bda441-5cc5-4d23-86f6-93d8539da621",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         },
@@ -1111,7 +1091,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         {
                             UserId = 2,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "bd91d500-0e4e-4869-8637-fdbff7a19b3a",
+                            ConcurrencyStamp = "b2b861b2-35ed-40de-bbbc-fb6fb46e09d7",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "staff@system.com",
                             EmailConfirmed = true,
@@ -1123,10 +1103,10 @@ namespace GradeManagementSystem.Repository.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "STAFF@SYSTEM.COM",
                             NormalizedUserName = "STAFF",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDdBsPAa23UmH0f8srnsi1CS6PhmVnHWr25g/Vz4MjknJpgmUwfGSQ1/blCPM7+8pw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMNHEqhOgEYaq5qTXtCqUqib56KRGLiwTts7OdAJoZeIypVhptaiAUWQOjYQ2QCyWA==",
                             PhoneNumberConfirmed = false,
                             RoleId = 2,
-                            SecurityStamp = "fefcb4cb-90c6-4b1a-a439-fcfecf25f6ad",
+                            SecurityStamp = "a632f2ae-7600-4ae0-ab61-73e2391b15c2",
                             TwoFactorEnabled = false,
                             UserName = "staff"
                         });
@@ -1284,6 +1264,47 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.Navigation("Student");
 
                     b.Navigation("StudentCompetencyStatus");
+                });
+
+            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.Grade", b =>
+                {
+                    b.HasOne("GradeManagementSystem.Core.Entities.Domain.AcademicYear", "AcademicYear")
+                        .WithMany()
+                        .HasForeignKey("AcademicYearID")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("GradeManagementSystem.Core.Entities.Domain.Class", "Class")
+                        .WithMany()
+                        .HasForeignKey("ClassID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GradeManagementSystem.Core.Entities.Domain.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GradeManagementSystem.Core.Entities.Domain.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GradeManagementSystem.Core.Entities.Domain.Term", "Term")
+                        .WithMany()
+                        .HasForeignKey("TermID")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AcademicYear");
+
+                    b.Navigation("Class");
+
+                    b.Navigation("Student");
+
+                    b.Navigation("Subject");
+
+                    b.Navigation("Term");
                 });
 
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.Guardian", b =>
