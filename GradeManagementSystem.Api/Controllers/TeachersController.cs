@@ -1,6 +1,9 @@
 using GradeManagementSystem.Core.DTOs.Teacher;
 using GradeManagementSystem.Core.Interfaces;
+using GradeManagementSystem.Core.Interfaces.Services;
+using System.Security.Claims;
 using GradeManagementSystem.Repository.Data;
+using GradeManagementSystem.Services.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,11 +19,13 @@ namespace GradeManagementSystem.Api.Controllers
     {
         private readonly GradeDbContext _context;
         private readonly IAuthService _authService;
+        private readonly ITeacherGradeService teacherGradeService;
 
-        public TeachersController(GradeDbContext context, IAuthService authService)
+        public TeachersController(GradeDbContext context, IAuthService authService,ITeacherGradeService teacherGradeService)
         {
             _context = context;
             _authService = authService;
+            this.teacherGradeService = teacherGradeService;
         }
 
         // GET: api/teachers
@@ -68,5 +73,63 @@ namespace GradeManagementSystem.Api.Controllers
 
             return Ok(data);
         }
+
+        [HttpGet("students/{classId}")]
+        public async Task<IActionResult> GetStudentsByClass(int classId)
+        {
+            if (classId <= 0)
+                return BadRequest(new { success = false, message = "Invalid classId" });
+
+            var result = await teacherGradeService.GetStudentsByClassAsync(classId);
+
+            if (result == null)
+                return NotFound(new { success = false, message = "Class not found" });
+
+            return Ok(result);
+        }
+
+        // Post api/teacher/Grede
+        [HttpPost("SubmitGrade")]
+      //  [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> SubmitGrade([FromBody] TeacherSubmitGradeDto teacherSubmitGradeDto)
+        {
+
+            try
+            {
+                var teacherIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+               //  var teacherIdClaim = User.FindFirst("Id")?.Value;
+                if (teacherIdClaim == null)
+                    return Unauthorized(new { ok = false, message = "Teacher not authenticated" });
+
+                int teacherId = int.Parse(teacherIdClaim);
+
+                await teacherGradeService.SubmitGradeAsync(teacherSubmitGradeDto);//, teacherId);
+                return Ok(new
+                {
+                    success = true,
+                    message = "Grade saved successfully",
+                    data = teacherSubmitGradeDto
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = ex.Message,
+                    details = ex.InnerException?.Message
+                });
+            }
+
+        }
+
+
+
     }
 }
