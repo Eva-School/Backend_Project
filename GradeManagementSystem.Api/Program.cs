@@ -34,7 +34,6 @@ namespace GradeManagementSystem.Api
             // Register Services
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IEmailService, EmailService>();
-            builder.Services.AddScoped<ISubjectService, SubjectService>();
             builder.Services.AddScoped<ITeacherGradeService, TeacherGradeService>();
             builder.Services.AddAutoMapper(typeof(AuthMappingProfile));
 
