@@ -725,10 +725,10 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "RoleID", "ConcurrencyStamp", "Description", "Id", "Name", "NormalizedName", "RoleName" },
                 values: new object[,]
                 {
-                    { 1, "c2e2014f-1e38-45f9-a3f1-2bb0aa1505a9", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
-                    { 2, "e3013015-b005-4f56-a903-ad3bccc09dfb", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
-                    { 3, "ff614b8c-fbce-493c-8cd7-6b6cfb79af6f", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
-                    { 4, "fce1e00b-e3f2-4158-903d-71bffc6f1188", "Student Role", 4, "Student", "STUDENT", "Student" }
+                    { 1, "fa88e41f-77bd-40aa-ad0e-fe9eb2d7f890", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
+                    { 2, "1c17be33-4e53-4a49-8d3a-05725a402159", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
+                    { 3, "20d23627-4f65-4c0b-b484-6babe64987b6", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
+                    { 4, "c009c2ca-725a-4f3f-9711-72fd24ef2e7d", "Student Role", 4, "Student", "STUDENT", "Student" }
                 });
 
             migrationBuilder.InsertData(
@@ -757,8 +757,8 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "UserID", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "FullName", "Id", "IsActive", "LastLoginAt", "LastName", "LockoutEnabled", "LockoutEnd", "MiddleName", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RefreshToken", "RefreshTokenExpiryTime", "RoleID", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
-                    { 1, 0, "612ae701-dea5-41df-8be4-edae816de702", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEJe+wGr/eP2/QnA0M5cfND+a8BIKFJ47dBXeuI16BBAD9lBLs6M/DiGyu9hyA1QTUw==", null, false, null, null, 1, "e14f5c40-d091-4edc-ad19-f16866db3089", false, "admin" },
-                    { 2, 0, "9019555b-a50c-4571-835f-341b6090cb3e", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEDrzr3/BVb5jDp9sS2kplqrnTnUMgEZ738b7Zb7+nI5KAIVXekVi/T0/8ntQs3l3Rg==", null, false, null, null, 2, "77c772a5-3e50-452b-9ec2-25c5aa8dad53", false, "staff" }
+                    { 1, 0, "56fe0c8d-3c64-41d4-a3e2-fa9be9d2c7f6", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEBbvv0HAlCPksr7pu1kf3fK7Xli+hmPUnVyz9ypkWnm5+nipw4QDrJusJUX3vle+xw==", null, false, null, null, 1, "0a4507c4-d2e0-4b4b-83f0-47ef1e170bda", false, "admin" },
+                    { 2, 0, "bfc9dac9-fa60-4125-a36a-89ffe2930c2d", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEJocIv0CXiClG0cEeXV4UOEJ9qjzCxxOMVOj9oXMNL4DY2rjdOhq77djdzk+hRDgyw==", null, false, null, null, 2, "0a8e383a-6438-4275-a6ff-9bbd959353bc", false, "staff" }
                 });
 
             migrationBuilder.InsertData(
