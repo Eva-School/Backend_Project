@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GradeManagementSystem.Repository.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCatlog : Migration
+    public partial class InititalCatlog : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -725,10 +725,10 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "RoleID", "ConcurrencyStamp", "Description", "Id", "Name", "NormalizedName", "RoleName" },
                 values: new object[,]
                 {
-                    { 1, "1cbfd7a3-ba51-4882-80c0-c4e0c66b7fbc", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
-                    { 2, "249b4fba-064c-461b-bf83-ef778eb15232", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
-                    { 3, "d1579d04-c43b-4f28-8a3c-e5d2c110d964", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
-                    { 4, "156f7b7a-940e-40a8-9cc8-6833e8e4a397", "Student Role", 4, "Student", "STUDENT", "Student" }
+                    { 1, "c2e2014f-1e38-45f9-a3f1-2bb0aa1505a9", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
+                    { 2, "e3013015-b005-4f56-a903-ad3bccc09dfb", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
+                    { 3, "ff614b8c-fbce-493c-8cd7-6b6cfb79af6f", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
+                    { 4, "fce1e00b-e3f2-4158-903d-71bffc6f1188", "Student Role", 4, "Student", "STUDENT", "Student" }
                 });
 
             migrationBuilder.InsertData(
@@ -757,8 +757,8 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "UserID", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "FullName", "Id", "IsActive", "LastLoginAt", "LastName", "LockoutEnabled", "LockoutEnd", "MiddleName", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RefreshToken", "RefreshTokenExpiryTime", "RoleID", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
-                    { 1, 0, "44629734-3f20-47b5-85e7-cae3f9372e8c", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEGQ3LMson98ccSje7dn2mA/YwBb1qlrUXA2OmI37/W1g1QMhEve/gQilHuFUBI6uJg==", null, false, null, null, 1, "a23a30b5-8f8e-45a7-9f33-86072a592e0d", false, "admin" },
-                    { 2, 0, "bd91d500-0e4e-4869-8637-fdbff7a19b3a", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEDdBsPAa23UmH0f8srnsi1CS6PhmVnHWr25g/Vz4MjknJpgmUwfGSQ1/blCPM7+8pw==", null, false, null, null, 2, "fefcb4cb-90c6-4b1a-a439-fcfecf25f6ad", false, "staff" }
+                    { 1, 0, "612ae701-dea5-41df-8be4-edae816de702", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEJe+wGr/eP2/QnA0M5cfND+a8BIKFJ47dBXeuI16BBAD9lBLs6M/DiGyu9hyA1QTUw==", null, false, null, null, 1, "e14f5c40-d091-4edc-ad19-f16866db3089", false, "admin" },
+                    { 2, 0, "9019555b-a50c-4571-835f-341b6090cb3e", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEDrzr3/BVb5jDp9sS2kplqrnTnUMgEZ738b7Zb7+nI5KAIVXekVi/T0/8ntQs3l3Rg==", null, false, null, null, 2, "77c772a5-3e50-452b-9ec2-25c5aa8dad53", false, "staff" }
                 });
 
             migrationBuilder.InsertData(

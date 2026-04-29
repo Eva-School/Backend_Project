@@ -1,3 +1,4 @@
+using GradeManagementSystem.Api.Data;
 using GradeManagementSystem.Core.Entities.Identity;
 using GradeManagementSystem.Core.Interfaces;
 using GradeManagementSystem.Repository.Data;
@@ -32,6 +33,7 @@ namespace GradeManagementSystem.Api
             builder.Services.AddScoped<ISubjectService, SubjectService>();
             builder.Services.AddScoped<IClassService, ClassService>();
             builder.Services.AddScoped<ITeacherAssignmentService, TeacherAssignmentService>();
+            builder.Services.AddScoped<IStudentDashboardService, StudentDashboardService>();
             builder.Services.AddAutoMapper(typeof(AuthMappingProfile));
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -121,6 +123,7 @@ namespace GradeManagementSystem.Api
             app.UseAuthentication();
             app.UseAuthorization();
 
+            StudentDashboardSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
 
             app.MapControllers();
 
