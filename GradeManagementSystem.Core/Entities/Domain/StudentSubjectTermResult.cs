@@ -1,4 +1,4 @@
-﻿using GradeManagementSystem.Core.Entities.Enums;
+using GradeManagementSystem.Core.Entities.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -29,9 +29,11 @@ namespace GradeManagementSystem.Core.Entities.Domain
 
         public decimal? Quarter1Score { get; set; }
 
+        public decimal? Quarter3Score { get; set; }
 
         public decimal? Quarter2Score { get; set; }
 
+        public decimal? Quarter4Score { get; set; }
 
         public decimal? FinalExamScore { get; set; }
 

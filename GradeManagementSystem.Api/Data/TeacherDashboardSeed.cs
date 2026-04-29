@@ -18,8 +18,6 @@ namespace GradeManagementSystem.Api.Data
             var context = scope.ServiceProvider.GetRequiredService<GradeDbContext>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-            await context.Database.MigrateAsync();
-
             var major = await EnsureMajorAsync(context);
             var teacherUser = await EnsureTeacherUserAsync(userManager);
             var teacher = await EnsureTeacherAsync(context, teacherUser.UserId);

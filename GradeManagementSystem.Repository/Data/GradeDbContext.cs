@@ -1,4 +1,4 @@
-﻿using GradeManagementSystem.Core.Entities.Domain;
+using GradeManagementSystem.Core.Entities.Domain;
 using GradeManagementSystem.Core.Entities.Identity;
 using GradeManagementSystem.Repository.Data.Configurations;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -36,6 +36,9 @@ namespace GradeManagementSystem.Repository.Data
         public DbSet<StudentAllResults> StudentAllResults { get; set; }
         public DbSet<ResultApproval> ResultApprovals { get; set; }
         public DbSet<StudentPromotion> StudentPromotions { get; set; }
+        public DbSet<QuarterGradesLock> QuarterGradesLocks { get; set; }
+        public DbSet<QuarterGradeSubmission> QuarterGradeSubmissions { get; set; }
+        public DbSet<GradeActionLog> GradeActionLogs { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -65,6 +68,9 @@ namespace GradeManagementSystem.Repository.Data
             modelBuilder.ApplyConfiguration(new StudentAllResultsConfiguration());
             modelBuilder.ApplyConfiguration(new ResultApprovalConfiguration());
             modelBuilder.ApplyConfiguration(new StudentPromotionConfiguration());
+            modelBuilder.ApplyConfiguration(new QuarterGradesLockConfiguration());
+            modelBuilder.ApplyConfiguration(new QuarterGradeSubmissionConfiguration());
+            modelBuilder.ApplyConfiguration(new GradeActionLogConfiguration());
 
             // Configure Identity table names
             modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserRole<int>>()

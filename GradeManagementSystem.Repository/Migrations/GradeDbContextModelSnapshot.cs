@@ -304,6 +304,67 @@ namespace GradeManagementSystem.Repository.Migrations
                         });
                 });
 
+            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.GradeActionLog", b =>
+                {
+                    b.Property<int>("ActionLogID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ActionLogID"));
+
+                    b.Property<int?>("AcademicYearID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ActorName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ActorUserID")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("AfterFinalScore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("BeforeFinalScore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("ClassID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ClassName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("DepartmentID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Level")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("StudentID")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SubjectID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SubjectName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("TermID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Timestamp")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.HasKey("ActionLogID");
+
+                    b.ToTable("GradeActionLogs", (string)null);
+                });
+
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.Guardian", b =>
                 {
                     b.Property<int>("GuardianID")
@@ -393,6 +454,69 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.HasIndex("StudentID");
 
                     b.ToTable("PreviousSchools", (string)null);
+                });
+
+            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.QuarterGradeSubmission", b =>
+                {
+                    b.Property<int>("SubmissionID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SubmissionID"));
+
+                    b.Property<int>("AcademicYearID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StudentID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubjectID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<int?>("SubmittedBy")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TermID")
+                        .HasColumnType("int");
+
+                    b.HasKey("SubmissionID");
+
+                    b.HasIndex("StudentID", "SubjectID", "AcademicYearID", "TermID")
+                        .IsUnique();
+
+                    b.ToTable("QuarterGradeSubmissions", (string)null);
+                });
+
+            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.QuarterGradesLock", b =>
+                {
+                    b.Property<int>("AcademicYearID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubjectID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DepartmentID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ClassID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("LockedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<int?>("LockedBy")
+                        .HasColumnType("int");
+
+                    b.HasKey("AcademicYearID", "SubjectID", "DepartmentID", "ClassID");
+
+                    b.ToTable("QuarterGradesLocks", (string)null);
                 });
 
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.ResultApproval", b =>
@@ -663,6 +787,12 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.Property<decimal?>("Quarter2Score")
                         .HasColumnType("decimal(5,2)");
 
+                    b.Property<decimal?>("Quarter3Score")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal?>("Quarter4Score")
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -713,6 +843,18 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.Property<int?>("MaxFinalScore")
                         .HasColumnType("int");
 
+                    b.Property<int?>("MaxQuarterQ1Score")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MaxQuarterQ2Score")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MaxQuarterQ3Score")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MaxQuarterQ4Score")
+                        .HasColumnType("int");
+
                     b.Property<int?>("MaxQuarterScore")
                         .HasColumnType("int");
 
@@ -734,6 +876,10 @@ namespace GradeManagementSystem.Repository.Migrations
                             AcademicYearID = 3,
                             IsActive = true,
                             MaxFinalScore = 100,
+                            MaxQuarterQ1Score = 12,
+                            MaxQuarterQ2Score = 13,
+                            MaxQuarterQ3Score = 12,
+                            MaxQuarterQ4Score = 13,
                             MaxQuarterScore = 25,
                             SubjectName = "Mathematics"
                         },
@@ -743,6 +889,10 @@ namespace GradeManagementSystem.Repository.Migrations
                             AcademicYearID = 3,
                             IsActive = true,
                             MaxFinalScore = 100,
+                            MaxQuarterQ1Score = 12,
+                            MaxQuarterQ2Score = 13,
+                            MaxQuarterQ3Score = 12,
+                            MaxQuarterQ4Score = 13,
                             MaxQuarterScore = 25,
                             SubjectName = "English"
                         });
@@ -926,7 +1076,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 1,
-                            ConcurrencyStamp = "fa88e41f-77bd-40aa-ad0e-fe9eb2d7f890",
+                            ConcurrencyStamp = "2411f9e6-9e55-4e6b-a5d7-d662b7880113",
                             Description = "System Administrator",
                             Id = 1,
                             Name = "Admin",
@@ -936,7 +1086,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 2,
-                            ConcurrencyStamp = "1c17be33-4e53-4a49-8d3a-05725a402159",
+                            ConcurrencyStamp = "715a5b7d-283a-4684-9723-824074208207",
                             Description = "Student Affairs Officer",
                             Id = 2,
                             Name = "StudentAffairs",
@@ -946,7 +1096,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 3,
-                            ConcurrencyStamp = "20d23627-4f65-4c0b-b484-6babe64987b6",
+                            ConcurrencyStamp = "fa68b0c3-f84f-46ad-9cb4-1183b8ad3620",
                             Description = "Teacher Role",
                             Id = 3,
                             Name = "Teacher",
@@ -956,7 +1106,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             RoleId = 4,
-                            ConcurrencyStamp = "c009c2ca-725a-4f3f-9711-72fd24ef2e7d",
+                            ConcurrencyStamp = "5be44d96-bb7f-4aaa-8b15-0410470f15f4",
                             Description = "Student Role",
                             Id = 4,
                             Name = "Student",
@@ -1085,7 +1235,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         {
                             UserId = 1,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "56fe0c8d-3c64-41d4-a3e2-fa9be9d2c7f6",
+                            ConcurrencyStamp = "0050d4b5-f3de-4f1f-a3a5-d408a281451c",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin@system.com",
                             EmailConfirmed = true,
@@ -1097,10 +1247,10 @@ namespace GradeManagementSystem.Repository.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@SYSTEM.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEBbvv0HAlCPksr7pu1kf3fK7Xli+hmPUnVyz9ypkWnm5+nipw4QDrJusJUX3vle+xw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEKoT7L7yDzgYWCMccdYN11BmjjP2P9vRwg5SIg47SiCLlnC8Bc3WhTAxwamt9f+GCQ==",
                             PhoneNumberConfirmed = false,
                             RoleId = 1,
-                            SecurityStamp = "0a4507c4-d2e0-4b4b-83f0-47ef1e170bda",
+                            SecurityStamp = "a361623c-79d6-4a52-98f3-d08842b6153e",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         },
@@ -1108,7 +1258,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         {
                             UserId = 2,
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "bfc9dac9-fa60-4125-a36a-89ffe2930c2d",
+                            ConcurrencyStamp = "03f43a39-ffb9-45ff-8790-baa254295dc8",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "staff@system.com",
                             EmailConfirmed = true,
@@ -1120,10 +1270,10 @@ namespace GradeManagementSystem.Repository.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "STAFF@SYSTEM.COM",
                             NormalizedUserName = "STAFF",
-                            PasswordHash = "AQAAAAIAAYagAAAAEJocIv0CXiClG0cEeXV4UOEJ9qjzCxxOMVOj9oXMNL4DY2rjdOhq77djdzk+hRDgyw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEIy6riqTYm/l//Hty5bEGGbTSnDJvTRIwPDG+wwmVV1dNhNn9YAAc8ya59RGZ3Ed1w==",
                             PhoneNumberConfirmed = false,
                             RoleId = 2,
-                            SecurityStamp = "0a8e383a-6438-4275-a6ff-9bbd959353bc",
+                            SecurityStamp = "33397f04-f7ac-443e-b153-bf81416277b1",
                             TwoFactorEnabled = false,
                             UserName = "staff"
                         });

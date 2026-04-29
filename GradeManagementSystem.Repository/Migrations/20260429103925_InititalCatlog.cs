@@ -63,6 +63,67 @@ namespace GradeManagementSystem.Repository.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "GradeActionLogs",
+                columns: table => new
+                {
+                    ActionLogID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Action = table.Column<string>(type: "text", nullable: false),
+                    ActorUserID = table.Column<int>(type: "int", nullable: true),
+                    ActorName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    StudentID = table.Column<int>(type: "int", nullable: true),
+                    SubjectID = table.Column<int>(type: "int", nullable: true),
+                    AcademicYearID = table.Column<int>(type: "int", nullable: true),
+                    DepartmentID = table.Column<int>(type: "int", nullable: true),
+                    ClassID = table.Column<int>(type: "int", nullable: true),
+                    TermID = table.Column<int>(type: "int", nullable: true),
+                    Level = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SubjectName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ClassName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    BeforeFinalScore = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    AfterFinalScore = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GradeActionLogs", x => x.ActionLogID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "QuarterGradesLocks",
+                columns: table => new
+                {
+                    AcademicYearID = table.Column<int>(type: "int", nullable: false),
+                    SubjectID = table.Column<int>(type: "int", nullable: false),
+                    DepartmentID = table.Column<int>(type: "int", nullable: false),
+                    ClassID = table.Column<int>(type: "int", nullable: false),
+                    LockedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    LockedBy = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_QuarterGradesLocks", x => new { x.AcademicYearID, x.SubjectID, x.DepartmentID, x.ClassID });
+                });
+
+            migrationBuilder.CreateTable(
+                name: "QuarterGradeSubmissions",
+                columns: table => new
+                {
+                    SubmissionID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    StudentID = table.Column<int>(type: "int", nullable: false),
+                    SubjectID = table.Column<int>(type: "int", nullable: false),
+                    AcademicYearID = table.Column<int>(type: "int", nullable: false),
+                    TermID = table.Column<int>(type: "int", nullable: false),
+                    SubmittedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    SubmittedBy = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_QuarterGradeSubmissions", x => x.SubmissionID);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Subjects",
                 columns: table => new
                 {
@@ -72,6 +133,10 @@ namespace GradeManagementSystem.Repository.Migrations
                     AcademicYearID = table.Column<int>(type: "int", nullable: true),
                     MaxFinalScore = table.Column<int>(type: "int", nullable: true),
                     MaxQuarterScore = table.Column<int>(type: "int", nullable: true),
+                    MaxQuarterQ1Score = table.Column<int>(type: "int", nullable: true),
+                    MaxQuarterQ2Score = table.Column<int>(type: "int", nullable: true),
+                    MaxQuarterQ3Score = table.Column<int>(type: "int", nullable: true),
+                    MaxQuarterQ4Score = table.Column<int>(type: "int", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
@@ -613,7 +678,9 @@ namespace GradeManagementSystem.Repository.Migrations
                     TermID = table.Column<int>(type: "int", nullable: true),
                     AcademicYearID = table.Column<int>(type: "int", nullable: true),
                     Quarter1Score = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
+                    Quarter3Score = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
                     Quarter2Score = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
+                    Quarter4Score = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
                     FinalExamScore = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
                     TermTotal = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -725,10 +792,10 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "RoleID", "ConcurrencyStamp", "Description", "Id", "Name", "NormalizedName", "RoleName" },
                 values: new object[,]
                 {
-                    { 1, "fa88e41f-77bd-40aa-ad0e-fe9eb2d7f890", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
-                    { 2, "1c17be33-4e53-4a49-8d3a-05725a402159", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
-                    { 3, "20d23627-4f65-4c0b-b484-6babe64987b6", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
-                    { 4, "c009c2ca-725a-4f3f-9711-72fd24ef2e7d", "Student Role", 4, "Student", "STUDENT", "Student" }
+                    { 1, "2411f9e6-9e55-4e6b-a5d7-d662b7880113", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
+                    { 2, "715a5b7d-283a-4684-9723-824074208207", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
+                    { 3, "fa68b0c3-f84f-46ad-9cb4-1183b8ad3620", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
+                    { 4, "5be44d96-bb7f-4aaa-8b15-0410470f15f4", "Student Role", 4, "Student", "STUDENT", "Student" }
                 });
 
             migrationBuilder.InsertData(
@@ -757,8 +824,8 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "UserID", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "FullName", "Id", "IsActive", "LastLoginAt", "LastName", "LockoutEnabled", "LockoutEnd", "MiddleName", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RefreshToken", "RefreshTokenExpiryTime", "RoleID", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
-                    { 1, 0, "56fe0c8d-3c64-41d4-a3e2-fa9be9d2c7f6", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEBbvv0HAlCPksr7pu1kf3fK7Xli+hmPUnVyz9ypkWnm5+nipw4QDrJusJUX3vle+xw==", null, false, null, null, 1, "0a4507c4-d2e0-4b4b-83f0-47ef1e170bda", false, "admin" },
-                    { 2, 0, "bfc9dac9-fa60-4125-a36a-89ffe2930c2d", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEJocIv0CXiClG0cEeXV4UOEJ9qjzCxxOMVOj9oXMNL4DY2rjdOhq77djdzk+hRDgyw==", null, false, null, null, 2, "0a8e383a-6438-4275-a6ff-9bbd959353bc", false, "staff" }
+                    { 1, 0, "0050d4b5-f3de-4f1f-a3a5-d408a281451c", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEKoT7L7yDzgYWCMccdYN11BmjjP2P9vRwg5SIg47SiCLlnC8Bc3WhTAxwamt9f+GCQ==", null, false, null, null, 1, "a361623c-79d6-4a52-98f3-d08842b6153e", false, "admin" },
+                    { 2, 0, "03f43a39-ffb9-45ff-8790-baa254295dc8", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEIy6riqTYm/l//Hty5bEGGbTSnDJvTRIwPDG+wwmVV1dNhNn9YAAc8ya59RGZ3Ed1w==", null, false, null, null, 2, "33397f04-f7ac-443e-b153-bf81416277b1", false, "staff" }
                 });
 
             migrationBuilder.InsertData(
@@ -773,11 +840,11 @@ namespace GradeManagementSystem.Repository.Migrations
 
             migrationBuilder.InsertData(
                 table: "Subjects",
-                columns: new[] { "SubjectID", "AcademicYearID", "IsActive", "MaxFinalScore", "MaxQuarterScore", "SubjectName" },
+                columns: new[] { "SubjectID", "AcademicYearID", "IsActive", "MaxFinalScore", "MaxQuarterQ1Score", "MaxQuarterQ2Score", "MaxQuarterQ3Score", "MaxQuarterQ4Score", "MaxQuarterScore", "SubjectName" },
                 values: new object[,]
                 {
-                    { 1, 3, true, 100, 25, "Mathematics" },
-                    { 2, 3, true, 100, 25, "English" }
+                    { 1, 3, true, 100, 12, 13, 12, 13, 25, "Mathematics" },
+                    { 2, 3, true, 100, 12, 13, 12, 13, 25, "English" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -866,6 +933,12 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "IX_PreviousSchools_StudentID",
                 table: "PreviousSchools",
                 column: "StudentID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QuarterGradeSubmissions_StudentID_SubjectID_AcademicYearID_TermID",
+                table: "QuarterGradeSubmissions",
+                columns: new[] { "StudentID", "SubjectID", "AcademicYearID", "TermID" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ResultApprovals_AllResultID",
@@ -1044,10 +1117,19 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "CompetencyAttempts");
 
             migrationBuilder.DropTable(
+                name: "GradeActionLogs");
+
+            migrationBuilder.DropTable(
                 name: "Guardians");
 
             migrationBuilder.DropTable(
                 name: "PreviousSchools");
+
+            migrationBuilder.DropTable(
+                name: "QuarterGradesLocks");
+
+            migrationBuilder.DropTable(
+                name: "QuarterGradeSubmissions");
 
             migrationBuilder.DropTable(
                 name: "ResultApprovals");

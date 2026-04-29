@@ -1,4 +1,4 @@
-﻿using GradeManagementSystem.Core.Entities.Domain;
+using GradeManagementSystem.Core.Entities.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -35,8 +35,32 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasData(
-                new Subject { SubjectID = 1, SubjectName = "Mathematics", AcademicYearID = 3, MaxFinalScore = 100, MaxQuarterScore = 25, IsActive = true },
-                new Subject { SubjectID = 2, SubjectName = "English", AcademicYearID = 3, MaxFinalScore = 100, MaxQuarterScore = 25, IsActive = true }
+                new Subject
+                {
+                    SubjectID = 1,
+                    SubjectName = "Mathematics",
+                    AcademicYearID = 3,
+                    MaxFinalScore = 100,
+                    MaxQuarterScore = 25,
+                    MaxQuarterQ1Score = 12,
+                    MaxQuarterQ2Score = 13,
+                    MaxQuarterQ3Score = 12,
+                    MaxQuarterQ4Score = 13,
+                    IsActive = true
+                },
+                new Subject
+                {
+                    SubjectID = 2,
+                    SubjectName = "English",
+                    AcademicYearID = 3,
+                    MaxFinalScore = 100,
+                    MaxQuarterScore = 25,
+                    MaxQuarterQ1Score = 12,
+                    MaxQuarterQ2Score = 13,
+                    MaxQuarterQ3Score = 12,
+                    MaxQuarterQ4Score = 13,
+                    IsActive = true
+                }
             );
         }
     }
