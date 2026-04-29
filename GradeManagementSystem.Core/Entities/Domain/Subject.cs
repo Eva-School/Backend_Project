@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -23,6 +23,14 @@ namespace GradeManagementSystem.Core.Entities.Domain
         public int? MaxFinalScore { get; set; }
 
         public int? MaxQuarterScore { get; set; }
+
+        public int? MaxQuarterQ1Score { get; set; }
+
+        public int? MaxQuarterQ2Score { get; set; }
+
+        public int? MaxQuarterQ3Score { get; set; }
+
+        public int? MaxQuarterQ4Score { get; set; }
 
         [Required]
         public bool IsActive { get; set; }

@@ -1,7 +1,9 @@
 using GradeManagementSystem.Core.DTOs.Subject;
+using GradeManagementSystem.Core.Entities.Enums;
 using GradeManagementSystem.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -22,12 +24,23 @@ namespace GradeManagementSystem.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSubjects([FromQuery] string? year)
         {
-            // Note: year parameter is ignored as per specification
-            var subjects = await _subjectService.GetSubjectsForActiveYearAsync();
+            var subjects = (await _subjectService.GetSubjectsForActiveYearAsync()).ToList();
 
             if (subjects == null)
             {
                 return NotFound(new { message = "No active academic year found" });
+            }
+
+            if (!string.IsNullOrWhiteSpace(year))
+            {
+                if (!Enum.TryParse<EducationStage>(year, true, out var stage))
+                {
+                    return BadRequest(new { message = "Invalid year value. Expected: junior|wheeler|senior." });
+                }
+
+                subjects = subjects
+                    .Where(s => string.Equals(s.Stage, stage.ToString(), System.StringComparison.OrdinalIgnoreCase))
+                    .ToList();
             }
 
             return Ok(subjects);

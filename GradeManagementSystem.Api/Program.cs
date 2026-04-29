@@ -35,6 +35,11 @@ namespace GradeManagementSystem.Api
             builder.Services.AddScoped<ITeacherAssignmentService, TeacherAssignmentService>();
             builder.Services.AddScoped<ITeacherDashboardService, TeacherDashboardService>();
             builder.Services.AddScoped<IStudentDashboardService, StudentDashboardService>();
+            builder.Services.AddScoped<IViceDashboardService, ViceDashboardService>();
+            builder.Services.AddScoped<IViceStudentService, ViceStudentService>();
+            builder.Services.AddScoped<IViceQuarterGradesService, ViceQuarterGradesService>();
+            builder.Services.AddScoped<IViceFinalGradesService, ViceFinalGradesService>();
+            builder.Services.AddScoped<IAdminFinalGradesService, AdminFinalGradesService>();
             builder.Services.AddAutoMapper(typeof(AuthMappingProfile));
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -124,8 +129,21 @@ namespace GradeManagementSystem.Api
             app.UseAuthentication();
             app.UseAuthorization();
 
-            StudentDashboardSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
-            TeacherDashboardSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
+            // Migrate DB once, then run seeds.
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<GradeDbContext>();
+                db.Database.Migrate();
+            }
+
+            // Optional: set env var RUN_SEED=false to skip seeding on startup
+            var runSeed = Environment.GetEnvironmentVariable("RUN_SEED");
+            if (!string.Equals(runSeed, "false", StringComparison.OrdinalIgnoreCase))
+            {
+                StudentDashboardSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
+                TeacherDashboardSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
+                ViceGradesSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
+            }
 
             app.MapControllers();
 

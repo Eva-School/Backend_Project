@@ -1,0 +1,37 @@
+using GradeManagementSystem.Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+
+namespace GradeManagementSystem.Api.Controllers
+{
+    [ApiController]
+    [Route("api/vice")]
+    public class ViceDashboardController : ControllerBase
+    {
+        private readonly IViceDashboardService _viceDashboardService;
+
+        public ViceDashboardController(IViceDashboardService viceDashboardService)
+        {
+            _viceDashboardService = viceDashboardService;
+        }
+
+        // 11 GET /api/vice/dashboard/cards
+        [HttpGet("dashboard/cards")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetCards()
+        {
+            var cards = await _viceDashboardService.GetCardsAsync();
+            return Ok(cards);
+        }
+
+        // 23 GET /api/vice/grades/dashboard
+        [HttpGet("grades/dashboard")]
+        [Authorize(Roles = "Student Affairs,StudentAffairs")]
+        public async Task<IActionResult> GetGradesDashboard()
+        {
+            var dashboard = await _viceDashboardService.GetGradesDashboardAsync();
+            return Ok(dashboard);
+        }
+    }
+}

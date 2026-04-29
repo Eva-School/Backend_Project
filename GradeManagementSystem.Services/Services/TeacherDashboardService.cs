@@ -404,6 +404,67 @@ namespace GradeManagementSystem.Services.Services
 
             await _context.SaveChangesAsync();
 
+            // Create quarter submission + audit log for vice dashboard.
+            // This endpoint currently updates quarter1/quarter2 of the first term only.
+            var existingQuarterSubmission = await _context.QuarterGradeSubmissions
+                .FirstOrDefaultAsync(s =>
+                    s.StudentID == request.StudentId &&
+                    s.SubjectID == subjectId &&
+                    s.TermID == term!.TermID &&
+                    s.AcademicYearID == academicYearId);
+
+            if (existingQuarterSubmission == null)
+            {
+                _context.QuarterGradeSubmissions.Add(new QuarterGradeSubmission
+                {
+                    StudentID = request.StudentId,
+                    SubjectID = subjectId,
+                    TermID = term.TermID,
+                    AcademicYearID = academicYearId,
+                    SubmittedAt = DateTime.UtcNow,
+                    SubmittedBy = userId
+                });
+            }
+            else
+            {
+                existingQuarterSubmission.SubmittedAt = DateTime.UtcNow;
+                existingQuarterSubmission.SubmittedBy = userId;
+            }
+
+            var teacherName = await _context.Users
+                .Where(u => u.UserId == userId)
+                .Select(u => u.FullName)
+                .FirstOrDefaultAsync();
+
+            var classRow = await _context.Classes
+                .Where(c => c.ClassID == request.ClassId)
+                .Select(c => new { c.ClassName, c.DepartmentID })
+                .FirstOrDefaultAsync();
+
+            var stage = await _context.AcademicYears
+                .Where(ay => ay.AcademicYearID == academicYearId)
+                .Select(ay => ay.Stage)
+                .FirstOrDefaultAsync();
+
+            _context.GradeActionLogs.Add(new GradeActionLog
+            {
+                Action = "Submitted quarter grades",
+                ActorUserID = userId,
+                ActorName = teacherName,
+                StudentID = request.StudentId,
+                SubjectID = subjectId,
+                AcademicYearID = academicYearId,
+                DepartmentID = classRow?.DepartmentID,
+                ClassID = request.ClassId,
+                TermID = term.TermID,
+                Level = stage.ToString().ToLowerInvariant(),
+                SubjectName = subject.SubjectName,
+                ClassName = classRow?.ClassName,
+                Timestamp = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+
             return new TeacherGradeUpdateResponseDto
             {
                 ClassId = request.ClassId,

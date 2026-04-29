@@ -1,4 +1,4 @@
-﻿using GradeManagementSystem.Core.Entities.Domain;
+using GradeManagementSystem.Core.Entities.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -20,7 +20,13 @@ namespace GradeManagementSystem.Repository.Data.Configurations
             builder.Property(r => r.Quarter1Score)
                 .HasColumnType("decimal(5,2)");
 
+            builder.Property(r => r.Quarter3Score)
+                .HasColumnType("decimal(5,2)");
+
             builder.Property(r => r.Quarter2Score)
+                .HasColumnType("decimal(5,2)");
+
+            builder.Property(r => r.Quarter4Score)
                 .HasColumnType("decimal(5,2)");
 
             builder.Property(r => r.FinalExamScore)
