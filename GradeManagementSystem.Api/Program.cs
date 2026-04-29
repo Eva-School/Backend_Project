@@ -33,6 +33,7 @@ namespace GradeManagementSystem.Api
             builder.Services.AddScoped<ISubjectService, SubjectService>();
             builder.Services.AddScoped<IClassService, ClassService>();
             builder.Services.AddScoped<ITeacherAssignmentService, TeacherAssignmentService>();
+            builder.Services.AddScoped<ITeacherDashboardService, TeacherDashboardService>();
             builder.Services.AddScoped<IStudentDashboardService, StudentDashboardService>();
             builder.Services.AddAutoMapper(typeof(AuthMappingProfile));
 
@@ -124,6 +125,7 @@ namespace GradeManagementSystem.Api
             app.UseAuthorization();
 
             StudentDashboardSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
+            TeacherDashboardSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
 
             app.MapControllers();
 
