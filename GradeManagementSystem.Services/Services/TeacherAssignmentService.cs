@@ -1,5 +1,6 @@
-﻿using GradeManagementSystem.Core.DTOs.TeacherAssignment;
+using GradeManagementSystem.Core.DTOs.TeacherAssignment;
 using GradeManagementSystem.Core.Entities.Domain;
+using GradeManagementSystem.Core.DTOs.Class;
 using GradeManagementSystem.Core.Interfaces;
 using GradeManagementSystem.Repository.Data;
 using Microsoft.EntityFrameworkCore;
@@ -106,6 +107,99 @@ namespace GradeManagementSystem.Services.Services
             await _context.SaveChangesAsync();
 
             return (true, "Teacher assigned successfully");
+        }
+
+        public async Task<List<TeacherAssignmentDashboardYearDto>> GetMyDashboardAsync(int teacherUserId)
+        {
+            var teacher = await _context.Teachers
+                .FirstOrDefaultAsync(t => t.UserID == teacherUserId && t.IsActive);
+
+            if (teacher == null)
+            {
+                return new List<TeacherAssignmentDashboardYearDto>();
+            }
+
+            var assignments = await _context.TeacherAssignments
+                .Where(ta =>
+                    ta.TeacherID == teacher.TeacherID &&
+                    ta.IsActive &&
+                    ta.AcademicYearID.HasValue &&
+                    ta.ClassID.HasValue &&
+                    ta.AcademicYear.IsActive &&
+                    ta.Class.IsActive)
+                .Select(ta => new
+                {
+                    ta.AcademicYear.YearName,
+                    ClassId = ta.ClassID!.Value,
+                    ClassName = ta.Class.ClassName
+                })
+                .ToListAsync();
+
+            var result = assignments
+                .GroupBy(x => x.YearName)
+                .Select(g => new TeacherAssignmentDashboardYearDto
+                {
+                    YearId = g.Key,
+                    Classes = g
+                        .GroupBy(c => c.ClassId)
+                        .Select(cg => new ClassResponseDTO { ClassId = cg.Key, ClassName = cg.First().ClassName })
+                        .OrderBy(c => c.ClassName)
+                        .ToList()
+                })
+                .OrderBy(y => y.YearId)
+                .ToList();
+
+            return result;
+        }
+
+        public async Task<List<ClassResponseDTO>> GetMyClassesAsync(int teacherUserId, string yearId)
+        {
+            if (string.IsNullOrWhiteSpace(yearId))
+            {
+                return new List<ClassResponseDTO>();
+            }
+
+            var teacher = await _context.Teachers
+                .FirstOrDefaultAsync(t => t.UserID == teacherUserId && t.IsActive);
+
+            if (teacher == null)
+            {
+                return new List<ClassResponseDTO>();
+            }
+
+            var baseQuery = _context.TeacherAssignments
+                .Where(ta =>
+                    ta.TeacherID == teacher.TeacherID &&
+                    ta.IsActive &&
+                    ta.AcademicYearID.HasValue &&
+                    ta.ClassID.HasValue &&
+                    ta.AcademicYear.IsActive &&
+                    ta.Class.IsActive);
+
+            if (int.TryParse(yearId, out var academicYearNumericId))
+            {
+                baseQuery = baseQuery.Where(ta => ta.AcademicYearID == academicYearNumericId);
+            }
+            else
+            {
+                baseQuery = baseQuery.Where(ta => ta.AcademicYear.YearName == yearId);
+            }
+
+            var classes = await baseQuery
+                .Select(ta => new
+                {
+                    ClassId = ta.ClassID!.Value,
+                    ClassName = ta.Class.ClassName
+                })
+                .ToListAsync();
+
+            var result = classes
+                .GroupBy(c => c.ClassId)
+                .Select(g => new ClassResponseDTO { ClassId = g.Key, ClassName = g.First().ClassName })
+                .OrderBy(c => c.ClassName)
+                .ToList();
+
+            return result;
         }
     }
 }

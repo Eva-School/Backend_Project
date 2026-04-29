@@ -1,5 +1,6 @@
-﻿using GradeManagementSystem.Core.DTOs.TeacherAssignment;
+using GradeManagementSystem.Core.DTOs.TeacherAssignment;
 using GradeManagementSystem.Core.Interfaces;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,7 @@ namespace GradeManagementSystem.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new { message = "All fields are required or invalid" });
+                return BadRequest(new { message = "All fields are required" });
             }
 
             var (success, message) = await _teacherAssignmentService.AssignTeacherToClassesAsync(request);
@@ -39,6 +40,44 @@ namespace GradeManagementSystem.Api.Controllers
             }
 
             return Ok(new { message = message });
+        }
+
+        [HttpGet("MyDashboard")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> GetMyDashboard()
+        {
+            if (!TryGetUserId(out var userId))
+            {
+                return Unauthorized(new { message = "Unauthenticated" });
+            }
+
+            var dashboard = await _teacherAssignmentService.GetMyDashboardAsync(userId);
+            return Ok(dashboard);
+        }
+
+        [HttpGet("MyClasses")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> GetMyClasses([FromQuery] string yearId)
+        {
+            if (string.IsNullOrWhiteSpace(yearId))
+            {
+                return BadRequest(new { message = "yearId parameter is required" });
+            }
+
+            if (!TryGetUserId(out var userId))
+            {
+                return Unauthorized(new { message = "Unauthenticated" });
+            }
+
+            var classes = await _teacherAssignmentService.GetMyClassesAsync(userId, yearId);
+            return Ok(classes);
+        }
+
+        private bool TryGetUserId(out int userId)
+        {
+            userId = 0;
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            return userIdClaim != null && int.TryParse(userIdClaim.Value, out userId);
         }
     }
 }
