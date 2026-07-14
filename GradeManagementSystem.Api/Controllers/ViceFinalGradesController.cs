@@ -9,7 +9,7 @@ namespace GradeManagementSystem.Api.Controllers
 {
     [ApiController]
     [Route("api/vice/grades/final")]
-    [Authorize(Roles = "Student Affairs,StudentAffairs")]
+    [Authorize(Roles = "Student Affairs,StudentAffairs,Admin")]
     public class ViceFinalGradesController : ControllerBase
     {
         private readonly IViceFinalGradesService _viceFinalGradesService;
@@ -87,4 +87,3 @@ namespace GradeManagementSystem.Api.Controllers
         }
     }
 }
-

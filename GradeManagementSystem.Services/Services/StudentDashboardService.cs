@@ -160,18 +160,157 @@ namespace GradeManagementSystem.Services.Services
                 return Enumerable.Empty<StudentProgressPointDto>();
             }
 
-            var progress = await _context.StudentSubjectTermResults
+            var results = await _context.StudentSubjectTermResults
+                .AsNoTracking()
                 .Where(r => r.StudentID == contextInfo.Value.StudentId && r.AcademicYearID == contextInfo.Value.AcademicYearId)
-                .Include(r => r.Subject)
-                .Select(r => new StudentProgressPointDto
+                .Select(r => new
                 {
-                    Subject = r.Subject.SubjectName,
-                    QuarterAverage = ((r.Quarter1Score ?? 0) + (r.Quarter2Score ?? 0)) / 2,
-                    FinalExam = r.FinalExamScore ?? 0
+                    r.Subject.SubjectName,
+                    r.Quarter1Score,
+                    r.Quarter2Score,
+                    r.Quarter3Score,
+                    r.Quarter4Score,
+                    r.FinalExamScore,
+                    r.Subject.MaxQuarterQ1Score,
+                    r.Subject.MaxQuarterQ2Score,
+                    r.Subject.MaxQuarterQ3Score,
+                    r.Subject.MaxQuarterQ4Score,
+                    r.Subject.MaxQuarterScore,
+                    r.Subject.MaxFinalScore
                 })
                 .ToListAsync();
 
-            return progress;
+            return results.Select(item =>
+            {
+                var quarterPercentages = new[]
+                {
+                    ToPercentage(item.Quarter1Score, item.MaxQuarterQ1Score ?? item.MaxQuarterScore),
+                    ToPercentage(item.Quarter2Score, item.MaxQuarterQ2Score ?? item.MaxQuarterScore),
+                    ToPercentage(item.Quarter3Score, item.MaxQuarterQ3Score ?? item.MaxQuarterScore),
+                    ToPercentage(item.Quarter4Score, item.MaxQuarterQ4Score ?? item.MaxQuarterScore)
+                }
+                .Where(value => value.HasValue)
+                .Select(value => value!.Value)
+                .ToList();
+
+                return new StudentProgressPointDto
+                {
+                    Subject = item.SubjectName,
+                    QuarterAverage = quarterPercentages.Count == 0 ? 0 : Math.Round(quarterPercentages.Average(), 1),
+                    FinalExam = ToPercentage(item.FinalExamScore, item.MaxFinalScore) ?? 0
+                };
+            }).ToList();
+        }
+
+        public async Task<StudentReportDto?> GetReportAsync(int userId, string year)
+        {
+            if (string.IsNullOrWhiteSpace(year))
+            {
+                return null;
+            }
+
+            var student = await _context.Students
+                .AsNoTracking()
+                .Where(item => item.UserID == userId)
+                .Select(item => new
+                {
+                    item.StudentID,
+                    ClassName = item.Class != null ? item.Class.ClassName : "Unassigned"
+                })
+                .FirstOrDefaultAsync();
+            if (student == null)
+            {
+                return null;
+            }
+
+            var academicYear = await _context.AcademicYears
+                .AsNoTracking()
+                .Where(item => item.IsActive && item.YearName == year.Trim())
+                .OrderByDescending(item => item.AcademicYearID)
+                .FirstOrDefaultAsync();
+
+            if (academicYear == null && Enum.TryParse<EducationStage>(year, true, out var stage))
+            {
+                academicYear = await _context.AcademicYears
+                    .AsNoTracking()
+                    .Where(item => item.IsActive && item.Stage == stage)
+                    .OrderByDescending(item => item.AcademicYearID)
+                    .FirstOrDefaultAsync();
+            }
+            if (academicYear == null)
+            {
+                return null;
+            }
+
+            var resultRows = await _context.StudentSubjectTermResults
+                .AsNoTracking()
+                .Where(item => item.StudentID == student.StudentID && item.AcademicYearID == academicYear.AcademicYearID)
+                .Select(item => new
+                {
+                    Subject = item.Subject.SubjectName,
+                    item.Quarter1Score,
+                    item.Quarter2Score,
+                    item.Quarter3Score,
+                    item.Quarter4Score,
+                    item.FinalExamScore,
+                    item.Subject.MaxQuarterQ1Score,
+                    item.Subject.MaxQuarterQ2Score,
+                    item.Subject.MaxQuarterQ3Score,
+                    item.Subject.MaxQuarterQ4Score,
+                    item.Subject.MaxQuarterScore,
+                    item.Subject.MaxFinalScore
+                })
+                .ToListAsync();
+
+            var grades = resultRows
+                .GroupBy(item => item.Subject)
+                .OrderBy(group => group.Key)
+                .Select(group =>
+                {
+                    var q1 = group.Average(item => item.Quarter1Score ?? 0m);
+                    var q2 = group.Average(item => item.Quarter2Score ?? 0m);
+                    var q3 = group.Average(item => item.Quarter3Score ?? 0m);
+                    var q4 = group.Average(item => item.Quarter4Score ?? 0m);
+                    var final = group.Average(item => item.FinalExamScore ?? 0m);
+                    var points = group.SelectMany(item => new[]
+                    {
+                        new { Score = item.Quarter1Score, Maximum = (decimal)(item.MaxQuarterQ1Score ?? item.MaxQuarterScore ?? 100) },
+                        new { Score = item.Quarter2Score, Maximum = (decimal)(item.MaxQuarterQ2Score ?? item.MaxQuarterScore ?? 100) },
+                        new { Score = item.Quarter3Score, Maximum = (decimal)(item.MaxQuarterQ3Score ?? item.MaxQuarterScore ?? 100) },
+                        new { Score = item.Quarter4Score, Maximum = (decimal)(item.MaxQuarterQ4Score ?? item.MaxQuarterScore ?? 100) },
+                        new { Score = item.FinalExamScore, Maximum = (decimal)(item.MaxFinalScore ?? 100) }
+                    }).Where(item => item.Score.HasValue).ToList();
+                    var average = points.Count == 0
+                        ? 0m
+                        : Math.Round(points.Sum(item => item.Score!.Value) * 100m / points.Sum(item => item.Maximum), 1);
+
+                    return new StudentReportGradeDto
+                    {
+                        Subject = group.Key,
+                        Q1 = q1,
+                        Q2 = q2,
+                        Q3 = q3,
+                        Q4 = q4,
+                        Final = final,
+                        Average = average
+                    };
+                })
+                .ToList();
+
+            var studentName = await _context.Users
+                .AsNoTracking()
+                .Where(item => item.UserId == userId)
+                .Select(item => item.FullName)
+                .FirstOrDefaultAsync() ?? "Student";
+
+            return new StudentReportDto
+            {
+                StudentName = studentName,
+                StudentId = student.StudentID.ToString(),
+                ClassName = student.ClassName,
+                Year = academicYear.YearName,
+                Grades = grades
+            };
         }
 
         private async Task<(int StudentId, int AcademicYearId)?> ResolveContextAsync(int userId, string year)
@@ -214,6 +353,17 @@ namespace GradeManagementSystem.Services.Services
                 "senior" => "Year 3",
                 _ => "Year"
             };
+        }
+
+        private static decimal? ToPercentage(decimal? score, int? maximum)
+        {
+            if (!score.HasValue)
+            {
+                return null;
+            }
+
+            var denominator = maximum.GetValueOrDefault(100);
+            return denominator <= 0 ? 0m : Math.Round(score.Value * 100m / denominator, 1);
         }
     }
 }

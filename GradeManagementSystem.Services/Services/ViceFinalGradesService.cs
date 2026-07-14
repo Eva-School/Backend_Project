@@ -82,7 +82,8 @@ namespace GradeManagementSystem.Services.Services
                 .Select(x => new
                 {
                     StudentID = x.Student.StudentID,
-                    StudentName = x.User.FullName ?? string.Empty
+                    StudentName = x.User.FullName ?? string.Empty,
+                    ClassName = x.Class.ClassName
                 })
                 .OrderBy(x => x.StudentID)
                 .ToListAsync();
@@ -119,6 +120,7 @@ namespace GradeManagementSystem.Services.Services
                 {
                     StudentId = st.StudentID.ToString(),
                     StudentName = st.StudentName,
+                    ClassName = st.ClassName,
                     Score = score
                 };
             }).ToList();
@@ -442,4 +444,3 @@ namespace GradeManagementSystem.Services.Services
         }
     }
 }
-

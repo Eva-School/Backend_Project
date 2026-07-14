@@ -1,4 +1,5 @@
-﻿using GradeManagementSystem.Core.Interfaces;
+﻿using GradeManagementSystem.Core.DTOs.Class;
+using GradeManagementSystem.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ namespace GradeManagementSystem.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Admin,Student Affairs,StudentAffairs")]
     public class ClassesController : ControllerBase
     {
         private readonly IClassService _classService;
@@ -33,6 +34,30 @@ namespace GradeManagementSystem.Api.Controllers
             }
 
             return Ok(classes);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateClass([FromBody] CreateClassRequestDTO request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new { message = "yearId, department, and className are required." });
+            }
+
+            try
+            {
+                var created = await _classService.CreateClassAsync(request);
+                if (created == null)
+                {
+                    return BadRequest(new { message = "The selected academic year or department was not found." });
+                }
+
+                return CreatedAtAction(nameof(GetClasses), new { yearId = request.YearId }, created);
+            }
+            catch (InvalidOperationException exception)
+            {
+                return Conflict(new { message = exception.Message });
+            }
         }
     }
 }

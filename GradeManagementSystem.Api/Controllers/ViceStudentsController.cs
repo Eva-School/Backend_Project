@@ -8,7 +8,7 @@ namespace GradeManagementSystem.Api.Controllers
 {
     [ApiController]
     [Route("api/vice/students")]
-    [Authorize(Roles = "Student Affairs,StudentAffairs")]
+    [Authorize(Roles = "Student Affairs,StudentAffairs,Admin")]
     public class ViceStudentsController : ControllerBase
     {
         private readonly IViceStudentService _viceStudentService;
@@ -64,6 +64,44 @@ namespace GradeManagementSystem.Api.Controllers
             return Ok(updated);
         }
 
+        [HttpPatch("{studentId}/class")]
+        public async Task<IActionResult> AssignClass([FromRoute] string studentId, [FromBody] ViceStudentClassAssignmentRequestDTO request)
+        {
+            var updated = await _viceStudentService.AssignStudentToClassAsync(studentId, request.ClassId);
+            if (updated == null)
+            {
+                return BadRequest(new { message = "The student or selected class was not found, or the class belongs to another academic year." });
+            }
+
+            return Ok(updated);
+        }
+
+        [HttpPost("promote")]
+        public async Task<IActionResult> PromoteStudents([FromBody] VicePromoteStudentsRequestDTO request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new { message = "Student IDs, source level, target level, and department are required." });
+            }
+
+            var userId = int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var parsedUserId)
+                ? parsedUserId
+                : (int?)null;
+            try
+            {
+                var promoted = await _viceStudentService.PromoteStudentsAsync(request, userId);
+                return Ok(new { promoted });
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(new { message = exception.Message });
+            }
+            catch (InvalidOperationException exception)
+            {
+                return Conflict(new { message = exception.Message });
+            }
+        }
+
         [HttpDelete("{studentId}")]
         public async Task<IActionResult> DeleteStudent([FromRoute] string studentId)
         {
@@ -77,4 +115,3 @@ namespace GradeManagementSystem.Api.Controllers
         }
     }
 }
-

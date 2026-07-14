@@ -11,7 +11,7 @@ namespace GradeManagementSystem.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Admin,Student Affairs,StudentAffairs")]
     public class TeachersController : ControllerBase
     {
         private readonly GradeDbContext _context;
@@ -54,12 +54,12 @@ namespace GradeManagementSystem.Api.Controllers
             
             // Extracting properties from anonymous object
             var successProp = result.GetType().GetProperty("success");
-            bool success = successProp != null && (bool)successProp.GetValue(result);
+            var success = successProp?.GetValue(result) is bool successValue && successValue;
 
             if (!success)
             {
                 var messageProp = result.GetType().GetProperty("message");
-                string message = messageProp != null ? (string)messageProp.GetValue(result) : "Registration failed";
+                var message = messageProp?.GetValue(result) as string ?? "Registration failed";
                 return BadRequest(new { message = message });
             }
 

@@ -20,6 +20,7 @@ namespace GradeManagementSystem.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Student Affairs,StudentAffairs")]
         public async Task<IActionResult> AssignTeacher([FromBody] TeacherAssignmentRequestDTO request)
         {
             if (!ModelState.IsValid)

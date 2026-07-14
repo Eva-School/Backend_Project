@@ -11,7 +11,7 @@ namespace GradeManagementSystem.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Admin,Student Affairs,StudentAffairs")]
     public class SubjectsController : ControllerBase
     {
         private readonly ISubjectService _subjectService;

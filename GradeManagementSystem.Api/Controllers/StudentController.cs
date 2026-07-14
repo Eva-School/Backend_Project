@@ -131,6 +131,28 @@ namespace GradeManagementSystem.Api.Controllers
             return Ok(response);
         }
 
+        [HttpGet("report")]
+        public async Task<IActionResult> GetReport([FromQuery] string year)
+        {
+            if (string.IsNullOrWhiteSpace(year))
+            {
+                return BadRequest(new { message = "Year parameter is required." });
+            }
+
+            if (!TryGetUserId(out var userId))
+            {
+                return Unauthorized(new { message = "Unauthenticated" });
+            }
+
+            var report = await _studentDashboardService.GetReportAsync(userId, year);
+            if (report == null)
+            {
+                return NotFound(new { message = "No report data found for the provided year." });
+            }
+
+            return Ok(report);
+        }
+
         private bool TryGetUserId(out int userId)
         {
             userId = 0;

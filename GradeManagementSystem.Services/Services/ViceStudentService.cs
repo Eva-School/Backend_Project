@@ -285,6 +285,122 @@ namespace GradeManagementSystem.Services.Services
 
             return true;
         }
+
+        public async Task<ViceStudentDto?> AssignStudentToClassAsync(string studentId, int? classId)
+        {
+            if (!int.TryParse(studentId, out var studentPk))
+            {
+                return null;
+            }
+
+            var student = await _context.Students.FirstOrDefaultAsync(item => item.StudentID == studentPk && item.UserID.HasValue);
+            if (student == null)
+            {
+                return null;
+            }
+
+            GradeManagementSystem.Core.Entities.Domain.Class? assignedClass = null;
+            if (classId.HasValue)
+            {
+                assignedClass = await _context.Classes.FirstOrDefaultAsync(item => item.IsActive && item.ClassID == classId.Value);
+                if (assignedClass == null || assignedClass.AcademicYearID != student.CurrentAcademicYearID)
+                {
+                    return null;
+                }
+                student.ClassID = assignedClass.ClassID;
+            }
+            else
+            {
+                student.ClassID = null;
+            }
+
+            await _context.SaveChangesAsync();
+
+            var user = await _context.Users.FirstOrDefaultAsync(item => item.UserId == student.UserID!.Value);
+            var department = assignedClass?.DepartmentID is int departmentId
+                ? await _context.Departments.FirstOrDefaultAsync(item => item.DepartmentID == departmentId)
+                : null;
+            var academicYear = await _context.AcademicYears.FirstOrDefaultAsync(item => item.AcademicYearID == student.CurrentAcademicYearID);
+
+            return new ViceStudentDto
+            {
+                Id = student.StudentID.ToString(),
+                ClassId = student.ClassID ?? 0,
+                StudentCode = student.NationalID ?? string.Empty,
+                Name = user?.FullName ?? string.Empty,
+                Department = department?.DepartmentName ?? string.Empty,
+                ClassName = assignedClass?.ClassName ?? string.Empty,
+                Year = academicYear?.Stage.ToString().ToLowerInvariant() ?? string.Empty
+            };
+        }
+
+        public async Task<int> PromoteStudentsAsync(VicePromoteStudentsRequestDTO request, int? requestedBy)
+        {
+            if (request == null || request.StudentIds.Count == 0 ||
+                !Enum.TryParse<EducationStage>(request.SourceLevel, true, out var sourceStage) ||
+                !Enum.TryParse<EducationStage>(request.TargetLevel, true, out var targetStage) ||
+                sourceStage == targetStage)
+            {
+                throw new ArgumentException("A non-empty student list and different valid source and target levels are required.");
+            }
+
+            var studentIds = request.StudentIds
+                .Select(value => int.TryParse(value, out var id) ? id : 0)
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+            if (studentIds.Count != request.StudentIds.Count)
+            {
+                throw new ArgumentException("Every student ID must be a valid numeric ID.");
+            }
+
+            var sourceYear = await _context.AcademicYears
+                .Where(year => year.IsActive && year.Stage == sourceStage)
+                .OrderByDescending(year => year.AcademicYearID)
+                .FirstOrDefaultAsync();
+            var targetYear = await _context.AcademicYears
+                .Where(year => year.IsActive && year.Stage == targetStage)
+                .OrderByDescending(year => year.AcademicYearID)
+                .FirstOrDefaultAsync();
+            var department = await _context.Departments
+                .FirstOrDefaultAsync(item => item.IsActive && item.DepartmentName == request.Department.Trim());
+            if (sourceYear == null || targetYear == null || department == null)
+            {
+                throw new InvalidOperationException("The selected academic years or department could not be found.");
+            }
+
+            var students = await _context.Students
+                .Include(student => student.Class)
+                .Where(student => studentIds.Contains(student.StudentID) &&
+                    student.CurrentAcademicYearID == sourceYear.AcademicYearID &&
+                    student.ClassID.HasValue && student.Class!.DepartmentID == department.DepartmentID)
+                .ToListAsync();
+            if (students.Count != studentIds.Count)
+            {
+                throw new InvalidOperationException("One or more students are not in the selected source level and department.");
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            foreach (var student in students)
+            {
+                student.CurrentAcademicYearID = targetYear.AcademicYearID;
+                student.ClassID = null;
+                _context.StudentPromotions.Add(new StudentPromotion
+                {
+                    StudentID = student.StudentID,
+                    FromAcademicYearID = sourceYear.AcademicYearID,
+                    ToAcademicYearID = targetYear.AcademicYearID,
+                    RequestDate = DateTime.UtcNow,
+                    IsApproved = true,
+                    RequestedBy = requestedBy,
+                    ApprovedBy = requestedBy,
+                    ApprovalDate = DateTime.UtcNow
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return students.Count;
+        }
     }
 }
-

@@ -8,7 +8,7 @@ namespace GradeManagementSystem.Api.Controllers
 {
     [ApiController]
     [Route("api/vice/grades/quarter")]
-    [Authorize(Roles = "Student Affairs,StudentAffairs")]
+    [Authorize(Roles = "Student Affairs,StudentAffairs,Admin")]
     public class ViceQuarterGradesController : ControllerBase
     {
         private readonly IViceQuarterGradesService _viceQuarterGradesService;
@@ -72,4 +72,3 @@ namespace GradeManagementSystem.Api.Controllers
         }
     }
 }
-

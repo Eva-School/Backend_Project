@@ -51,6 +51,53 @@ namespace GradeManagementSystem.Services.Services
 
             return classes;
         }
+
+        public async Task<ClassResponseDTO?> CreateClassAsync(CreateClassRequestDTO request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.YearId) ||
+                string.IsNullOrWhiteSpace(request.Department) || string.IsNullOrWhiteSpace(request.ClassName))
+            {
+                return null;
+            }
+
+            var academicYear = await _context.AcademicYears
+                .Where(year => year.IsActive && year.YearName == request.YearId.Trim())
+                .OrderByDescending(year => year.AcademicYearID)
+                .FirstOrDefaultAsync();
+            if (academicYear == null)
+            {
+                return null;
+            }
+
+            var department = await _context.Departments
+                .FirstOrDefaultAsync(item => item.IsActive && item.DepartmentName == request.Department.Trim());
+            if (department == null)
+            {
+                return null;
+            }
+
+            var className = request.ClassName.Trim();
+            var exists = await _context.Classes.AnyAsync(item =>
+                item.IsActive && item.AcademicYearID == academicYear.AcademicYearID &&
+                item.DepartmentID == department.DepartmentID && item.ClassName == className);
+            if (exists)
+            {
+                throw new InvalidOperationException("A class with this name already exists for the selected year and department.");
+            }
+
+            var created = new GradeManagementSystem.Core.Entities.Domain.Class
+            {
+                AcademicYearID = academicYear.AcademicYearID,
+                DepartmentID = department.DepartmentID,
+                ClassName = className,
+                Capacity = request.Capacity,
+                IsActive = true
+            };
+            _context.Classes.Add(created);
+            await _context.SaveChangesAsync();
+
+            return new ClassResponseDTO { ClassId = created.ClassID, ClassName = created.ClassName };
+        }
     }
 
 }

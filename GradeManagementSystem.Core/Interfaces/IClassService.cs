@@ -10,5 +10,6 @@ namespace GradeManagementSystem.Core.Interfaces
     public interface IClassService
     {
         Task<IEnumerable<ClassResponseDTO>> GetClassesByYearIdAsync(string yearId);
+        Task<ClassResponseDTO?> CreateClassAsync(CreateClassRequestDTO request);
     }
 }

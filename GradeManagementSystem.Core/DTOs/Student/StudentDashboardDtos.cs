@@ -53,4 +53,24 @@ namespace GradeManagementSystem.Core.DTOs.Student
         public decimal QuarterAverage { get; set; }
         public decimal FinalExam { get; set; }
     }
+
+    public class StudentReportGradeDto
+    {
+        public string Subject { get; set; } = string.Empty;
+        public decimal Q1 { get; set; }
+        public decimal Q2 { get; set; }
+        public decimal Q3 { get; set; }
+        public decimal Q4 { get; set; }
+        public decimal Final { get; set; }
+        public decimal Average { get; set; }
+    }
+
+    public class StudentReportDto
+    {
+        public string StudentName { get; set; } = string.Empty;
+        public string StudentId { get; set; } = string.Empty;
+        public string ClassName { get; set; } = string.Empty;
+        public string Year { get; set; } = string.Empty;
+        public List<StudentReportGradeDto> Grades { get; set; } = new();
+    }
 }

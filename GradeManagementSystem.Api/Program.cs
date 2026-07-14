@@ -40,7 +40,9 @@ namespace GradeManagementSystem.Api
             builder.Services.AddScoped<IViceQuarterGradesService, ViceQuarterGradesService>();
             builder.Services.AddScoped<IViceFinalGradesService, ViceFinalGradesService>();
             builder.Services.AddScoped<IAdminFinalGradesService, AdminFinalGradesService>();
-            builder.Services.AddAutoMapper(typeof(AuthMappingProfile));
+            builder.Services.AddAutoMapper(
+                _ => { },
+                typeof(AuthMappingProfile).Assembly);
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -129,17 +131,21 @@ namespace GradeManagementSystem.Api
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // Migrate DB once, then run seeds.
-            using (var scope = app.Services.CreateScope())
+            var applyMigrations = app.Environment.IsDevelopment() ||
+                string.Equals(Environment.GetEnvironmentVariable("APPLY_MIGRATIONS"), "true", StringComparison.OrdinalIgnoreCase);
+            if (applyMigrations)
             {
+                using var scope = app.Services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<GradeDbContext>();
                 db.Database.Migrate();
             }
 
-            // Optional: set env var RUN_SEED=false to skip seeding on startup
+            // Seed data is development-only. Set RUN_SEED=false to skip it locally.
             var runSeed = Environment.GetEnvironmentVariable("RUN_SEED");
-            if (!string.Equals(runSeed, "false", StringComparison.OrdinalIgnoreCase))
+            if (app.Environment.IsDevelopment() &&
+                !string.Equals(runSeed, "false", StringComparison.OrdinalIgnoreCase))
             {
+                LocalTestAccountsSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
                 StudentDashboardSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
                 TeacherDashboardSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
                 ViceGradesSeed.SeedAsync(app.Services).GetAwaiter().GetResult();

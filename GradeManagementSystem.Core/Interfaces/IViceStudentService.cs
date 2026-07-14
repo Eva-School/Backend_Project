@@ -13,6 +13,7 @@ namespace GradeManagementSystem.Core.Interfaces
         Task<ViceStudentDto?> UpdateStudentAsync(string studentId, ViceCreateStudentRequestDTO request);
 
         Task<bool> DeleteStudentAsync(string studentId);
+        Task<ViceStudentDto?> AssignStudentToClassAsync(string studentId, int? classId);
+        Task<int> PromoteStudentsAsync(VicePromoteStudentsRequestDTO request, int? requestedBy);
     }
 }
-

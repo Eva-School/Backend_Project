@@ -39,6 +39,8 @@ namespace GradeManagementSystem.Repository.Data
         public DbSet<QuarterGradesLock> QuarterGradesLocks { get; set; }
         public DbSet<QuarterGradeSubmission> QuarterGradeSubmissions { get; set; }
         public DbSet<GradeActionLog> GradeActionLogs { get; set; }
+        public DbSet<AppNotification> Notifications { get; set; }
+        public DbSet<AppNotificationRead> NotificationReads { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -71,6 +73,8 @@ namespace GradeManagementSystem.Repository.Data
             modelBuilder.ApplyConfiguration(new QuarterGradesLockConfiguration());
             modelBuilder.ApplyConfiguration(new QuarterGradeSubmissionConfiguration());
             modelBuilder.ApplyConfiguration(new GradeActionLogConfiguration());
+            modelBuilder.ApplyConfiguration(new AppNotificationConfiguration());
+            modelBuilder.ApplyConfiguration(new AppNotificationReadConfiguration());
 
             // Configure Identity table names
             modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserRole<int>>()

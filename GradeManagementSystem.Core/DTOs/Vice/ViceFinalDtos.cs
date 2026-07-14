@@ -8,6 +8,7 @@ namespace GradeManagementSystem.Core.DTOs.Vice
     {
         public string StudentId { get; set; } = string.Empty;
         public string StudentName { get; set; } = string.Empty;
+        public string ClassName { get; set; } = string.Empty;
         public decimal Score { get; set; }
     }
 
@@ -84,4 +85,3 @@ namespace GradeManagementSystem.Core.DTOs.Vice
         public decimal? AfterScore { get; set; }
     }
 }
-

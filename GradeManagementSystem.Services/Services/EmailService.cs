@@ -18,11 +18,21 @@ namespace GradeManagementSystem.Services.Services
         public async Task SendEmailAsync(string to, string subject, string body)
         {
             var smtpHost = _configuration["SmtpSettings:Host"];
-            var smtpPort = int.Parse(_configuration["SmtpSettings:Port"]);
+            var smtpPortValue = _configuration["SmtpSettings:Port"];
             var smtpUser = _configuration["SmtpSettings:UserName"];
             var smtpPass = _configuration["SmtpSettings:Password"];
             var smtpFrom = _configuration["SmtpSettings:From"];
-            var enableSsl = bool.Parse(_configuration["SmtpSettings:EnableSsl"]);
+            var enableSslValue = _configuration["SmtpSettings:EnableSsl"];
+
+            if (string.IsNullOrWhiteSpace(smtpHost) ||
+                string.IsNullOrWhiteSpace(smtpUser) ||
+                string.IsNullOrWhiteSpace(smtpPass) ||
+                string.IsNullOrWhiteSpace(smtpFrom) ||
+                !int.TryParse(smtpPortValue, out var smtpPort) ||
+                !bool.TryParse(enableSslValue, out var enableSsl))
+            {
+                throw new InvalidOperationException("SMTP settings are incomplete or invalid.");
+            }
 
             using (var client = new SmtpClient(smtpHost, smtpPort))
             {
