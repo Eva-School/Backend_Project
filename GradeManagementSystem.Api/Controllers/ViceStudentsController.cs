@@ -2,6 +2,7 @@ using GradeManagementSystem.Core.DTOs.Vice;
 using GradeManagementSystem.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 namespace GradeManagementSystem.Api.Controllers
@@ -19,14 +20,19 @@ namespace GradeManagementSystem.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetStudents([FromQuery] string year, [FromQuery] string department, [FromQuery] int? classId, [FromQuery] bool unassigned = false)
+        public async Task<IActionResult> GetStudents(
+            [FromQuery] string year,
+            [FromQuery] string department,
+            [FromQuery] int? classId,
+            [FromQuery] bool unassigned = false,
+            [FromQuery] string? academicYearName = null)
         {
             if (string.IsNullOrWhiteSpace(year) || string.IsNullOrWhiteSpace(department))
             {
                 return BadRequest(new { message = "year and department are required" });
             }
 
-            var students = await _viceStudentService.GetStudentsAsync(year, department, classId, unassigned);
+            var students = await _viceStudentService.GetStudentsAsync(year, department, classId, unassigned, academicYearName);
             return Ok(students);
         }
 
@@ -38,13 +44,28 @@ namespace GradeManagementSystem.Api.Controllers
                 return BadRequest(new { message = "Invalid request body" });
             }
 
-            var created = await _viceStudentService.CreateStudentAsync(request);
-            if (created == null)
+            try
             {
-                return BadRequest(new { message = "Unable to create student" });
-            }
+                var created = await _viceStudentService.CreateStudentAsync(request);
+                if (created == null)
+                {
+                    return BadRequest(new { message = "The selected academic year or department was not found." });
+                }
 
-            return Ok(created);
+                return Ok(created);
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(new { message = exception.Message });
+            }
+            catch (InvalidOperationException exception)
+            {
+                return Conflict(new { message = exception.Message });
+            }
+            catch (DbUpdateException)
+            {
+                return Conflict(new { message = "The student could not be saved. Check that the student code and email address are unique." });
+            }
         }
 
         [HttpPut("{studentId}")]
@@ -55,13 +76,28 @@ namespace GradeManagementSystem.Api.Controllers
                 return BadRequest(new { message = "Invalid request body" });
             }
 
-            var updated = await _viceStudentService.UpdateStudentAsync(studentId, request);
-            if (updated == null)
+            try
             {
-                return NotFound(new { message = "Student not found" });
-            }
+                var updated = await _viceStudentService.UpdateStudentAsync(studentId, request);
+                if (updated == null)
+                {
+                    return NotFound(new { message = "Student not found" });
+                }
 
-            return Ok(updated);
+                return Ok(updated);
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(new { message = exception.Message });
+            }
+            catch (InvalidOperationException exception)
+            {
+                return Conflict(new { message = exception.Message });
+            }
+            catch (DbUpdateException)
+            {
+                return Conflict(new { message = "The student could not be updated. Check that the student code and email address are unique." });
+            }
         }
 
         [HttpPatch("{studentId}/class")]

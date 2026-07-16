@@ -19,9 +19,27 @@ namespace GradeManagementSystem.Services.Services
         {
             IEnumerable<StudentCardDto> cards = new[]
             {
-                new StudentCardDto { Id = "quarter-grades", Title = "Quarter Grades" },
-                new StudentCardDto { Id = "final-grades", Title = "Final Grades" },
-                new StudentCardDto { Id = "competencies", Title = "Competencies" }
+                new StudentCardDto
+                {
+                    Id = "quarter-grades",
+                    Title = "Quarter Grades",
+                    Description = "Review your quarter assessment results.",
+                    Route = "/student/quarter"
+                },
+                new StudentCardDto
+                {
+                    Id = "final-grades",
+                    Title = "Final Grades",
+                    Description = "Review your final examination results.",
+                    Route = "/student/final"
+                },
+                new StudentCardDto
+                {
+                    Id = "competencies",
+                    Title = "Competencies",
+                    Description = "Review your Jadarat competency progress.",
+                    Route = "/student/jadarat"
+                }
             };
 
             return Task.FromResult(cards);

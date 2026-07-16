@@ -29,7 +29,7 @@ namespace GradeManagementSystem.Services.Services
             _roleManager = roleManager;
         }
 
-        public async Task<List<ViceStudentDto>> GetStudentsAsync(string year, string department, int? classId, bool unassigned = false)
+        public async Task<List<ViceStudentDto>> GetStudentsAsync(string year, string department, int? classId, bool unassigned = false, string? academicYearName = null)
         {
             if (!Enum.TryParse<EducationStage>(year, true, out var stage))
             {
@@ -39,8 +39,17 @@ namespace GradeManagementSystem.Services.Services
             // In the spec Department uses OM/SD. We map them to DepartmentName.
             var departmentName = department.Trim();
 
-            var academicYear = await _context.AcademicYears
-                .Where(a => a.IsActive && a.Stage == stage)
+            var academicYears = _context.AcademicYears.Where(a => a.Stage == stage);
+            if (!string.IsNullOrWhiteSpace(academicYearName))
+            {
+                academicYears = academicYears.Where(a => a.YearName == academicYearName.Trim());
+            }
+            else
+            {
+                academicYears = academicYears.Where(a => a.IsActive);
+            }
+
+            var academicYear = await academicYears
                 .OrderByDescending(a => a.AcademicYearID)
                 .FirstOrDefaultAsync();
 
@@ -75,9 +84,15 @@ namespace GradeManagementSystem.Services.Services
                         ClassId = 0,
                         StudentCode = x.Student.NationalID ?? string.Empty,
                         Name = x.User.FullName ?? string.Empty,
+                        FirstName = x.User.FirstName,
+                        MiddleName = x.User.MiddleName ?? string.Empty,
+                        LastName = x.User.LastName,
+                        Email = x.User.Email ?? string.Empty,
+                        Phone = x.User.PhoneNumber ?? string.Empty,
                         Department = dept.DepartmentName,
                         ClassName = string.Empty,
-                        Year = year.ToLowerInvariant()
+                        Year = year.ToLowerInvariant(),
+                        AcademicYearName = academicYear.YearName
                     })
                     .ToListAsync();
             }
@@ -108,9 +123,15 @@ namespace GradeManagementSystem.Services.Services
                         ClassId = x.Student.ClassID ?? 0,
                         StudentCode = x.Student.NationalID ?? string.Empty,
                         Name = x.User.FullName ?? string.Empty,
+                        FirstName = x.User.FirstName,
+                        MiddleName = x.User.MiddleName ?? string.Empty,
+                        LastName = x.User.LastName,
+                        Email = x.User.Email ?? string.Empty,
+                        Phone = x.User.PhoneNumber ?? string.Empty,
                         Department = dept.DepartmentName,
                         ClassName = x.Class != null ? x.Class.ClassName : string.Empty,
-                        Year = year.ToLowerInvariant()
+                        Year = year.ToLowerInvariant(),
+                        AcademicYearName = academicYear.YearName
                     })
                     .ToListAsync();
             }
@@ -135,9 +156,15 @@ namespace GradeManagementSystem.Services.Services
                     ClassId = x.Class.ClassID,
                     StudentCode = x.Student.NationalID ?? string.Empty,
                     Name = x.User.FullName ?? string.Empty,
+                    FirstName = x.User.FirstName,
+                    MiddleName = x.User.MiddleName ?? string.Empty,
+                    LastName = x.User.LastName,
+                    Email = x.User.Email ?? string.Empty,
+                    Phone = x.User.PhoneNumber ?? string.Empty,
                     Department = dept.DepartmentName,
                     ClassName = x.Class.ClassName,
-                    Year = year.ToLowerInvariant()
+                    Year = year.ToLowerInvariant(),
+                    AcademicYearName = academicYear.YearName
                 })
                 .ToListAsync();
         }
@@ -154,8 +181,31 @@ namespace GradeManagementSystem.Services.Services
                 throw new ArgumentException("Invalid year value. Expected: junior|wheeler|senior.");
             }
 
-            var academicYear = await _context.AcademicYears
-                .Where(a => a.IsActive && a.Stage == stage)
+            var studentCode = request.StudentCode.Trim();
+            var email = request.Email.Trim();
+            var normalizedEmail = email.ToUpperInvariant();
+
+            if (await _context.Students.AnyAsync(s => s.NationalID == studentCode))
+            {
+                throw new InvalidOperationException($"A student with code '{studentCode}' already exists. Use a different student code.");
+            }
+
+            if (await _context.Users.AnyAsync(u => u.NormalizedEmail == normalizedEmail))
+            {
+                throw new InvalidOperationException("An account with this email address already exists. Use a different email address.");
+            }
+
+            var academicYears = _context.AcademicYears.Where(a => a.Stage == stage);
+            if (!string.IsNullOrWhiteSpace(request.AcademicYearName))
+            {
+                academicYears = academicYears.Where(a => a.YearName == request.AcademicYearName.Trim());
+            }
+            else
+            {
+                academicYears = academicYears.Where(a => a.IsActive);
+            }
+
+            var academicYear = await academicYears
                 .OrderByDescending(a => a.AcademicYearID)
                 .FirstOrDefaultAsync();
 
@@ -196,7 +246,7 @@ namespace GradeManagementSystem.Services.Services
             var user = new ApplicationUser
             {
                 UserName = username,
-                Email = request.Email,
+                Email = email,
                 FirstName = request.FirstName,
                 MiddleName = request.MiddleName,
                 LastName = request.LastName,
@@ -211,13 +261,16 @@ namespace GradeManagementSystem.Services.Services
             var created = await _userManager.CreateAsync(user, "Student@123");
             if (!created.Succeeded)
             {
-                throw new InvalidOperationException("Unable to create student user.");
+                var errors = string.Join(" ", created.Errors.Select(error => error.Description));
+                throw new InvalidOperationException(string.IsNullOrWhiteSpace(errors)
+                    ? "Unable to create the student account."
+                    : errors);
             }
 
             var student = new Student
             {
                 UserID = user.UserId,
-                NationalID = request.StudentCode,
+                NationalID = studentCode,
                 EnrollmentDate = DateTime.UtcNow.Date,
                 CurrentAcademicYearID = academicYear.AcademicYearID,
                 MajorID = null,
@@ -228,7 +281,20 @@ namespace GradeManagementSystem.Services.Services
             };
 
             _context.Students.Add(student);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // UserManager has already persisted the Identity user at this point. Detach
+                // the failed student entity before removing that account so a failed student
+                // insert never leaves a login that has no matching Student record.
+                _context.Entry(student).State = EntityState.Detached;
+                await _userManager.DeleteAsync(user);
+                throw new InvalidOperationException(
+                    "The student could not be saved. No student account was created. Please verify the selected academic year and try again.");
+            }
 
             return new ViceStudentDto
             {
@@ -236,9 +302,15 @@ namespace GradeManagementSystem.Services.Services
                 ClassId = cls?.ClassID ?? 0,
                 StudentCode = student.NationalID ?? string.Empty,
                 Name = user.FullName ?? string.Empty,
+                FirstName = user.FirstName,
+                MiddleName = user.MiddleName ?? string.Empty,
+                LastName = user.LastName,
+                Email = user.Email ?? string.Empty,
+                Phone = user.PhoneNumber ?? string.Empty,
                 Department = dept.DepartmentName,
                 ClassName = cls?.ClassName ?? string.Empty,
-                Year = request.Year.ToLowerInvariant()
+                Year = request.Year.ToLowerInvariant(),
+                AcademicYearName = academicYear.YearName
             };
         }
 
@@ -266,39 +338,84 @@ namespace GradeManagementSystem.Services.Services
                 return null;
             }
 
+            var studentCode = request.StudentCode.Trim();
+            var email = request.Email.Trim();
+            var normalizedEmail = email.ToUpperInvariant();
+
+            if (await _context.Students.AnyAsync(s => s.StudentID != studentPk && s.NationalID == studentCode))
+            {
+                throw new InvalidOperationException($"A student with code '{studentCode}' already exists. Use a different student code.");
+            }
+
+            if (await _context.Users.AnyAsync(u => u.UserId != user.UserId && u.NormalizedEmail == normalizedEmail))
+            {
+                throw new InvalidOperationException("An account with this email address already exists. Use a different email address.");
+            }
+
             user.FirstName = request.FirstName;
             user.MiddleName = request.MiddleName;
             user.LastName = request.LastName;
             user.FullName = $"{request.FirstName} {(string.IsNullOrWhiteSpace(request.MiddleName) ? "" : request.MiddleName + " ")}{request.LastName}";
-            user.Email = request.Email;
+            user.Email = email;
             user.PhoneNumber = request.Phone;
 
-            await _userManager.UpdateAsync(user);
+            var userUpdated = await _userManager.UpdateAsync(user);
+            if (!userUpdated.Succeeded)
+            {
+                var errors = string.Join(" ", userUpdated.Errors.Select(error => error.Description));
+                throw new InvalidOperationException(string.IsNullOrWhiteSpace(errors)
+                    ? "Unable to update the student account."
+                    : errors);
+            }
 
-            // Update student code/year/class.
-            student.NationalID = request.StudentCode;
+            // Update student code/year/class using the selected academic year when
+            // one was supplied by the Student Affairs dashboard.
+            student.NationalID = studentCode;
+            AcademicYear? selectedAcademicYear = null;
             if (Enum.TryParse<EducationStage>(request.Year, true, out var stage))
             {
-                var academicYear = await _context.AcademicYears
-                    .Where(a => a.IsActive && a.Stage == stage)
+                var academicYears = _context.AcademicYears.Where(a => a.Stage == stage);
+                if (!string.IsNullOrWhiteSpace(request.AcademicYearName))
+                {
+                    academicYears = academicYears.Where(a => a.YearName == request.AcademicYearName.Trim());
+                }
+                else
+                {
+                    academicYears = academicYears.Where(a => a.IsActive);
+                }
+
+                selectedAcademicYear = await academicYears
                     .OrderByDescending(a => a.AcademicYearID)
                     .FirstOrDefaultAsync();
 
-                if (academicYear != null)
+                if (selectedAcademicYear != null)
                 {
-                    student.CurrentAcademicYearID = academicYear.AcademicYearID;
+                    student.CurrentAcademicYearID = selectedAcademicYear.AcademicYearID;
                 }
             }
 
             var dept = await _context.Departments.FirstOrDefaultAsync(d => d.IsActive && d.DepartmentName == request.Department);
-            if (dept != null)
+            if (dept == null)
+            {
+                throw new ArgumentException("The selected department was not found.");
+            }
+
+            student.DepartmentID = dept.DepartmentID;
+            if (request.ClassId.HasValue)
             {
                 var cls = await _context.Classes.FirstOrDefaultAsync(c =>
-                    c.IsActive && c.ClassID == request.ClassId && c.DepartmentID == dept.DepartmentID);
-                if (cls != null)
+                    c.IsActive && c.ClassID == request.ClassId && c.DepartmentID == dept.DepartmentID &&
+                    c.AcademicYearID == student.CurrentAcademicYearID);
+                if (cls == null)
                 {
-                    student.ClassID = cls.ClassID;
+                    throw new ArgumentException("The selected class does not belong to the selected academic year and department.");
                 }
+
+                student.ClassID = cls.ClassID;
+            }
+            else
+            {
+                student.ClassID = null;
             }
 
             await _context.SaveChangesAsync();
@@ -309,9 +426,15 @@ namespace GradeManagementSystem.Services.Services
                 ClassId = student.ClassID ?? 0,
                 StudentCode = student.NationalID ?? string.Empty,
                 Name = user.FullName ?? string.Empty,
+                FirstName = user.FirstName,
+                MiddleName = user.MiddleName ?? string.Empty,
+                LastName = user.LastName,
+                Email = user.Email ?? string.Empty,
+                Phone = user.PhoneNumber ?? string.Empty,
                 Department = request.Department,
                 ClassName = (await _context.Classes.FirstOrDefaultAsync(c => c.ClassID == student.ClassID))?.ClassName ?? string.Empty,
-                Year = request.Year.ToLowerInvariant()
+                Year = request.Year.ToLowerInvariant(),
+                AcademicYearName = selectedAcademicYear?.YearName ?? string.Empty
             };
         }
 

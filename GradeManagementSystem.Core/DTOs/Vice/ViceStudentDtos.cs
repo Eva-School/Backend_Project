@@ -8,9 +8,15 @@ namespace GradeManagementSystem.Core.DTOs.Vice
         public int ClassId { get; set; }
         public string StudentCode { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string MiddleName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
         public string Department { get; set; } = string.Empty;
         public string ClassName { get; set; } = string.Empty;
         public string Year { get; set; } = string.Empty;
+        public string AcademicYearName { get; set; } = string.Empty;
     }
 
     public class ViceCreateStudentRequestDTO
@@ -38,6 +44,8 @@ namespace GradeManagementSystem.Core.DTOs.Vice
 
         [Required(ErrorMessage = "year is required")]
         public string Year { get; set; } = string.Empty;
+
+        public string? AcademicYearName { get; set; }
 
         public int? ClassId { get; set; }
     }
