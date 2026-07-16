@@ -38,7 +38,11 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                 .HasForeignKey(c => c.DepartmentID)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasIndex(c => c.ClassName).IsUnique();
+            // A class name may be reused in a later academic year (for example,
+            // "Class 1A" in 2024-2025 and 2025-2026). It must only be unique
+            // within its academic year and department.
+            builder.HasIndex(c => new { c.AcademicYearID, c.DepartmentID, c.ClassName })
+                .IsUnique();
 
             builder.HasData(
                 new Class { ClassID = 1, ClassName = "Class 1A", AcademicYearID = 3, Capacity = 30, IsActive = true },

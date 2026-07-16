@@ -83,11 +83,11 @@ namespace GradeManagementSystem.Api.Controllers
         }
 
         [HttpGet("students")]
-        public async Task<IActionResult> GetStudents([FromQuery] int classId)
+        public async Task<IActionResult> GetStudents([FromQuery] int classId, [FromQuery] int subjectId)
         {
-            if (classId <= 0)
+            if (classId <= 0 || subjectId <= 0)
             {
-                return BadRequest(new { message = "classId must be provided and > 0." });
+                return BadRequest(new { message = "classId and subjectId must be provided and > 0." });
             }
 
             if (!TryGetUserId(out var userId))
@@ -97,7 +97,7 @@ namespace GradeManagementSystem.Api.Controllers
 
             try
             {
-                var students = await _teacherDashboardService.GetStudentsAsync(userId, classId);
+                var students = await _teacherDashboardService.GetStudentsAsync(userId, classId, subjectId);
                 if (students == null)
                 {
                     return NotFound(new { message = "Teacher profile not found." });
@@ -119,14 +119,19 @@ namespace GradeManagementSystem.Api.Controllers
                 return BadRequest(new { message = "Invalid request body." });
             }
 
-            if (request.ClassId <= 0 || request.StudentId <= 0)
+            if (request.ClassId <= 0 || request.StudentId <= 0 || request.SubjectId <= 0)
             {
-                return BadRequest(new { message = "classId and studentId must be > 0." });
+                return BadRequest(new { message = "classId, studentId and subjectId must be > 0." });
             }
 
-            if (request.Grade < 0)
+            if (new[] { request.Q1, request.Q2, request.Q3, request.Q4 }.Any(score => score < 0))
             {
-                return BadRequest(new { message = "grade must be >= 0." });
+                return BadRequest(new { message = "Quarter grades must be >= 0." });
+            }
+
+            if (!request.Q1.HasValue && !request.Q2.HasValue && !request.Q3.HasValue && !request.Q4.HasValue)
+            {
+                return BadRequest(new { message = "At least one quarter grade must be provided." });
             }
 
             if (!TryGetUserId(out var userId))
@@ -148,6 +153,10 @@ namespace GradeManagementSystem.Api.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         private bool TryGetUserId(out int userId)
@@ -158,4 +167,3 @@ namespace GradeManagementSystem.Api.Controllers
         }
     }
 }
-

@@ -190,7 +190,7 @@ namespace GradeManagementSystem.Repository.Migrations
 
                     b.HasIndex("AcademicYearID");
 
-                    b.HasIndex("ClassName")
+                    b.HasIndex("AcademicYearID", "DepartmentID", "ClassName")
                         .IsUnique();
 
                     b.HasIndex("DepartmentID");
@@ -641,6 +641,9 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.Property<int?>("CurrentAcademicYearID")
                         .HasColumnType("int");
 
+                    b.Property<int?>("DepartmentID")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("EnrollmentDate")
                         .IsRequired()
                         .HasColumnType("datetime2");
@@ -670,6 +673,8 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.HasIndex("ClassID");
 
                     b.HasIndex("CurrentAcademicYearID");
+
+                    b.HasIndex("DepartmentID");
 
                     b.HasIndex("MajorID");
 
@@ -1574,6 +1579,11 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.HasOne("GradeManagementSystem.Core.Entities.Domain.AcademicYear", "CurrentAcademicYear")
                         .WithMany("Students")
                         .HasForeignKey("CurrentAcademicYearID")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("GradeManagementSystem.Core.Entities.Domain.Department", "Department")
+                        .WithMany("Students")
+                        .HasForeignKey("DepartmentID")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("GradeManagementSystem.Core.Entities.Domain.Major", "Major")

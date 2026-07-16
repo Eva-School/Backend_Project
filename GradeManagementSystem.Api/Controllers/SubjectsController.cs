@@ -22,28 +22,25 @@ namespace GradeManagementSystem.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetSubjects([FromQuery] string? year)
+        public async Task<IActionResult> GetSubjects([FromQuery] string? year, [FromQuery] string? stage)
         {
-            var subjects = (await _subjectService.GetSubjectsForActiveYearAsync()).ToList();
-
-            if (subjects == null)
-            {
-                return NotFound(new { message = "No active academic year found" });
-            }
-
             if (!string.IsNullOrWhiteSpace(year))
             {
-                if (!Enum.TryParse<EducationStage>(year, true, out var stage))
+                if (Enum.TryParse<EducationStage>(year, true, out var stageFromYear))
                 {
-                    return BadRequest(new { message = "Invalid year value. Expected: junior|wheeler|senior." });
+                    stage = stageFromYear.ToString();
+                    year = null;
                 }
-
-                subjects = subjects
-                    .Where(s => string.Equals(s.Stage, stage.ToString(), System.StringComparison.OrdinalIgnoreCase))
-                    .ToList();
             }
 
-            return Ok(subjects);
+            try
+            {
+                return Ok(await _subjectService.GetSubjectsForActiveYearAsync(year, stage));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(new { message = exception.Message });
+            }
         }
 
         [HttpPost]

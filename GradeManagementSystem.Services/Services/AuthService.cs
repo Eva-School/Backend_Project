@@ -207,6 +207,7 @@ namespace GradeManagementSystem.Services.Services
                 }
 
                 // 4. If Role is Teacher, create Teacher record
+                int? teacherId = null;
                 if (request.Role.Equals("Teacher", StringComparison.OrdinalIgnoreCase))
                 {
                     var teacher = new Teacher
@@ -214,13 +215,14 @@ namespace GradeManagementSystem.Services.Services
                         UserID = user.UserId,
                         HireDate = request.HireDate,
                         DepartmentID = department.DepartmentID,
-                        Qualifications = request.Qualifications,
+                Qualifications = request.Qualifications.Trim(),
                         IsActive = true,
                         EmployeeCode = "TCH-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper()
                     };
 
                     _context.Teachers.Add(teacher);
                     await _context.SaveChangesAsync();
+                    teacherId = teacher.TeacherID;
                 }
 
                 // Commit transaction if everything is successful
@@ -244,7 +246,7 @@ namespace GradeManagementSystem.Services.Services
                     // Log email error but don't fail the whole process as DB is already updated
                 }
 
-                return new { success = true, data = new TeacherResponse { Id = user.UserId.ToString(), FullName = user.FullName } };
+                return new { success = true, data = new TeacherResponse { Id = (teacherId ?? user.UserId).ToString(), FullName = user.FullName } };
             }
             catch (Exception ex)
             {

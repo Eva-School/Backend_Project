@@ -26,6 +26,7 @@ namespace GradeManagementSystem.Core.Entities.Domain
         // Navigation Properties
         public virtual ICollection<Major> Majors { get; set; } = new List<Major>();
         public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
+        public virtual ICollection<Student> Students { get; set; } = new List<Student>();
         public virtual ICollection<Teacher> Teachers { get; set; } = new List<Teacher>();
     }
 }

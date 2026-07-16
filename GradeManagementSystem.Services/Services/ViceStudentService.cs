@@ -29,7 +29,7 @@ namespace GradeManagementSystem.Services.Services
             _roleManager = roleManager;
         }
 
-        public async Task<List<ViceStudentDto>> GetStudentsAsync(string year, string department, int? classId)
+        public async Task<List<ViceStudentDto>> GetStudentsAsync(string year, string department, int? classId, bool unassigned = false)
         {
             if (!Enum.TryParse<EducationStage>(year, true, out var stage))
             {
@@ -57,19 +57,68 @@ namespace GradeManagementSystem.Services.Services
                 return new List<ViceStudentDto>();
             }
 
-            var query = _context.Students
-                .AsNoTracking()
-                .Where(s => s.CurrentAcademicYearID == academicYear.AcademicYearID)
-                .Where(s => s.ClassID != null)
-                .Where(s => s.UserID.HasValue);
-
-            if (classId.HasValue)
+            if (unassigned)
             {
-                query = query.Where(s => s.ClassID == classId.Value);
+                return await _context.Students
+                    .AsNoTracking()
+                    .Where(s => s.CurrentAcademicYearID == academicYear.AcademicYearID)
+                    .Where(s => s.ClassID == null && s.DepartmentID == dept.DepartmentID)
+                    .Where(s => s.UserID.HasValue)
+                    .Join(_context.Users,
+                        s => s.UserID!.Value,
+                        u => u.UserId,
+                        (s, u) => new { Student = s, User = u })
+                    .OrderBy(x => x.Student.StudentID)
+                    .Select(x => new ViceStudentDto
+                    {
+                        Id = x.Student.StudentID.ToString(),
+                        ClassId = 0,
+                        StudentCode = x.Student.NationalID ?? string.Empty,
+                        Name = x.User.FullName ?? string.Empty,
+                        Department = dept.DepartmentName,
+                        ClassName = string.Empty,
+                        Year = year.ToLowerInvariant()
+                    })
+                    .ToListAsync();
             }
 
-            // Join users for full name, join class for class+department.
-            var students = await query
+            if (!classId.HasValue)
+            {
+                return await _context.Students
+                    .AsNoTracking()
+                    .Where(s => s.CurrentAcademicYearID == academicYear.AcademicYearID)
+                    .Where(s => s.UserID.HasValue)
+                    .Join(_context.Users,
+                        s => s.UserID!.Value,
+                        u => u.UserId,
+                        (s, u) => new { Student = s, User = u })
+                    .GroupJoin(_context.Classes,
+                        x => x.Student.ClassID,
+                        c => (int?)c.ClassID,
+                        (x, classes) => new { x.Student, x.User, Classes = classes })
+                    .SelectMany(
+                        x => x.Classes.DefaultIfEmpty(),
+                        (x, cls) => new { x.Student, x.User, Class = cls })
+                    .Where(x => x.Student.DepartmentID == dept.DepartmentID ||
+                                (x.Class != null && x.Class.DepartmentID == dept.DepartmentID && x.Class.IsActive))
+                    .OrderBy(x => x.Student.StudentID)
+                    .Select(x => new ViceStudentDto
+                    {
+                        Id = x.Student.StudentID.ToString(),
+                        ClassId = x.Student.ClassID ?? 0,
+                        StudentCode = x.Student.NationalID ?? string.Empty,
+                        Name = x.User.FullName ?? string.Empty,
+                        Department = dept.DepartmentName,
+                        ClassName = x.Class != null ? x.Class.ClassName : string.Empty,
+                        Year = year.ToLowerInvariant()
+                    })
+                    .ToListAsync();
+            }
+
+            return await _context.Students
+                .AsNoTracking()
+                .Where(s => s.CurrentAcademicYearID == academicYear.AcademicYearID)
+                .Where(s => s.ClassID == classId.Value && s.UserID.HasValue)
                 .Join(_context.Users,
                     s => s.UserID!.Value,
                     u => u.UserId,
@@ -79,8 +128,7 @@ namespace GradeManagementSystem.Services.Services
                     c => c.ClassID,
                     (x, c) => new { x.Student, x.User, Class = c })
                 .Where(x => x.Class.DepartmentID == dept.DepartmentID && x.Class.IsActive)
-                .OrderBy(x => x.Class.ClassID)
-                .ThenBy(x => x.Student.StudentID)
+                .OrderBy(x => x.Student.StudentID)
                 .Select(x => new ViceStudentDto
                 {
                     Id = x.Student.StudentID.ToString(),
@@ -92,8 +140,6 @@ namespace GradeManagementSystem.Services.Services
                     Year = year.ToLowerInvariant()
                 })
                 .ToListAsync();
-
-            return students;
         }
 
         public async Task<ViceStudentDto?> CreateStudentAsync(ViceCreateStudentRequestDTO request)
@@ -130,10 +176,18 @@ namespace GradeManagementSystem.Services.Services
                 return null;
             }
 
-            var cls = await _context.Classes.FirstOrDefaultAsync(c => c.IsActive && c.ClassID == request.ClassId && c.DepartmentID == dept.DepartmentID);
-            if (cls == null)
+            Class? cls = null;
+            if (request.ClassId.HasValue && request.ClassId.Value > 0)
             {
-                return null;
+                cls = await _context.Classes.FirstOrDefaultAsync(c =>
+                    c.IsActive &&
+                    c.ClassID == request.ClassId.Value &&
+                    c.DepartmentID == dept.DepartmentID &&
+                    c.AcademicYearID == academicYear.AcademicYearID);
+                if (cls == null)
+                {
+                    return null;
+                }
             }
 
             var username = (request.FirstName + "." + request.LastName).Replace(" ", "").ToLowerInvariant() + "-" + new Random().Next(100, 999);
@@ -167,7 +221,8 @@ namespace GradeManagementSystem.Services.Services
                 EnrollmentDate = DateTime.UtcNow.Date,
                 CurrentAcademicYearID = academicYear.AcademicYearID,
                 MajorID = null,
-                ClassID = cls.ClassID,
+                DepartmentID = dept.DepartmentID,
+                ClassID = cls?.ClassID,
                 Status = "Active",
                 Gender = Gender.Male
             };
@@ -178,11 +233,11 @@ namespace GradeManagementSystem.Services.Services
             return new ViceStudentDto
             {
                 Id = student.StudentID.ToString(),
-                ClassId = cls.ClassID,
+                ClassId = cls?.ClassID ?? 0,
                 StudentCode = student.NationalID ?? string.Empty,
                 Name = user.FullName ?? string.Empty,
                 Department = dept.DepartmentName,
-                ClassName = cls.ClassName,
+                ClassName = cls?.ClassName ?? string.Empty,
                 Year = request.Year.ToLowerInvariant()
             };
         }
@@ -308,6 +363,7 @@ namespace GradeManagementSystem.Services.Services
                     return null;
                 }
                 student.ClassID = assignedClass.ClassID;
+                student.DepartmentID = assignedClass.DepartmentID;
             }
             else
             {

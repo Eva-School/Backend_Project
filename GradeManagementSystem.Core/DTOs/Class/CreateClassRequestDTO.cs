@@ -8,6 +8,9 @@ namespace GradeManagementSystem.Core.DTOs.Class
         [StringLength(100)]
         public string YearId { get; set; } = string.Empty;
 
+        [StringLength(20)]
+        public string? Stage { get; set; }
+
         [Required]
         [StringLength(100)]
         public string Department { get; set; } = string.Empty;

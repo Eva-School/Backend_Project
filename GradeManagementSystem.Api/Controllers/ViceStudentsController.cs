@@ -19,14 +19,14 @@ namespace GradeManagementSystem.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetStudents([FromQuery] string year, [FromQuery] string department, [FromQuery] int? classId)
+        public async Task<IActionResult> GetStudents([FromQuery] string year, [FromQuery] string department, [FromQuery] int? classId, [FromQuery] bool unassigned = false)
         {
             if (string.IsNullOrWhiteSpace(year) || string.IsNullOrWhiteSpace(department))
             {
                 return BadRequest(new { message = "year and department are required" });
             }
 
-            var students = await _viceStudentService.GetStudentsAsync(year, department, classId);
+            var students = await _viceStudentService.GetStudentsAsync(year, department, classId, unassigned);
             return Ok(students);
         }
 

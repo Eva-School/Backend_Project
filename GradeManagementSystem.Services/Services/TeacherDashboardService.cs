@@ -41,8 +41,6 @@ namespace GradeManagementSystem.Services.Services
                 return null;
             }
 
-            var stageLabel = currentAcademicYear.Stage.ToString().ToLowerInvariant();
-
             var firstSubject = await _context.TeacherAssignments
                 .Where(ta => ta.TeacherID == teacher.TeacherID
                              && ta.IsActive
@@ -53,7 +51,7 @@ namespace GradeManagementSystem.Services.Services
                 .FirstOrDefaultAsync();
 
             var subtitle = !string.IsNullOrWhiteSpace(firstSubject)
-                ? $"{firstSubject} Teacher"
+                ? firstSubject
                 : "Teacher";
 
             var user = await _context.Users
@@ -65,7 +63,7 @@ namespace GradeManagementSystem.Services.Services
             {
                 Name = user?.FullName ?? "Teacher",
                 Subtitle = subtitle,
-                CurrentAcademicYear = stageLabel
+                CurrentAcademicYear = currentAcademicYear.YearName
             };
         }
 
@@ -86,6 +84,7 @@ namespace GradeManagementSystem.Services.Services
                              && ta.Subject.IsActive)
                 .Select(ta => new
                 {
+                    YearName = ta.AcademicYear.YearName,
                     Stage = ta.AcademicYear.Stage,
                     SubjectId = ta.SubjectID!.Value,
                     SubjectName = ta.Subject.SubjectName
@@ -93,26 +92,22 @@ namespace GradeManagementSystem.Services.Services
                 .ToListAsync();
 
             return rows
-                .GroupBy(x => x.Stage.ToString().ToLowerInvariant())
+                .GroupBy(x => new { x.YearName, x.Stage })
                 .Select(g => new TeacherSubjectYearGroupDto
                 {
-                    Year = g.Key,
+                    Year = g.Key.YearName,
+                    Stage = g.Key.Stage.ToString().ToLowerInvariant(),
                     Subjects = g
                         .OrderBy(s => s.SubjectId)
                         .Select(s => new TeacherSubjectDto { Id = s.SubjectId, SubjectName = s.SubjectName })
                         .ToList()
                 })
-                .OrderBy(gr => gr.Year)
+                .OrderByDescending(gr => gr.Year)
                 .ToList();
         }
 
         public async Task<List<ClassResponseDTO>?> GetClassesAsync(int userId, string year, string subject)
         {
-            if (!Enum.TryParse<EducationStage>(year, true, out var stage))
-            {
-                throw new ArgumentException("Invalid year value. Expected: junior|wheeler|senior.");
-            }
-
             var teacher = await _context.Teachers
                 .FirstOrDefaultAsync(t => t.UserID == userId && t.IsActive);
 
@@ -122,9 +117,17 @@ namespace GradeManagementSystem.Services.Services
             }
 
             var academicYear = await _context.AcademicYears
-                .Where(ay => ay.IsActive && ay.Stage == stage)
+                .Where(ay => ay.IsActive && ay.YearName == year)
                 .OrderByDescending(ay => ay.AcademicYearID)
                 .FirstOrDefaultAsync();
+
+            if (academicYear == null && Enum.TryParse<EducationStage>(year, true, out var stage))
+            {
+                academicYear = await _context.AcademicYears
+                    .Where(ay => ay.IsActive && ay.Stage == stage)
+                    .OrderByDescending(ay => ay.AcademicYearID)
+                    .FirstOrDefaultAsync();
+            }
 
             if (academicYear == null)
             {
@@ -136,7 +139,6 @@ namespace GradeManagementSystem.Services.Services
             {
                 subjectId = await _context.Subjects
                     .Where(s => s.IsActive
-                                && s.AcademicYearID == academicYear.AcademicYearID
                                 && s.SubjectID == parsedSubjectId)
                     .Select(s => (int?)s.SubjectID)
                     .FirstOrDefaultAsync();
@@ -145,7 +147,6 @@ namespace GradeManagementSystem.Services.Services
             {
                 subjectId = await _context.Subjects
                     .Where(s => s.IsActive
-                                && s.AcademicYearID == academicYear.AcademicYearID
                                 && s.SubjectName == subject)
                     .Select(s => (int?)s.SubjectID)
                     .FirstOrDefaultAsync();
@@ -174,306 +175,162 @@ namespace GradeManagementSystem.Services.Services
             return classes.Select(c => new ClassResponseDTO { ClassId = c.ClassId, ClassName = c.ClassName }).ToList();
         }
 
-        public async Task<List<TeacherStudentGradeDto>?> GetStudentsAsync(int userId, int classId)
+        public async Task<List<TeacherStudentGradeDto>?> GetStudentsAsync(int userId, int classId, int subjectId)
         {
-            var teacher = await _context.Teachers
-                .FirstOrDefaultAsync(t => t.UserID == userId && t.IsActive);
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserID == userId && t.IsActive);
+            if (teacher == null) return null;
 
-            if (teacher == null)
-            {
-                return null;
-            }
-
-            var assignments = await _context.TeacherAssignments
-                .Where(ta => ta.TeacherID == teacher.TeacherID
-                             && ta.IsActive
-                             && ta.ClassID == classId
-                             && ta.AcademicYear.IsActive
-                             && ta.Subject.IsActive)
-                .Select(ta => new { ta.AcademicYearID, ta.SubjectID })
-                .ToListAsync();
-
-            if (!assignments.Any())
-            {
-                return new List<TeacherStudentGradeDto>();
-            }
-
-            var academicYearId = assignments
-                .Where(a => a.AcademicYearID.HasValue)
-                .Select(a => a.AcademicYearID!.Value)
-                .OrderByDescending(id => id)
-                .First();
-
-            var subjectIds = assignments
-                .Where(a => a.AcademicYearID == academicYearId && a.SubjectID.HasValue)
-                .Select(a => a.SubjectID!.Value)
-                .Distinct()
-                .ToList();
-
-            if (subjectIds.Count != 1)
-            {
-                throw new ArgumentException("Teacher class has multiple subjects. Current endpoint cannot infer which one to grade.");
-            }
-
-            var subjectId = subjectIds[0];
-
-            var term = await _context.Terms
-                .Where(t => t.AcademicYearID == academicYearId)
-                .OrderBy(t => t.TermID)
+            var assignment = await _context.TeacherAssignments
+                .Where(ta => ta.TeacherID == teacher.TeacherID && ta.IsActive && ta.ClassID == classId &&
+                             ta.SubjectID == subjectId && ta.AcademicYearID.HasValue && ta.AcademicYear.IsActive && ta.Subject.IsActive)
+                .Select(ta => new { AcademicYearId = ta.AcademicYearID!.Value })
                 .FirstOrDefaultAsync();
+            if (assignment == null) return new List<TeacherStudentGradeDto>();
 
-            if (term == null)
-            {
-                return null;
-            }
+            var subject = await _context.Subjects
+                .Where(s => s.SubjectID == subjectId && s.IsActive)
+                .Select(s => new { s.SubjectName, s.MaxQuarterQ1Score, s.MaxQuarterQ2Score, s.MaxQuarterQ3Score, s.MaxQuarterQ4Score, s.MaxQuarterScore })
+                .FirstOrDefaultAsync();
+            if (subject == null) return new List<TeacherStudentGradeDto>();
+
+            var termIds = await _context.Terms.Where(t => t.AcademicYearID == assignment.AcademicYearId)
+                .OrderBy(t => t.TermID).Select(t => t.TermID).ToListAsync();
+            if (termIds.Count == 0) return null;
+            var firstTermId = termIds[0];
+            var secondTermId = termIds.Count > 1 ? termIds[1] : firstTermId;
 
             var students = await _context.Students
-                .Where(s => s.ClassID == classId
-                            && s.CurrentAcademicYearID == academicYearId
-                            && s.UserID.HasValue)
-                .Join(_context.Users,
-                      s => s.UserID.Value,
-                      u => u.UserId,
-                      (s, u) => new
-                      {
-                          StudentId = s.StudentID,
-                          StudentName = u.FullName
-                      })
-                .ToListAsync();
-
-            var studentIds = students.Select(s => s.StudentId).Distinct().ToList();
-
-            if (!studentIds.Any())
-            {
-                return new List<TeacherStudentGradeDto>();
-            }
-
+                .Where(s => s.ClassID == classId && s.CurrentAcademicYearID == assignment.AcademicYearId && s.UserID.HasValue)
+                .Join(_context.Users, s => s.UserID!.Value, u => u.UserId, (s, u) => new { StudentId = s.StudentID, StudentName = u.FullName })
+                .OrderBy(s => s.StudentName).ToListAsync();
+            var studentIds = students.Select(s => s.StudentId).ToList();
             var results = await _context.StudentSubjectTermResults
-                .Where(r => r.SubjectID == subjectId
-                            && r.TermID == term.TermID
-                            && r.AcademicYearID == academicYearId
-                            && r.StudentID.HasValue
-                            && studentIds.Contains(r.StudentID.Value))
-                .Select(r => new
-                {
-                    StudentId = r.StudentID!.Value,
-                    FinalExamScore = r.FinalExamScore,
-                    Status = r.Status
-                })
+                .Where(r => r.SubjectID == subjectId && r.AcademicYearID == assignment.AcademicYearId && r.StudentID.HasValue &&
+                            studentIds.Contains(r.StudentID.Value) && (r.TermID == firstTermId || r.TermID == secondTermId))
                 .ToListAsync();
 
-            var resultByStudentId = results.ToDictionary(
-                r => r.StudentId,
-                r => new { Grade = r.FinalExamScore ?? 0m, Status = r.Status });
-
-            var subjectName = await _context.Subjects
-                .Where(sub => sub.SubjectID == subjectId)
-                .Select(sub => sub.SubjectName)
-                .FirstOrDefaultAsync();
-
-            return students.Select(s =>
+            return students.Select(student =>
             {
-                if (!resultByStudentId.TryGetValue(s.StudentId, out var r))
-                {
-                    return new TeacherStudentGradeDto
-                    {
-                        StudentId = s.StudentId,
-                        StudentName = s.StudentName,
-                        SubjectId = subjectId,
-                        SubjectName = subjectName ?? "",
-                        Grade = 0m,
-                        Status = SubjectStatus.InProgress.ToString()
-                    };
-                }
-
+                var first = results.FirstOrDefault(r => r.StudentID == student.StudentId && r.TermID == firstTermId);
+                var second = results.FirstOrDefault(r => r.StudentID == student.StudentId && r.TermID == secondTermId);
                 return new TeacherStudentGradeDto
                 {
-                    StudentId = s.StudentId,
-                    StudentName = s.StudentName,
+                    StudentId = student.StudentId,
+                    StudentName = student.StudentName,
                     SubjectId = subjectId,
-                    SubjectName = subjectName ?? "",
-                    Grade = r.Grade,
-                    Status = (r.Status ?? SubjectStatus.InProgress).ToString()
+                    SubjectName = subject.SubjectName,
+                    Q1 = first?.Quarter1Score,
+                    Q2 = first?.Quarter2Score,
+                    Q3 = second?.Quarter3Score,
+                    Q4 = second?.Quarter4Score,
+                    FinalGrade = second?.FinalExamScore ?? first?.FinalExamScore,
+                    MaxQ1 = subject.MaxQuarterQ1Score ?? subject.MaxQuarterScore,
+                    MaxQ2 = subject.MaxQuarterQ2Score ?? subject.MaxQuarterScore,
+                    MaxQ3 = subject.MaxQuarterQ3Score ?? subject.MaxQuarterScore,
+                    MaxQ4 = subject.MaxQuarterQ4Score ?? subject.MaxQuarterScore,
+                    Status = (second?.Status ?? first?.Status ?? SubjectStatus.InProgress).ToString()
                 };
             }).ToList();
         }
 
         public async Task<TeacherGradeUpdateResponseDto?> UpsertGradeAsync(int userId, TeacherGradeUpdateRequestDTO request)
         {
-            var teacher = await _context.Teachers
-                .FirstOrDefaultAsync(t => t.UserID == userId && t.IsActive);
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserID == userId && t.IsActive);
+            if (teacher == null) return null;
 
-            if (teacher == null)
-            {
-                return null;
-            }
-
-            var assignments = await _context.TeacherAssignments
-                .Where(ta => ta.TeacherID == teacher.TeacherID
-                             && ta.IsActive
-                             && ta.ClassID == request.ClassId
-                             && ta.AcademicYear.IsActive
-                             && ta.Subject.IsActive)
-                .Select(ta => new { ta.AcademicYearID, ta.SubjectID })
-                .ToListAsync();
-
-            if (!assignments.Any())
-            {
-                return null;
-            }
-
-            var academicYearId = assignments
-                .Where(a => a.AcademicYearID.HasValue)
-                .Select(a => a.AcademicYearID!.Value)
-                .OrderByDescending(id => id)
-                .First();
-
-            var subjectIds = assignments
-                .Where(a => a.AcademicYearID == academicYearId && a.SubjectID.HasValue)
-                .Select(a => a.SubjectID!.Value)
-                .Distinct()
-                .ToList();
-
-            if (subjectIds.Count != 1)
-            {
-                throw new ArgumentException("Teacher class has multiple subjects. Current endpoint cannot infer which one to grade.");
-            }
-
-            var subjectId = subjectIds[0];
-
-            var term = await _context.Terms
-                .Where(t => t.AcademicYearID == academicYearId)
-                .OrderBy(t => t.TermID)
+            var assignment = await _context.TeacherAssignments
+                .Where(ta => ta.TeacherID == teacher.TeacherID && ta.IsActive && ta.ClassID == request.ClassId &&
+                             ta.SubjectID == request.SubjectId && ta.AcademicYearID.HasValue && ta.AcademicYear.IsActive && ta.Subject.IsActive)
+                .Select(ta => new { AcademicYearId = ta.AcademicYearID!.Value, ClassName = ta.Class.ClassName, DepartmentId = ta.Class.DepartmentID, Stage = ta.AcademicYear.Stage })
                 .FirstOrDefaultAsync();
+            if (assignment == null) return null;
 
-            if (term == null)
-            {
-                return null;
-            }
+            var studentExists = await _context.Students.AnyAsync(s => s.StudentID == request.StudentId && s.ClassID == request.ClassId && s.CurrentAcademicYearID == assignment.AcademicYearId);
+            if (!studentExists) throw new ArgumentException("The student is not enrolled in this class for the selected academic year.");
 
             var subject = await _context.Subjects
-                .Where(s => s.SubjectID == subjectId)
-                .Select(s => new { s.MaxFinalScore, s.MaxQuarterScore, s.SubjectName })
+                .Where(s => s.SubjectID == request.SubjectId && s.IsActive)
+                .Select(s => new { s.SubjectName, s.MaxQuarterQ1Score, s.MaxQuarterQ2Score, s.MaxQuarterQ3Score, s.MaxQuarterQ4Score, s.MaxQuarterScore })
                 .FirstOrDefaultAsync();
+            if (subject == null) return null;
 
-            if (subject == null)
+            ValidateQuarter(request.Q1, subject.MaxQuarterQ1Score ?? subject.MaxQuarterScore, "Q1");
+            ValidateQuarter(request.Q2, subject.MaxQuarterQ2Score ?? subject.MaxQuarterScore, "Q2");
+            ValidateQuarter(request.Q3, subject.MaxQuarterQ3Score ?? subject.MaxQuarterScore, "Q3");
+            ValidateQuarter(request.Q4, subject.MaxQuarterQ4Score ?? subject.MaxQuarterScore, "Q4");
+
+            if (assignment.DepartmentId.HasValue && await _context.QuarterGradesLocks.AnyAsync(l =>
+                l.AcademicYearID == assignment.AcademicYearId && l.SubjectID == request.SubjectId &&
+                l.DepartmentID == assignment.DepartmentId.Value && l.ClassID == request.ClassId))
             {
-                return null;
+                throw new InvalidOperationException("Quarter grades for this class and subject are locked.");
             }
 
-            var maxFinalScore = subject.MaxFinalScore ?? 100m;
-            var passThreshold = maxFinalScore / 2m;
-            var status = request.Grade >= passThreshold ? SubjectStatus.Passed : SubjectStatus.Failed;
+            var termIds = await _context.Terms.Where(t => t.AcademicYearID == assignment.AcademicYearId)
+                .OrderBy(t => t.TermID).Select(t => t.TermID).ToListAsync();
+            if (termIds.Count == 0) throw new InvalidOperationException("No terms are configured for this academic year.");
+            var firstTermId = termIds[0];
+            var secondTermId = termIds.Count > 1 ? termIds[1] : firstTermId;
+            var now = DateTime.UtcNow;
 
-            var quarterMax = subject.MaxQuarterScore ?? 25m;
-            var quarter1 = decimal.Round(quarterMax * 0.48m, 2, MidpointRounding.AwayFromZero);
-            var quarter2 = decimal.Round(quarterMax - quarter1, 2, MidpointRounding.AwayFromZero);
+            var first = await GetOrCreateResultAsync(request.StudentId, request.SubjectId, assignment.AcademicYearId, firstTermId, now);
+            if (request.Q1.HasValue) first.Quarter1Score = request.Q1;
+            if (request.Q2.HasValue) first.Quarter2Score = request.Q2;
+            first.TermTotal = (first.Quarter1Score ?? 0m) + (first.Quarter2Score ?? 0m);
+            first.Status = SubjectStatus.InProgress;
+            first.LastUpdatedAt = now;
 
-            var existing = await _context.StudentSubjectTermResults
-                .FirstOrDefaultAsync(r =>
-                    r.StudentID == request.StudentId &&
-                    r.SubjectID == subjectId &&
-                    r.TermID == term.TermID &&
-                    r.AcademicYearID == academicYearId);
+            var second = firstTermId == secondTermId ? first : await GetOrCreateResultAsync(request.StudentId, request.SubjectId, assignment.AcademicYearId, secondTermId, now);
+            if (request.Q3.HasValue) second.Quarter3Score = request.Q3;
+            if (request.Q4.HasValue) second.Quarter4Score = request.Q4;
+            second.TermTotal = firstTermId == secondTermId
+                ? (second.Quarter1Score ?? 0m) + (second.Quarter2Score ?? 0m) + (second.Quarter3Score ?? 0m) + (second.Quarter4Score ?? 0m)
+                : (second.Quarter3Score ?? 0m) + (second.Quarter4Score ?? 0m);
+            second.Status = SubjectStatus.InProgress;
+            second.LastUpdatedAt = now;
 
-            if (existing == null)
-            {
-                _context.StudentSubjectTermResults.Add(new StudentSubjectTermResult
-                {
-                    StudentID = request.StudentId,
-                    SubjectID = subjectId,
-                    TermID = term.TermID,
-                    AcademicYearID = academicYearId,
-                    Quarter1Score = quarter1,
-                    Quarter2Score = quarter2,
-                    FinalExamScore = request.Grade,
-                    TermTotal = quarter1 + quarter2 + request.Grade,
-                    Status = status,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
-            else
-            {
-                existing.Quarter1Score = existing.Quarter1Score ?? quarter1;
-                existing.Quarter2Score = existing.Quarter2Score ?? quarter2;
-                existing.FinalExamScore = request.Grade;
-                existing.TermTotal = (existing.Quarter1Score ?? 0m) + (existing.Quarter2Score ?? 0m) + request.Grade;
-                existing.Status = status;
-                existing.LastUpdatedAt = DateTime.UtcNow;
-            }
+            await EnsureQuarterSubmissionAsync(request.StudentId, request.SubjectId, assignment.AcademicYearId, firstTermId, userId, now);
+            if (secondTermId != firstTermId) await EnsureQuarterSubmissionAsync(request.StudentId, request.SubjectId, assignment.AcademicYearId, secondTermId, userId, now);
 
-            await _context.SaveChangesAsync();
-
-            // Create quarter submission + audit log for vice dashboard.
-            // This endpoint currently updates quarter1/quarter2 of the first term only.
-            var existingQuarterSubmission = await _context.QuarterGradeSubmissions
-                .FirstOrDefaultAsync(s =>
-                    s.StudentID == request.StudentId &&
-                    s.SubjectID == subjectId &&
-                    s.TermID == term!.TermID &&
-                    s.AcademicYearID == academicYearId);
-
-            if (existingQuarterSubmission == null)
-            {
-                _context.QuarterGradeSubmissions.Add(new QuarterGradeSubmission
-                {
-                    StudentID = request.StudentId,
-                    SubjectID = subjectId,
-                    TermID = term.TermID,
-                    AcademicYearID = academicYearId,
-                    SubmittedAt = DateTime.UtcNow,
-                    SubmittedBy = userId
-                });
-            }
-            else
-            {
-                existingQuarterSubmission.SubmittedAt = DateTime.UtcNow;
-                existingQuarterSubmission.SubmittedBy = userId;
-            }
-
-            var teacherName = await _context.Users
-                .Where(u => u.UserId == userId)
-                .Select(u => u.FullName)
-                .FirstOrDefaultAsync();
-
-            var classRow = await _context.Classes
-                .Where(c => c.ClassID == request.ClassId)
-                .Select(c => new { c.ClassName, c.DepartmentID })
-                .FirstOrDefaultAsync();
-
-            var stage = await _context.AcademicYears
-                .Where(ay => ay.AcademicYearID == academicYearId)
-                .Select(ay => ay.Stage)
-                .FirstOrDefaultAsync();
-
+            var teacherName = await _context.Users.Where(u => u.UserId == userId).Select(u => u.FullName).FirstOrDefaultAsync();
             _context.GradeActionLogs.Add(new GradeActionLog
             {
-                Action = "Submitted quarter grades",
-                ActorUserID = userId,
-                ActorName = teacherName,
-                StudentID = request.StudentId,
-                SubjectID = subjectId,
-                AcademicYearID = academicYearId,
-                DepartmentID = classRow?.DepartmentID,
-                ClassID = request.ClassId,
-                TermID = term.TermID,
-                Level = stage.ToString().ToLowerInvariant(),
-                SubjectName = subject.SubjectName,
-                ClassName = classRow?.ClassName,
-                Timestamp = DateTime.UtcNow
+                Action = "Updated quarter grades", ActorUserID = userId, ActorName = teacherName,
+                StudentID = request.StudentId, SubjectID = request.SubjectId, AcademicYearID = assignment.AcademicYearId,
+                DepartmentID = assignment.DepartmentId, ClassID = request.ClassId, TermID = firstTermId,
+                Level = assignment.Stage.ToString().ToLowerInvariant(), SubjectName = subject.SubjectName,
+                ClassName = assignment.ClassName, Timestamp = now
             });
-
             await _context.SaveChangesAsync();
 
-            return new TeacherGradeUpdateResponseDto
+            return new TeacherGradeUpdateResponseDto { ClassId = request.ClassId, StudentId = request.StudentId, SubjectId = request.SubjectId, Q1 = first.Quarter1Score, Q2 = first.Quarter2Score, Q3 = second.Quarter3Score, Q4 = second.Quarter4Score, Status = SubjectStatus.InProgress.ToString() };
+        }
+
+        private async Task<StudentSubjectTermResult> GetOrCreateResultAsync(int studentId, int subjectId, int academicYearId, int termId, DateTime now)
+        {
+            var result = await _context.StudentSubjectTermResults.FirstOrDefaultAsync(r => r.StudentID == studentId && r.SubjectID == subjectId && r.AcademicYearID == academicYearId && r.TermID == termId);
+            if (result != null) return result;
+            result = new StudentSubjectTermResult { StudentID = studentId, SubjectID = subjectId, AcademicYearID = academicYearId, TermID = termId, Status = SubjectStatus.InProgress, CreatedAt = now };
+            _context.StudentSubjectTermResults.Add(result);
+            return result;
+        }
+
+        private async Task EnsureQuarterSubmissionAsync(int studentId, int subjectId, int academicYearId, int termId, int userId, DateTime now)
+        {
+            var submission = await _context.QuarterGradeSubmissions.FirstOrDefaultAsync(s => s.StudentID == studentId && s.SubjectID == subjectId && s.AcademicYearID == academicYearId && s.TermID == termId);
+            if (submission == null)
             {
-                ClassId = request.ClassId,
-                StudentId = request.StudentId,
-                SubjectId = subjectId,
-                Grade = request.Grade,
-                Status = status.ToString()
-            };
+                _context.QuarterGradeSubmissions.Add(new QuarterGradeSubmission { StudentID = studentId, SubjectID = subjectId, AcademicYearID = academicYearId, TermID = termId, SubmittedAt = now, SubmittedBy = userId });
+                return;
+            }
+            submission.SubmittedAt = now;
+            submission.SubmittedBy = userId;
+        }
+
+        private static void ValidateQuarter(decimal? score, int? maximum, string quarter)
+        {
+            if (!score.HasValue || !maximum.HasValue || maximum.Value <= 0) return;
+            if (score.Value > maximum.Value) throw new ArgumentException($"{quarter} cannot exceed the configured maximum of {maximum.Value}.");
         }
     }
 }
-

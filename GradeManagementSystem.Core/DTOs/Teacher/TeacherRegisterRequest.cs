@@ -12,7 +12,7 @@ namespace GradeManagementSystem.Core.DTOs.Teacher
         public string Department { get; set; }
 
         [Required]
-        public string Qualifications { get; set; }
+        public string Qualifications { get; set; } = string.Empty;
 
         [Required]
         [EmailAddress]

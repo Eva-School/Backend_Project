@@ -39,12 +39,10 @@ namespace GradeManagementSystem.Core.DTOs.Vice
         [Required(ErrorMessage = "year is required")]
         public string Year { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "classId is required")]
-        public int ClassId { get; set; }
+        public int? ClassId { get; set; }
     }
 
     public class ViceUpdateStudentRequestDTO : ViceCreateStudentRequestDTO
     {
     }
 }
-

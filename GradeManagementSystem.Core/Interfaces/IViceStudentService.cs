@@ -6,7 +6,7 @@ namespace GradeManagementSystem.Core.Interfaces
 {
     public interface IViceStudentService
     {
-        Task<List<ViceStudentDto>> GetStudentsAsync(string year, string department, int? classId);
+        Task<List<ViceStudentDto>> GetStudentsAsync(string year, string department, int? classId, bool unassigned = false);
 
         Task<ViceStudentDto?> CreateStudentAsync(ViceCreateStudentRequestDTO request);
 

@@ -19,19 +19,33 @@ namespace GradeManagementSystem.Services.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<ClassResponseDTO>> GetClassesByYearIdAsync(string yearId)
+        public async Task<IEnumerable<ClassResponseDTO>> GetClassesByYearIdAsync(string yearId, string? stage = null)
         {
             if (string.IsNullOrWhiteSpace(yearId))
             {
                 return null; // Or throw an exception, depending on desired error handling
             }
 
-            // Find the AcademicYearID based on the provided yearId (YearName)
-            // Note: There can be multiple academic years with the same YearName but different stages.
-            // For simplicity, we'll get classes associated with any active academic year matching the yearId.
-            // A more robust solution might require specifying the stage as well.
-            var academicYearIds = await _context.AcademicYears
-                .Where(ay => ay.YearName == yearId && ay.IsActive)
+            var academicYears = _context.AcademicYears.AsNoTracking();
+            if (Enum.TryParse<GradeManagementSystem.Core.Entities.Enums.EducationStage>(yearId, true, out var stageFromYearId))
+            {
+                // Existing grade pages use a level such as "junior" as yearId.
+                academicYears = academicYears.Where(item => item.IsActive && item.Stage == stageFromYearId);
+            }
+            else
+            {
+                academicYears = academicYears.Where(item => item.YearName == yearId.Trim());
+                if (!string.IsNullOrWhiteSpace(stage))
+                {
+                    if (!Enum.TryParse<GradeManagementSystem.Core.Entities.Enums.EducationStage>(stage, true, out var parsedStage))
+                    {
+                        return new List<ClassResponseDTO>();
+                    }
+                    academicYears = academicYears.Where(item => item.Stage == parsedStage);
+                }
+            }
+
+            var academicYearIds = await academicYears
                 .Select(ay => ay.AcademicYearID)
                 .ToListAsync();
 
@@ -60,8 +74,23 @@ namespace GradeManagementSystem.Services.Services
                 return null;
             }
 
-            var academicYear = await _context.AcademicYears
-                .Where(year => year.IsActive && year.YearName == request.YearId.Trim())
+            var academicYears = _context.AcademicYears
+                .Where(year => year.YearName == request.YearId.Trim());
+            if (!string.IsNullOrWhiteSpace(request.Stage))
+            {
+                if (!Enum.TryParse<GradeManagementSystem.Core.Entities.Enums.EducationStage>(request.Stage, true, out var stage))
+                {
+                    throw new InvalidOperationException("Invalid stage. Expected: junior|wheeler|senior.");
+                }
+                academicYears = academicYears.Where(year => year.Stage == stage);
+            }
+            else
+            {
+                // Preserve behavior for existing callers that do not send a stage.
+                academicYears = academicYears.Where(year => year.IsActive);
+            }
+
+            var academicYear = await academicYears
                 .OrderByDescending(year => year.AcademicYearID)
                 .FirstOrDefaultAsync();
             if (academicYear == null)
@@ -90,7 +119,9 @@ namespace GradeManagementSystem.Services.Services
                 AcademicYearID = academicYear.AcademicYearID,
                 DepartmentID = department.DepartmentID,
                 ClassName = className,
-                Capacity = request.Capacity,
+                // Capacity is required by the database, while the Student
+                // Affairs form currently does not ask for it.
+                Capacity = request.Capacity ?? 30,
                 IsActive = true
             };
             _context.Classes.Add(created);

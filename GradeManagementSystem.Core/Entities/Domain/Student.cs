@@ -27,6 +27,9 @@ namespace GradeManagementSystem.Core.Entities.Domain
         [ForeignKey("Major")]
         public int? MajorID { get; set; }
 
+        [ForeignKey("Department")]
+        public int? DepartmentID { get; set; }
+
         [ForeignKey("Class")]
         public int? ClassID { get; set; }
 
@@ -39,6 +42,7 @@ namespace GradeManagementSystem.Core.Entities.Domain
         // Navigation Properties
         public virtual AcademicYear? CurrentAcademicYear { get; set; }
         public virtual Major? Major { get; set; }
+        public virtual Department? Department { get; set; }
         public virtual Class? Class { get; set; }
         public virtual ICollection<Guardian> Guardians { get; set; } = new List<Guardian>();
         public virtual ICollection<PreviousSchools> PreviousSchools { get; set; } = new List<PreviousSchools>();

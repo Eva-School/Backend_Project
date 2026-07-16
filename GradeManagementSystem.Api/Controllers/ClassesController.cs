@@ -3,6 +3,7 @@ using GradeManagementSystem.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace GradeManagementSystem.Api.Controllers
 {
@@ -19,21 +20,19 @@ namespace GradeManagementSystem.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetClasses([FromQuery] string yearId)
+        public async Task<IActionResult> GetClasses([FromQuery] string yearId, [FromQuery] string? stage)
         {
             if (string.IsNullOrWhiteSpace(yearId))
             {
                 return BadRequest(new { message = "YearId parameter is required" });
             }
 
-            var classes = await _classService.GetClassesByYearIdAsync(yearId);
+            var classes = await _classService.GetClassesByYearIdAsync(yearId, stage);
 
-            if (classes == null || !classes.Any())
-            {
-                return NotFound(new { message = "No classes found for the specified academic year or yearId is invalid." });
-            }
-
-            return Ok(classes);
+            // An academic year without classes is a normal setup state. Return
+            // an empty collection so Student Affairs can create its first class
+            // without treating the request as an error.
+            return Ok(classes ?? Enumerable.Empty<ClassResponseDTO>());
         }
 
         [HttpPost]
@@ -57,6 +56,10 @@ namespace GradeManagementSystem.Api.Controllers
             catch (InvalidOperationException exception)
             {
                 return Conflict(new { message = exception.Message });
+            }
+            catch (DbUpdateException)
+            {
+                return Conflict(new { message = "The class could not be saved. Check that its name is unique for the selected year and department." });
             }
         }
     }

@@ -19,6 +19,7 @@ namespace GradeManagementSystem.Core.DTOs.Teacher
     public class TeacherSubjectYearGroupDto
     {
         public string Year { get; set; } = string.Empty;
+        public string Stage { get; set; } = string.Empty;
         public List<TeacherSubjectDto> Subjects { get; set; } = new();
     }
 
@@ -33,7 +34,15 @@ namespace GradeManagementSystem.Core.DTOs.Teacher
         public string StudentName { get; set; } = string.Empty;
         public int SubjectId { get; set; }
         public string SubjectName { get; set; } = string.Empty;
-        public decimal Grade { get; set; }
+        public decimal? Q1 { get; set; }
+        public decimal? Q2 { get; set; }
+        public decimal? Q3 { get; set; }
+        public decimal? Q4 { get; set; }
+        public decimal? FinalGrade { get; set; }
+        public decimal? MaxQ1 { get; set; }
+        public decimal? MaxQ2 { get; set; }
+        public decimal? MaxQ3 { get; set; }
+        public decimal? MaxQ4 { get; set; }
         public string Status { get; set; } = "InProgress";
     }
 
@@ -46,7 +55,11 @@ namespace GradeManagementSystem.Core.DTOs.Teacher
     {
         public int ClassId { get; set; }
         public int StudentId { get; set; }
-        public decimal Grade { get; set; }
+        public int SubjectId { get; set; }
+        public decimal? Q1 { get; set; }
+        public decimal? Q2 { get; set; }
+        public decimal? Q3 { get; set; }
+        public decimal? Q4 { get; set; }
     }
 
     public class TeacherGradeUpdateResponseDto
@@ -54,8 +67,10 @@ namespace GradeManagementSystem.Core.DTOs.Teacher
         public int ClassId { get; set; }
         public int StudentId { get; set; }
         public int SubjectId { get; set; }
-        public decimal Grade { get; set; }
+        public decimal? Q1 { get; set; }
+        public decimal? Q2 { get; set; }
+        public decimal? Q3 { get; set; }
+        public decimal? Q4 { get; set; }
         public string Status { get; set; } = SubjectStatus.InProgress.ToString();
     }
 }
-

@@ -20,34 +20,53 @@ namespace GradeManagementSystem.Services.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<SubjectResponseDTO>> GetSubjectsForActiveYearAsync()
+        public async Task<IEnumerable<SubjectResponseDTO>> GetSubjectsForActiveYearAsync(string? yearName = null, string? stage = null)
         {
-            // 1. Get all active academic years (instead of just the first one)
-            var activeYears = await _context.AcademicYears
-                .Where(y => y.IsActive)
-                .ToListAsync();
-
-            if (!activeYears.Any())
+            // Subjects are a shared catalogue. AcademicYearID records the original
+            // setup context only; it does not limit where the subject can be used.
+            // The stage remains meaningful, so Junior/Wheeler/Senior keep separate
+            // subject lists without duplicating them for every academic year.
+            if (!string.IsNullOrWhiteSpace(stage))
             {
-                return null;
+                if (!Enum.TryParse<EducationStage>(stage, true, out var parsedStage))
+                {
+                    throw new ArgumentException("Invalid stage. Expected: junior|wheeler|senior.");
+                }
+                var stageSubjects = await _context.Subjects
+                    .Where(subject => subject.IsActive && subject.AcademicYear != null && subject.AcademicYear.Stage == parsedStage)
+                    .Select(subject => new SubjectResponseDTO
+                    {
+                        Id = subject.SubjectID,
+                        SubjectName = subject.SubjectName,
+                        YearName = subject.AcademicYear!.YearName,
+                        Stage = subject.AcademicYear.Stage.ToString()
+                    })
+                    .ToListAsync();
+
+                return stageSubjects
+                    .GroupBy(subject => subject.SubjectName.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .Select(group => group.OrderBy(subject => subject.Id).First())
+                    .OrderBy(subject => subject.SubjectName)
+                    .ToList();
             }
 
-            var activeYearIds = activeYears.Select(y => y.AcademicYearID).ToList();
-
-            // 2. Get all subjects that belong to ANY of the active academic years
-            var subjects = await _context.Subjects
-                .Include(s => s.AcademicYear) // Include navigation property to access YearName and Stage
-                .Where(s => s.AcademicYearID.HasValue && activeYearIds.Contains(s.AcademicYearID.Value) && s.IsActive)
-                .Select(s => new SubjectResponseDTO
+            var allSubjects = await _context.Subjects
+                .Where(subject => subject.IsActive)
+                .Select(subject => new SubjectResponseDTO
                 {
-                    Id = s.SubjectID,
-                    SubjectName = s.SubjectName,
-                    YearName = s.AcademicYear.YearName,
-                    Stage = s.AcademicYear.Stage.ToString()
+                    Id = subject.SubjectID,
+                    SubjectName = subject.SubjectName,
+                    YearName = subject.AcademicYear != null ? subject.AcademicYear.YearName : string.Empty,
+                    Stage = subject.AcademicYear != null ? subject.AcademicYear.Stage.ToString() : string.Empty
                 })
                 .ToListAsync();
 
-            return subjects;
+            return allSubjects
+                .GroupBy(subject => new { subject.Stage, Name = subject.SubjectName.Trim() })
+                .Select(group => group.OrderBy(subject => subject.Id).First())
+                .OrderBy(subject => subject.Stage)
+                .ThenBy(subject => subject.SubjectName)
+                .ToList();
         }
 
         public async Task<SubjectResponseDTO> CreateSubjectAsync(CreateSubjectRequestDTO request)
@@ -58,18 +77,35 @@ namespace GradeManagementSystem.Services.Services
                 return null;
             }
 
-            // 2. Find the SPECIFIC active academic year that matches the requested stage
+            // A new catalogue subject keeps its creation context for its level, but
+            // can subsequently be used in every academic year of that level.
             var targetedYear = await _context.AcademicYears
-                .Where(y => y.IsActive && y.Stage == stage)
+                .Where(y => y.IsActive && y.Stage == stage && y.YearName == request.YearName.Trim())
                 .OrderByDescending(y => y.AcademicYearID)
                 .FirstOrDefaultAsync();
 
             if (targetedYear == null)
             {
-                throw new InvalidOperationException($"No active academic year found for the specified stage: {request.Stage}");
+                throw new InvalidOperationException($"No active academic year named '{request.YearName}' was found for the specified stage: {request.Stage}");
             }
 
-            // 3. Create the subject linked to the correct AcademicYearID
+            var existing = await _context.Subjects
+                .Include(subject => subject.AcademicYear)
+                .FirstOrDefaultAsync(subject => subject.IsActive &&
+                    subject.SubjectName == request.SubjectName.Trim() &&
+                    subject.AcademicYear != null && subject.AcademicYear.Stage == stage);
+            if (existing != null)
+            {
+                return new SubjectResponseDTO
+                {
+                    Id = existing.SubjectID,
+                    SubjectName = existing.SubjectName,
+                    YearName = existing.AcademicYear!.YearName,
+                    Stage = existing.AcademicYear.Stage.ToString()
+                };
+            }
+
+            // Create the shared catalogue subject with its initial setup context.
             var subject = new Subject
             {
                 SubjectName = request.SubjectName.Trim(),

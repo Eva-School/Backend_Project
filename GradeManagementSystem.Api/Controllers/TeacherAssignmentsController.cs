@@ -56,6 +56,45 @@ namespace GradeManagementSystem.Api.Controllers
             return Ok(dashboard);
         }
 
+        [HttpGet]
+        [Authorize(Roles = "Admin,Student Affairs,StudentAffairs")]
+        public async Task<IActionResult> GetAssignments([FromQuery] string? yearName, [FromQuery] string? stage)
+        {
+            try
+            {
+                return Ok(await _teacherAssignmentService.GetAssignmentsAsync(yearName, stage));
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPut]
+        [Authorize(Roles = "Admin,Student Affairs,StudentAffairs")]
+        public async Task<IActionResult> ReplaceAssignmentClasses([FromBody] TeacherAssignmentRequestDTO request)
+        {
+            if (!ModelState.IsValid) return BadRequest(new { message = "All fields are required." });
+            var (success, message) = await _teacherAssignmentService.ReplaceTeacherAssignmentClassesAsync(request);
+            return success ? Ok(new { message }) : BadRequest(new { message });
+        }
+
+        [HttpPatch("status")]
+        [Authorize(Roles = "Admin,Student Affairs,StudentAffairs")]
+        public async Task<IActionResult> SetAssignmentStatus([FromBody] TeacherAssignmentStatusRequestDto request)
+        {
+            var (success, message) = await _teacherAssignmentService.SetAssignmentStatusAsync(request);
+            return success ? Ok(new { message }) : NotFound(new { message });
+        }
+
+        [HttpDelete]
+        [Authorize(Roles = "Admin,Student Affairs,StudentAffairs")]
+        public async Task<IActionResult> DeleteAssignment([FromBody] TeacherAssignmentStatusRequestDto request)
+        {
+            var (success, message) = await _teacherAssignmentService.DeleteAssignmentAsync(request);
+            return success ? NoContent() : NotFound(new { message });
+        }
+
         [HttpGet("MyClasses")]
         [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> GetMyClasses([FromQuery] string yearId)

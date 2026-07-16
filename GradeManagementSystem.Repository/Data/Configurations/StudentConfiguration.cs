@@ -46,6 +46,11 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                 .HasForeignKey(s => s.MajorID)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasOne(s => s.Department)
+                .WithMany(d => d.Students)
+                .HasForeignKey(s => s.DepartmentID)
+                .OnDelete(DeleteBehavior.Restrict);
+
             builder.HasOne(s => s.Class)
                 .WithMany(c => c.Students)
                 .HasForeignKey(s => s.ClassID)
