@@ -8,6 +8,7 @@ using GradeManagementSystem.Repository.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -24,6 +25,7 @@ namespace GradeManagementSystem.Services.Services
         private readonly IMapper _mapper;
         private readonly IEmailService _emailService;
         private readonly GradeDbContext _context;
+        private readonly ILogger<AuthService> _logger;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
@@ -31,7 +33,8 @@ namespace GradeManagementSystem.Services.Services
             IConfiguration configuration,
             IMapper mapper,
             IEmailService emailService,
-            GradeDbContext context)
+            GradeDbContext context,
+            ILogger<AuthService> logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -39,6 +42,7 @@ namespace GradeManagementSystem.Services.Services
             _mapper = mapper;
             _emailService = emailService;
             _context = context;
+            _logger = logger;
         }
 
         public async Task<AuthResponse?> LoginAsync(LoginRequest request)
@@ -48,7 +52,7 @@ namespace GradeManagementSystem.Services.Services
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.UserName == request.Username);
 
-            if (user == null || !await _userManager.CheckPasswordAsync(user, request.Password))
+            if (user == null || !user.IsActive || !await _userManager.CheckPasswordAsync(user, request.Password))
             {
                 return null;
             }
@@ -79,7 +83,7 @@ namespace GradeManagementSystem.Services.Services
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
 
-            if (user == null || user.RefreshTokenExpiryTime <= DateTime.Now)
+            if (user == null || !user.IsActive || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             {
                 return null;
             }
@@ -158,7 +162,7 @@ namespace GradeManagementSystem.Services.Services
             // 1. Generate Username and Password
             // Generate username from FullName: firstName.lastName + random number
             string baseUsername = $"{request.FullName.FirstName.ToLower()}.{request.FullName.LastName.ToLower()}".Replace(" ", "");
-            string username = baseUsername + new Random().Next(100, 999);
+            string username = baseUsername + RandomNumberGenerator.GetInt32(100, 1000);
             string password = GenerateRandomPassword();
 
             var existingUser = await _userManager.FindByEmailAsync(request.Email);
@@ -168,10 +172,12 @@ namespace GradeManagementSystem.Services.Services
             }
 
             // 2. Find Role and Department
-            var role = await _roleManager.Roles.FirstOrDefaultAsync(r => r.RoleName == request.Role);
+            // This endpoint creates teachers only. Never trust a client-supplied
+            // role here, otherwise Student Affairs could create an Admin account.
+            var role = await _roleManager.Roles.FirstOrDefaultAsync(r => r.RoleName == "Teacher");
             if (role == null)
             {
-                return new { success = false, message = $"Role '{request.Role}' not found" };
+                return new { success = false, message = "Teacher role is not configured" };
             }
 
             var department = await _context.Departments.FirstOrDefaultAsync(d => d.DepartmentName == request.Department);
@@ -208,7 +214,7 @@ namespace GradeManagementSystem.Services.Services
 
                 // 4. If Role is Teacher, create Teacher record
                 int? teacherId = null;
-                if (request.Role.Equals("Teacher", StringComparison.OrdinalIgnoreCase))
+                if (role.RoleName.Equals("Teacher", StringComparison.OrdinalIgnoreCase))
                 {
                     var teacher = new Teacher
                     {
@@ -243,7 +249,7 @@ namespace GradeManagementSystem.Services.Services
                 }
                 catch (Exception ex)
                 {
-                    // Log email error but don't fail the whole process as DB is already updated
+                    _logger.LogError(ex, "Teacher account {UserId} was created, but the credentials email could not be sent.", user.UserId);
                 }
 
                 return new { success = true, data = new TeacherResponse { Id = (teacherId ?? user.UserId).ToString(), FullName = user.FullName } };
@@ -251,7 +257,8 @@ namespace GradeManagementSystem.Services.Services
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return new { success = false, message = "An error occurred during registration: " + ex.Message };
+                _logger.LogError(ex, "Teacher registration failed for {Email}.", request.Email);
+                return new { success = false, message = "Teacher registration could not be completed." };
             }
         }
 
@@ -262,18 +269,16 @@ namespace GradeManagementSystem.Services.Services
             string lower = "abcdefghijkmnopqrstuvwxyz";
             string digits = "0123456789";
             string nonAlphanumeric = "!@#$%^&*";
-            Random random = new Random();
-
             return new string(new[]
             {
-                upper[random.Next(upper.Length)],
-                lower[random.Next(lower.Length)],
-                digits[random.Next(digits.Length)],
-                nonAlphanumeric[random.Next(nonAlphanumeric.Length)],
-                lower[random.Next(lower.Length)],
-                digits[random.Next(digits.Length)],
-                upper[random.Next(upper.Length)],
-                lower[random.Next(lower.Length)]
+                upper[RandomNumberGenerator.GetInt32(upper.Length)],
+                lower[RandomNumberGenerator.GetInt32(lower.Length)],
+                digits[RandomNumberGenerator.GetInt32(digits.Length)],
+                nonAlphanumeric[RandomNumberGenerator.GetInt32(nonAlphanumeric.Length)],
+                lower[RandomNumberGenerator.GetInt32(lower.Length)],
+                digits[RandomNumberGenerator.GetInt32(digits.Length)],
+                upper[RandomNumberGenerator.GetInt32(upper.Length)],
+                lower[RandomNumberGenerator.GetInt32(lower.Length)]
             });
         }
 

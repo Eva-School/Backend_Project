@@ -39,7 +39,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                     NormalizedName = "ADMIN",
                     RoleName = "Admin",
                     Description = "System Administrator",
-                    ConcurrencyStamp = Guid.NewGuid().ToString()
+                    ConcurrencyStamp = "39081a45-da45-4b25-9aca-787bbaf07b22"
                 },
                 new ApplicationRole
                 {
@@ -49,7 +49,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                     NormalizedName = "STUDENTAFFAIRS",
                     RoleName = "Student Affairs",
                     Description = "Student Affairs Officer",
-                    ConcurrencyStamp = Guid.NewGuid().ToString()
+                    ConcurrencyStamp = "6fea2cca-8207-43aa-90dc-006a3755a606"
                 },
                 new ApplicationRole
                 {
@@ -59,7 +59,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                     NormalizedName = "TEACHER",
                     RoleName = "Teacher",
                     Description = "Teacher Role",
-                    ConcurrencyStamp = Guid.NewGuid().ToString()
+                    ConcurrencyStamp = "7172e6ec-4b75-4da6-8a74-5317a3b4924f"
                 },
                 new ApplicationRole
                 {
@@ -69,7 +69,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                     NormalizedName = "STUDENT",
                     RoleName = "Student",
                     Description = "Student Role",
-                    ConcurrencyStamp = Guid.NewGuid().ToString()
+                    ConcurrencyStamp = "0adc8fbb-91cb-4dd7-a957-59453987a14f"
                 }
             );
         }

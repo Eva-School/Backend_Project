@@ -68,8 +68,6 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Seed Default Users
-            var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<ApplicationUser>();
-
             builder.HasData(
                 new ApplicationUser
                 {
@@ -80,14 +78,15 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                     Email = "admin@system.com",
                     NormalizedEmail = "ADMIN@SYSTEM.COM",
                     EmailConfirmed = true,
-                    PasswordHash = hasher.HashPassword(null, "Admin@123"),
+                    PasswordHash = "AQAAAAIAAYagAAAAENYA8Zrd5LoGYV68oOm9/E59pSiucbfv+8+e4I5zx9voIAI5REKOkJ2yoA4NxCUPYg==",
                     FirstName = "System",
                     LastName = "Admin",
                     FullName = "System Admin",
                     IsActive = true,
                     CreatedAt = new DateTime(2026, 1, 1),
                     RoleId = 1,
-                    SecurityStamp = Guid.NewGuid().ToString()
+                    SecurityStamp = "bc6b0bd0-2e6d-4631-9f37-5cc9540f40d1",
+                    ConcurrencyStamp = "be729c7f-d1ce-4543-8f75-9a453025a340"
                 },
                 new ApplicationUser
                 {
@@ -98,14 +97,15 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                     Email = "staff@system.com",
                     NormalizedEmail = "STAFF@SYSTEM.COM",
                     EmailConfirmed = true,
-                    PasswordHash = hasher.HashPassword(null, "Staff@123"),
+                    PasswordHash = "AQAAAAIAAYagAAAAEA/hkmvGbeFcTcU81jZWyVAOO+YixBNd9Y/pubiQWCx4FGy9SWa60X1F/fPBQycaEQ==",
                     FirstName = "Student",
                     LastName = "Affairs",
                     FullName = "Student Affairs",
                     IsActive = true,
                     CreatedAt = new DateTime(2026, 1, 1),
                     RoleId = 2,
-                    SecurityStamp = Guid.NewGuid().ToString()
+                    SecurityStamp = "f9d7a40b-130f-432a-8015-3e6381c6f961",
+                    ConcurrencyStamp = "e4d6f077-c63e-4dab-8f76-c8beed69f411"
                 }
             );
         }

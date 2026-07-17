@@ -23,7 +23,7 @@ namespace GradeManagementSystem.Services.Services
         {
             if (string.IsNullOrWhiteSpace(yearId))
             {
-                return null; // Or throw an exception, depending on desired error handling
+                return Array.Empty<ClassResponseDTO>();
             }
 
             var academicYears = _context.AcademicYears.AsNoTracking();
@@ -55,7 +55,7 @@ namespace GradeManagementSystem.Services.Services
             }
 
             var classes = await _context.Classes
-                .Where(c => academicYearIds.Contains(c.AcademicYearID.Value) && c.IsActive)
+                .Where(c => c.AcademicYearID.HasValue && academicYearIds.Contains(c.AcademicYearID.Value) && c.IsActive)
                 .Select(c => new ClassResponseDTO
                 {
                     ClassId = c.ClassID,

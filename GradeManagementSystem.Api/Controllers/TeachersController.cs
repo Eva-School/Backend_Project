@@ -47,7 +47,7 @@ namespace GradeManagementSystem.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new { message = "Validation error message" });
+                return ValidationProblem(ModelState);
             }
 
             var result = await _authService.RegisterTeacherAsync(request);

@@ -172,6 +172,19 @@ namespace GradeManagementSystem.Api.Controllers
                 _context.AcademicYears.AddRange(targetYears.Values);
                 await _context.SaveChangesAsync();
 
+                // A year without terms cannot be used by any grade-entry flow.
+                // When terms are not imported, create the two standard terms so
+                // the new year is immediately usable; dates remain configurable.
+                if (!request.CopyTerms)
+                {
+                    foreach (var target in targetYears.Values)
+                    {
+                        _context.Terms.AddRange(
+                            new Term { AcademicYearID = target.AcademicYearID, TermName = "Term 1" },
+                            new Term { AcademicYearID = target.AcademicYearID, TermName = "Term 2" });
+                    }
+                }
+
                 var classIds = new Dictionary<int, int>();
                 var subjectIds = new Dictionary<int, int>();
                 var copiedClasses = new List<(int SourceId, GradeManagementSystem.Core.Entities.Domain.Class Target)>();

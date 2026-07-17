@@ -19,10 +19,14 @@ namespace GradeManagementSystem.Repository.Data.Configurations
 
             builder.Property(a => a.Stage)
                    .HasConversion<string>()
+                   .HasMaxLength(20)
                    .IsRequired();
 
             builder.Property(a => a.IsActive)
                    .IsRequired();
+
+            builder.HasIndex(a => new { a.YearName, a.Stage })
+                   .IsUnique();
 
             builder.HasData(
                 new AcademicYear

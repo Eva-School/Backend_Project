@@ -25,7 +25,7 @@ namespace GradeManagementSystem.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new { message = "All fields are required" });
+                return ValidationProblem(ModelState);
             }
 
             var (success, message) = await _teacherAssignmentService.AssignTeacherToClassesAsync(request);
@@ -74,7 +74,7 @@ namespace GradeManagementSystem.Api.Controllers
         [Authorize(Roles = "Admin,Student Affairs,StudentAffairs")]
         public async Task<IActionResult> ReplaceAssignmentClasses([FromBody] TeacherAssignmentRequestDTO request)
         {
-            if (!ModelState.IsValid) return BadRequest(new { message = "All fields are required." });
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
             var (success, message) = await _teacherAssignmentService.ReplaceTeacherAssignmentClassesAsync(request);
             return success ? Ok(new { message }) : BadRequest(new { message });
         }

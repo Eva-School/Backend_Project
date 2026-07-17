@@ -287,7 +287,7 @@ namespace GradeManagementSystem.Api.Data
             var studentExisting = await context.Students.FirstOrDefaultAsync(s => s.NationalID == studentCode);
             if (studentExisting != null)
             {
-                return (studentExisting, user, await context.Classes.FirstOrDefaultAsync(c => c.ClassID == classId)!);
+                return (studentExisting, user, await context.Classes.FirstAsync(c => c.ClassID == classId));
             }
 
             var student = new Student
@@ -716,4 +716,3 @@ namespace GradeManagementSystem.Api.Data
         }
     }
 }
-

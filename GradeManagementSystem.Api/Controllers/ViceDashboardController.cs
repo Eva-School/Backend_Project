@@ -18,7 +18,7 @@ namespace GradeManagementSystem.Api.Controllers
 
         // 11 GET /api/vice/dashboard/cards
         [HttpGet("dashboard/cards")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Student Affairs,StudentAffairs,Admin")]
         public async Task<IActionResult> GetCards()
         {
             var cards = await _viceDashboardService.GetCardsAsync();

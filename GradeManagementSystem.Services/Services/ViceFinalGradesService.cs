@@ -177,13 +177,58 @@ namespace GradeManagementSystem.Services.Services
                 return 0;
             }
 
-            var cls = await _context.Classes.FirstOrDefaultAsync(c => c.IsActive && c.ClassID == request.ClassId);
-            var className = cls?.ClassName ?? request.ClassId.ToString();
+            var cls = await _context.Classes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c =>
+                    c.IsActive &&
+                    c.ClassID == request.ClassId &&
+                    c.AcademicYearID == academicYear.AcademicYearID &&
+                    c.DepartmentID == dept.DepartmentID);
+            if (cls == null)
+            {
+                throw new ArgumentException("The selected class does not belong to the selected academic year and department.");
+            }
+
+            var className = cls.ClassName;
 
             var now = DateTime.UtcNow;
 
             // If any student already approved, we reject this upsert entirely.
-            var parsedStudentIds = request.Grades.Select(g => int.Parse(g.StudentId)).Distinct().ToList();
+            var parsedStudentIds = new List<int>();
+            foreach (var grade in request.Grades)
+            {
+                if (!int.TryParse(grade.StudentId, out var studentId) || studentId <= 0)
+                {
+                    throw new ArgumentException($"Invalid student id: {grade.StudentId}.");
+                }
+
+                if (grade.Score < 0 || grade.Score > (subject.MaxFinalScore ?? 100m))
+                {
+                    throw new ArgumentException($"Score for student {grade.StudentId} must be between 0 and {subject.MaxFinalScore ?? 100m}.");
+                }
+
+                parsedStudentIds.Add(studentId);
+            }
+
+            parsedStudentIds = parsedStudentIds.Distinct().ToList();
+            if (parsedStudentIds.Count != request.Grades.Count)
+            {
+                throw new ArgumentException("Each student may appear only once in a final-grade submission.");
+            }
+
+            var validStudentIds = await _context.Students
+                .AsNoTracking()
+                .Where(student =>
+                    parsedStudentIds.Contains(student.StudentID) &&
+                    student.CurrentAcademicYearID == academicYear.AcademicYearID &&
+                    student.DepartmentID == dept.DepartmentID &&
+                    student.ClassID == request.ClassId)
+                .Select(student => student.StudentID)
+                .ToListAsync();
+            if (validStudentIds.Count != parsedStudentIds.Count)
+            {
+                throw new ArgumentException("One or more students do not belong to the selected class, academic year, and department.");
+            }
             var existingApproved = await _context.StudentAllResults
                 .AsNoTracking()
                 .Where(ar =>

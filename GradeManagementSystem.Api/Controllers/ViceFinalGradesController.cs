@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System;
 
 namespace GradeManagementSystem.Api.Controllers
 {
@@ -41,10 +42,18 @@ namespace GradeManagementSystem.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new { message = "Invalid request body" });
+                return ValidationProblem(ModelState);
             }
 
-            var updatedCount = await _viceFinalGradesService.UpsertFinalGradesBulkAsync(request);
+            int updatedCount;
+            try
+            {
+                updatedCount = await _viceFinalGradesService.UpsertFinalGradesBulkAsync(request);
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(new { message = exception.Message });
+            }
             if (updatedCount == 0)
             {
                 return BadRequest(new { message = "Final grades could not be updated (maybe already approved/locked)" });

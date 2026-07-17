@@ -73,7 +73,7 @@ namespace GradeManagementSystem.Services.Services
             // Pending final grades = StudentAllResults where ResultApproval doesn't exist or is Pending.
             var finalGradesPending = await _context.StudentAllResults
                 .AsNoTracking()
-                .Where(ar => ar.ResultApproval == null || ar.ResultApproval.Decision == null || ar.ResultApproval.Decision == Core.Entities.Enums.Decision.Pending)
+                .Where(ar => ar.ResultApproval == null || ar.ResultApproval.Decision == Core.Entities.Enums.Decision.Pending)
                 .CountAsync();
 
             var lastUpdated = await _context.GradeActionLogs
@@ -110,4 +110,3 @@ namespace GradeManagementSystem.Services.Services
         }
     }
 }
-

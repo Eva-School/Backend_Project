@@ -23,6 +23,7 @@ namespace GradeManagementSystem.Core.DTOs.Vice
         [Required]
         public string StudentId { get; set; } = string.Empty;
 
+        [Range(0, 1000000)]
         public decimal Score { get; set; }
     }
 
@@ -31,16 +32,16 @@ namespace GradeManagementSystem.Core.DTOs.Vice
         [Required]
         public string Level { get; set; } = string.Empty;
 
-        [Required]
+        [Range(1, 2)]
         public int Semester { get; set; }
 
         [Required]
         public string Department { get; set; } = string.Empty;
 
-        [Required]
+        [Range(1, int.MaxValue)]
         public int ClassId { get; set; }
 
-        [Required]
+        [Required, MinLength(1)]
         public List<ViceUpsertFinalGradeRequestRowDto> Grades { get; set; } = new();
     }
 

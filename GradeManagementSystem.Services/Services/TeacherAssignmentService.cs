@@ -26,6 +26,7 @@ namespace GradeManagementSystem.Services.Services
             // Validate input fields
             if (string.IsNullOrWhiteSpace(request.TeacherId) ||
                 string.IsNullOrWhiteSpace(request.YearId) ||
+                string.IsNullOrWhiteSpace(request.Stage) ||
                 string.IsNullOrWhiteSpace(request.SubjectId) ||
                 request.ClassIds == null || !request.ClassIds.Any())
             {
@@ -48,16 +49,22 @@ namespace GradeManagementSystem.Services.Services
             {
                 return (false, "Invalid SubjectId format");
             }
-            // Validate Academic Year
+            if (!Enum.TryParse<GradeManagementSystem.Core.Entities.Enums.EducationStage>(request.Stage, true, out var stage))
+            {
+                return (false, "Invalid stage. Expected: junior|wheeler|senior.");
+            }
+
+            // Year names are repeated for every education stage, so stage is
+            // part of the academic-year identity and must never be inferred.
             var academicYear = await _context.AcademicYears
-                .FirstOrDefaultAsync(ay => ay.YearName == request.YearId && ay.IsActive);
+                .SingleOrDefaultAsync(ay => ay.YearName == request.YearId && ay.Stage == stage && ay.IsActive);
             if (academicYear == null)
             {
                 return (false, "Academic year not found or not active");
             }
 
             var subjectExists = await _context.Subjects.AnyAsync(s =>
-                s.SubjectID == subjectIdInt && s.IsActive);
+                s.SubjectID == subjectIdInt && s.IsActive && s.AcademicYear != null && s.AcademicYear.Stage == stage);
             if (!subjectExists)
             {
                 return (false, "The selected subject was not found or is inactive.");
@@ -122,6 +129,7 @@ namespace GradeManagementSystem.Services.Services
             {
                 TeacherId = request.TeacherId,
                 YearId = request.YearId,
+                Stage = request.Stage,
                 SubjectId = request.SubjectId,
                 ClassIds = request.ClassIds
             });
@@ -129,7 +137,10 @@ namespace GradeManagementSystem.Services.Services
 
             if (!int.TryParse(request.TeacherId, out var teacherId) || !int.TryParse(request.SubjectId, out var subjectId))
                 return (false, "Teacher and subject identifiers must be numeric.");
-            var academicYear = await _context.AcademicYears.FirstOrDefaultAsync(item => item.YearName == request.YearId && item.IsActive);
+            if (!Enum.TryParse<GradeManagementSystem.Core.Entities.Enums.EducationStage>(request.Stage, true, out var stage))
+                return (false, "Invalid stage. Expected: junior|wheeler|senior.");
+            var academicYear = await _context.AcademicYears.SingleOrDefaultAsync(item =>
+                item.YearName == request.YearId && item.Stage == stage && item.IsActive);
             if (academicYear == null) return (false, "Academic year not found or not active.");
 
             var retained = request.ClassIds.Distinct().ToHashSet();

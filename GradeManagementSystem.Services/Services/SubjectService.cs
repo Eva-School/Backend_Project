@@ -69,7 +69,7 @@ namespace GradeManagementSystem.Services.Services
                 .ToList();
         }
 
-        public async Task<SubjectResponseDTO> CreateSubjectAsync(CreateSubjectRequestDTO request)
+        public async Task<SubjectResponseDTO?> CreateSubjectAsync(CreateSubjectRequestDTO request)
         {
             // 1. Parse the stage from the request
             if (!Enum.TryParse<EducationStage>(request.Stage, true, out var stage))
