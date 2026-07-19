@@ -47,10 +47,10 @@ namespace GradeManagementSystem.Services.Services
 
         public async Task<AuthResponse?> LoginAsync(LoginRequest request)
         {
-            // Include Role to get the RoleName
+            var normalizedUsername = request.Username?.Trim().ToUpper();
             var user = await _userManager.Users
                 .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.UserName == request.Username);
+                .FirstOrDefaultAsync(u => u.NormalizedUserName == normalizedUsername || u.UserName == request.Username);
 
             if (user == null || !user.IsActive || !await _userManager.CheckPasswordAsync(user, request.Password))
             {
