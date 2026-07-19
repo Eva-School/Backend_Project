@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -102,7 +102,7 @@ namespace GradeManagementSystem.Repository.Migrations
                     Priority = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     TargetRole = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     CreatedByUserID = table.Column<int>(type: "integer", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {

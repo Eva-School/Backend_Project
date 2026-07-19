@@ -15,7 +15,7 @@ public class AppNotificationConfiguration : IEntityTypeConfiguration<AppNotifica
         builder.Property(item => item.Message).IsRequired().HasMaxLength(2000);
         builder.Property(item => item.Priority).IsRequired().HasMaxLength(20);
         builder.Property(item => item.TargetRole).HasMaxLength(100);
-        builder.Property(item => item.CreatedAt).IsRequired().HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(item => item.CreatedAt).IsRequired().HasDefaultValueSql("NOW()");
         builder.HasIndex(item => new { item.TargetRole, item.CreatedAt });
     }
 }
