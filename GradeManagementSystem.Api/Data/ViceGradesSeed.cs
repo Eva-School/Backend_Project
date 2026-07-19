@@ -97,8 +97,8 @@ namespace GradeManagementSystem.Api.Data
                 {
                     AcademicYearID = academicYearId,
                     TermName = "Term 1",
-                    StartDate = new DateTime(DateTime.UtcNow.Year, 9, 1),
-                    EndDate = new DateTime(DateTime.UtcNow.Year + 1, 1, 31)
+                    StartDate = DateTime.SpecifyKind(new DateTime(DateTime.UtcNow.Year, 9, 1), DateTimeKind.Utc),
+                    EndDate = DateTime.SpecifyKind(new DateTime(DateTime.UtcNow.Year + 1, 1, 31), DateTimeKind.Utc)
                 });
             }
 
@@ -108,8 +108,8 @@ namespace GradeManagementSystem.Api.Data
                 {
                     AcademicYearID = academicYearId,
                     TermName = "Term 2",
-                    StartDate = new DateTime(DateTime.UtcNow.Year + 1, 2, 1),
-                    EndDate = new DateTime(DateTime.UtcNow.Year + 1, 6, 30)
+                    StartDate = DateTime.SpecifyKind(new DateTime(DateTime.UtcNow.Year + 1, 2, 1), DateTimeKind.Utc),
+                    EndDate = DateTime.SpecifyKind(new DateTime(DateTime.UtcNow.Year + 1, 6, 30), DateTimeKind.Utc)
                 });
             }
 
@@ -294,7 +294,7 @@ namespace GradeManagementSystem.Api.Data
             {
                 UserID = user.UserId,
                 NationalID = studentCode,
-                EnrollmentDate = DateTime.UtcNow.Date,
+                EnrollmentDate = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc),
                 CurrentAcademicYearID = await context.AcademicYears.Where(a => a.IsActive && a.Stage == yearStage).OrderByDescending(a => a.AcademicYearID).Select(a => a.AcademicYearID).FirstOrDefaultAsync(),
                 MajorID = null,
                 ClassID = classId,

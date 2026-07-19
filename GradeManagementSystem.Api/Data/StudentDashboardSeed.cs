@@ -115,7 +115,7 @@ namespace GradeManagementSystem.Api.Data
             {
                 UserID = userId,
                 NationalID = "29901011234567",
-                EnrollmentDate = DateTime.UtcNow.Date,
+                EnrollmentDate = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc),
                 CurrentAcademicYearID = seniorYear.AcademicYearID,
                 MajorID = majorId,
                 ClassID = 1,
@@ -147,8 +147,8 @@ namespace GradeManagementSystem.Api.Data
                 {
                     AcademicYearID = yearId,
                     TermName = "Term 1",
-                    StartDate = new DateTime(2025, 9, 1),
-                    EndDate = new DateTime(2026, 1, 31)
+                    StartDate = DateTime.SpecifyKind(new DateTime(2025, 9, 1), DateTimeKind.Utc),
+                    EndDate = DateTime.SpecifyKind(new DateTime(2026, 1, 31), DateTimeKind.Utc)
                 });
             }
 
