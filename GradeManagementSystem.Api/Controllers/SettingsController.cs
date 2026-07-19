@@ -180,8 +180,8 @@ namespace GradeManagementSystem.Api.Controllers
                     foreach (var target in targetYears.Values)
                     {
                         _context.Terms.AddRange(
-                            new Term { AcademicYearID = target.AcademicYearID, TermName = "Term 1" },
-                            new Term { AcademicYearID = target.AcademicYearID, TermName = "Term 2" });
+                            new Term { AcademicYearID = target.AcademicYearID, TermName = "Term 1", StartDate = DateTime.UtcNow, EndDate = DateTime.UtcNow.AddMonths(4) },
+                            new Term { AcademicYearID = target.AcademicYearID, TermName = "Term 2", StartDate = DateTime.UtcNow.AddMonths(5), EndDate = DateTime.UtcNow.AddMonths(9) });
                     }
                 }
 

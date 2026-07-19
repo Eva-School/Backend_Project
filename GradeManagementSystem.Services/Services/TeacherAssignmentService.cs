@@ -39,7 +39,8 @@ namespace GradeManagementSystem.Services.Services
                 return (false, "Invalid TeacherId format");
             }
 
-            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => (t.TeacherID == teacherIdInt || t.UserID == teacherIdInt) && t.IsActive);
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherID == teacherIdInt && t.IsActive)
+                          ?? await _context.Teachers.FirstOrDefaultAsync(t => t.UserID == teacherIdInt && t.IsActive);
             if (teacher == null)
             {
                 // Check if user exists as teacher in Users table and create Teacher record if missing
@@ -179,7 +180,8 @@ namespace GradeManagementSystem.Services.Services
             if (!Enum.TryParse<GradeManagementSystem.Core.Entities.Enums.EducationStage>(request.Stage, true, out var stage))
                 return (false, "Invalid stage. Expected: junior|wheeler|senior.");
 
-            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => (t.TeacherID == parsedTeacherId || t.UserID == parsedTeacherId) && t.IsActive);
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherID == parsedTeacherId && t.IsActive)
+                          ?? await _context.Teachers.FirstOrDefaultAsync(t => t.UserID == parsedTeacherId && t.IsActive);
             var teacherId = teacher?.TeacherID ?? parsedTeacherId;
 
             int.TryParse(request.YearId, out int parsedYearId);
