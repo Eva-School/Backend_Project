@@ -857,11 +857,11 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "DepartmentID", "CreatedAt", "DepartmentName", "Description", "IsActive" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Mathematics", "Mathematics Department", true },
-                    { 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Science", "Science Department", true },
-                    { 3, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "English", "English Language Department", true },
-                    { 4, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Social Studies", "Social Studies Department", true },
-                    { 5, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Physical Education", "Physical Education Department", true }
+                    { 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Mathematics", "Mathematics Department", true },
+                    { 2, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Science", "Science Department", true },
+                    { 3, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "English", "English Language Department", true },
+                    { 4, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Social Studies", "Social Studies Department", true },
+                    { 5, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Physical Education", "Physical Education Department", true }
                 });
 
             migrationBuilder.InsertData(
@@ -869,8 +869,8 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "TeacherID", "DepartmentID", "EmployeeCode", "HireDate", "IsActive", "Qualifications", "UserID" },
                 values: new object[,]
                 {
-                    { 1, null, "TCH001", new DateTime(2020, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), true, "B.Sc. Mathematics", null },
-                    { 2, null, "TCH002", new DateTime(2021, 5, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), true, "B.A. English", null }
+                    { 1, null, "TCH001", new DateTime(2020, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), true, "B.Sc. Mathematics", null },
+                    { 2, null, "TCH002", new DateTime(2021, 5, 15, 0, 0, 0, 0, DateTimeKind.Utc), true, "B.A. English", null }
                 });
 
             migrationBuilder.InsertData(
@@ -878,8 +878,8 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "UserID", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "FullName", "Id", "IsActive", "LastLoginAt", "LastName", "LockoutEnabled", "LockoutEnd", "MiddleName", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RefreshToken", "RefreshTokenExpiryTime", "RoleID", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
-                    { 1, 0, "be729c7f-d1ce-4543-8f75-9a453025a340", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAENYA8Zrd5LoGYV68oOm9/E59pSiucbfv+8+e4I5zx9voIAI5REKOkJ2yoA4NxCUPYg==", null, false, null, null, 1, "bc6b0bd0-2e6d-4631-9f37-5cc9540f40d1", false, "admin" },
-                    { 2, 0, "e4d6f077-c63e-4dab-8f76-c8beed69f411", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEA/hkmvGbeFcTcU81jZWyVAOO+YixBNd9Y/pubiQWCx4FGy9SWa60X1F/fPBQycaEQ==", null, false, null, null, 2, "f9d7a40b-130f-432a-8015-3e6381c6f961", false, "staff" }
+                    { 1, 0, "be729c7f-d1ce-4543-8f75-9a453025a340", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAENYA8Zrd5LoGYV68oOm9/E59pSiucbfv+8+e4I5zx9voIAI5REKOkJ2yoA4NxCUPYg==", null, false, null, null, 1, "bc6b0bd0-2e6d-4631-9f37-5cc9540f40d1", false, "admin" },
+                    { 2, 0, "e4d6f077-c63e-4dab-8f76-c8beed69f411", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEA/hkmvGbeFcTcU81jZWyVAOO+YixBNd9Y/pubiQWCx4FGy9SWa60X1F/fPBQycaEQ==", null, false, null, null, 2, "f9d7a40b-130f-432a-8015-3e6381c6f961", false, "staff" }
                 });
 
             migrationBuilder.InsertData(

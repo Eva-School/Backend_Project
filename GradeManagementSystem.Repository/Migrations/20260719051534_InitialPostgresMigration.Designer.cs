@@ -344,7 +344,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             DepartmentID = 1,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DepartmentName = "Mathematics",
                             Description = "Mathematics Department",
                             IsActive = true
@@ -352,7 +352,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             DepartmentID = 2,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DepartmentName = "Science",
                             Description = "Science Department",
                             IsActive = true
@@ -360,7 +360,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             DepartmentID = 3,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DepartmentName = "English",
                             Description = "English Language Department",
                             IsActive = true
@@ -368,7 +368,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             DepartmentID = 4,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DepartmentName = "Social Studies",
                             Description = "Social Studies Department",
                             IsActive = true
@@ -376,7 +376,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         new
                         {
                             DepartmentID = 5,
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DepartmentName = "Physical Education",
                             Description = "Physical Education Department",
                             IsActive = true
@@ -1027,7 +1027,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         {
                             TeacherID = 1,
                             EmployeeCode = "TCH001",
-                            HireDate = new DateTime(2020, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HireDate = new DateTime(2020, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Qualifications = "B.Sc. Mathematics"
                         },
@@ -1035,7 +1035,7 @@ namespace GradeManagementSystem.Repository.Migrations
                         {
                             TeacherID = 2,
                             EmployeeCode = "TCH002",
-                            HireDate = new DateTime(2021, 5, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HireDate = new DateTime(2021, 5, 15, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Qualifications = "B.A. English"
                         });
@@ -1314,7 +1314,7 @@ namespace GradeManagementSystem.Repository.Migrations
                             UserId = 1,
                             AccessFailedCount = 0,
                             ConcurrencyStamp = "be729c7f-d1ce-4543-8f75-9a453025a340",
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@system.com",
                             EmailConfirmed = true,
                             FirstName = "System",
@@ -1337,7 +1337,7 @@ namespace GradeManagementSystem.Repository.Migrations
                             UserId = 2,
                             AccessFailedCount = 0,
                             ConcurrencyStamp = "e4d6f077-c63e-4dab-8f76-c8beed69f411",
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "staff@system.com",
                             EmailConfirmed = true,
                             FirstName = "Student",

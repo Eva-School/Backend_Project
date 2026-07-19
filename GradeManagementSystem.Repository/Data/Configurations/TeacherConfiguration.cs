@@ -1,4 +1,4 @@
-﻿using GradeManagementSystem.Core.Entities.Domain;
+using GradeManagementSystem.Core.Entities.Domain;
 using GradeManagementSystem.Core.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -42,8 +42,8 @@ namespace GradeManagementSystem.Repository.Data.Configurations
             builder.HasIndex(t => t.UserID).IsUnique();
 
             builder.HasData(
-                new Teacher { TeacherID = 1, EmployeeCode = "TCH001", Qualifications = "B.Sc. Mathematics", IsActive = true, HireDate = new DateTime(2020, 1, 1) },
-                new Teacher { TeacherID = 2, EmployeeCode = "TCH002", Qualifications = "B.A. English", IsActive = true, HireDate = new DateTime(2021, 5, 15) }
+                new Teacher { TeacherID = 1, EmployeeCode = "TCH001", Qualifications = "B.Sc. Mathematics", IsActive = true, HireDate = DateTime.SpecifyKind(new DateTime(2020, 1, 1), DateTimeKind.Utc) },
+                new Teacher { TeacherID = 2, EmployeeCode = "TCH002", Qualifications = "B.A. English", IsActive = true, HireDate = DateTime.SpecifyKind(new DateTime(2021, 5, 15), DateTimeKind.Utc) }
             );
         }
     }

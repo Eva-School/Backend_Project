@@ -1,4 +1,4 @@
-﻿using GradeManagementSystem.Core.Entities.Domain;
+using GradeManagementSystem.Core.Entities.Domain;
 using GradeManagementSystem.Core.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -83,7 +83,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                     LastName = "Admin",
                     FullName = "System Admin",
                     IsActive = true,
-                    CreatedAt = new DateTime(2026, 1, 1),
+                    CreatedAt = DateTime.SpecifyKind(new DateTime(2026, 1, 1), DateTimeKind.Utc),
                     RoleId = 1,
                     SecurityStamp = "bc6b0bd0-2e6d-4631-9f37-5cc9540f40d1",
                     ConcurrencyStamp = "be729c7f-d1ce-4543-8f75-9a453025a340"
@@ -102,7 +102,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                     LastName = "Affairs",
                     FullName = "Student Affairs",
                     IsActive = true,
-                    CreatedAt = new DateTime(2026, 1, 1),
+                    CreatedAt = DateTime.SpecifyKind(new DateTime(2026, 1, 1), DateTimeKind.Utc),
                     RoleId = 2,
                     SecurityStamp = "f9d7a40b-130f-432a-8015-3e6381c6f961",
                     ConcurrencyStamp = "e4d6f077-c63e-4dab-8f76-c8beed69f411"
