@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GradeManagementSystem.Repository.Migrations
 {
     /// <inheritdoc />
-    public partial class InititalCatlog : Migration
+    public partial class InitialPostgresMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,11 +18,11 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "AcademicYears",
                 columns: table => new
                 {
-                    AcademicYearID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    YearName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Stage = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    AcademicYearID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    YearName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Stage = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -32,14 +33,14 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "AspNetRoles",
                 columns: table => new
                 {
-                    RoleID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    RoleName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    RoleID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RoleName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
-                    Id = table.Column<int>(type: "int", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -50,12 +51,12 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "Departments",
                 columns: table => new
                 {
-                    DepartmentID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    DepartmentName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    DepartmentID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    DepartmentName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "text", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()")
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -66,23 +67,23 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "GradeActionLogs",
                 columns: table => new
                 {
-                    ActionLogID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ActionLogID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Action = table.Column<string>(type: "text", nullable: false),
-                    ActorUserID = table.Column<int>(type: "int", nullable: true),
-                    ActorName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    StudentID = table.Column<int>(type: "int", nullable: true),
-                    SubjectID = table.Column<int>(type: "int", nullable: true),
-                    AcademicYearID = table.Column<int>(type: "int", nullable: true),
-                    DepartmentID = table.Column<int>(type: "int", nullable: true),
-                    ClassID = table.Column<int>(type: "int", nullable: true),
-                    TermID = table.Column<int>(type: "int", nullable: true),
-                    Level = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SubjectName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ClassName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    BeforeFinalScore = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    AfterFinalScore = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()")
+                    ActorUserID = table.Column<int>(type: "integer", nullable: true),
+                    ActorName = table.Column<string>(type: "text", nullable: true),
+                    StudentID = table.Column<int>(type: "integer", nullable: true),
+                    SubjectID = table.Column<int>(type: "integer", nullable: true),
+                    AcademicYearID = table.Column<int>(type: "integer", nullable: true),
+                    DepartmentID = table.Column<int>(type: "integer", nullable: true),
+                    ClassID = table.Column<int>(type: "integer", nullable: true),
+                    TermID = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<string>(type: "text", nullable: true),
+                    SubjectName = table.Column<string>(type: "text", nullable: true),
+                    ClassName = table.Column<string>(type: "text", nullable: true),
+                    BeforeFinalScore = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
+                    AfterFinalScore = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -90,15 +91,34 @@ namespace GradeManagementSystem.Repository.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Notifications",
+                columns: table => new
+                {
+                    NotificationID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Title = table.Column<string>(type: "character varying(160)", maxLength: 160, nullable: false),
+                    Message = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
+                    Priority = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    TargetRole = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    CreatedByUserID = table.Column<int>(type: "integer", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "GETUTCDATE()")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notifications", x => x.NotificationID);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "QuarterGradesLocks",
                 columns: table => new
                 {
-                    AcademicYearID = table.Column<int>(type: "int", nullable: false),
-                    SubjectID = table.Column<int>(type: "int", nullable: false),
-                    DepartmentID = table.Column<int>(type: "int", nullable: false),
-                    ClassID = table.Column<int>(type: "int", nullable: false),
-                    LockedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    LockedBy = table.Column<int>(type: "int", nullable: true)
+                    AcademicYearID = table.Column<int>(type: "integer", nullable: false),
+                    SubjectID = table.Column<int>(type: "integer", nullable: false),
+                    DepartmentID = table.Column<int>(type: "integer", nullable: false),
+                    ClassID = table.Column<int>(type: "integer", nullable: false),
+                    LockedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    LockedBy = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -109,14 +129,14 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "QuarterGradeSubmissions",
                 columns: table => new
                 {
-                    SubmissionID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StudentID = table.Column<int>(type: "int", nullable: false),
-                    SubjectID = table.Column<int>(type: "int", nullable: false),
-                    AcademicYearID = table.Column<int>(type: "int", nullable: false),
-                    TermID = table.Column<int>(type: "int", nullable: false),
-                    SubmittedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    SubmittedBy = table.Column<int>(type: "int", nullable: true)
+                    SubmissionID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StudentID = table.Column<int>(type: "integer", nullable: false),
+                    SubjectID = table.Column<int>(type: "integer", nullable: false),
+                    AcademicYearID = table.Column<int>(type: "integer", nullable: false),
+                    TermID = table.Column<int>(type: "integer", nullable: false),
+                    SubmittedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    SubmittedBy = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -127,17 +147,17 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "Subjects",
                 columns: table => new
                 {
-                    SubjectID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SubjectName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    AcademicYearID = table.Column<int>(type: "int", nullable: true),
-                    MaxFinalScore = table.Column<int>(type: "int", nullable: true),
-                    MaxQuarterScore = table.Column<int>(type: "int", nullable: true),
-                    MaxQuarterQ1Score = table.Column<int>(type: "int", nullable: true),
-                    MaxQuarterQ2Score = table.Column<int>(type: "int", nullable: true),
-                    MaxQuarterQ3Score = table.Column<int>(type: "int", nullable: true),
-                    MaxQuarterQ4Score = table.Column<int>(type: "int", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                    SubjectID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SubjectName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    AcademicYearID = table.Column<int>(type: "integer", nullable: true),
+                    MaxFinalScore = table.Column<int>(type: "integer", nullable: true),
+                    MaxQuarterScore = table.Column<int>(type: "integer", nullable: true),
+                    MaxQuarterQ1Score = table.Column<int>(type: "integer", nullable: true),
+                    MaxQuarterQ2Score = table.Column<int>(type: "integer", nullable: true),
+                    MaxQuarterQ3Score = table.Column<int>(type: "integer", nullable: true),
+                    MaxQuarterQ4Score = table.Column<int>(type: "integer", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
@@ -154,12 +174,12 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "Terms",
                 columns: table => new
                 {
-                    TermID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AcademicYearID = table.Column<int>(type: "int", nullable: true),
-                    TermName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    TermID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AcademicYearID = table.Column<int>(type: "integer", nullable: true),
+                    TermName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -176,33 +196,33 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "AspNetUsers",
                 columns: table => new
                 {
-                    UserID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    FirstName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    MiddleName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    LastName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    FullName = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    LastLoginAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RefreshTokenExpiryTime = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    RoleID = table.Column<int>(type: "int", nullable: false),
-                    Id = table.Column<int>(type: "int", nullable: false),
-                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
-                    TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
-                    LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    LockoutEnabled = table.Column<bool>(type: "bit", nullable: false),
-                    AccessFailedCount = table.Column<int>(type: "int", nullable: false)
+                    UserID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FirstName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    MiddleName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    LastName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    FullName = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    LastLoginAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    RefreshToken = table.Column<string>(type: "text", nullable: true),
+                    RefreshTokenExpiryTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    RoleID = table.Column<int>(type: "integer", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false),
+                    UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    PasswordHash = table.Column<string>(type: "text", nullable: true),
+                    SecurityStamp = table.Column<string>(type: "text", nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "text", nullable: true),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    LockoutEnd = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LockoutEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    AccessFailedCount = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -219,11 +239,11 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "RoleClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    RoleId = table.Column<int>(type: "int", nullable: false),
-                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RoleId = table.Column<int>(type: "integer", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -240,13 +260,13 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "Classes",
                 columns: table => new
                 {
-                    ClassID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ClassName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    AcademicYearID = table.Column<int>(type: "int", nullable: true),
-                    DepartmentID = table.Column<int>(type: "int", nullable: true),
-                    Capacity = table.Column<int>(type: "int", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                    ClassID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ClassName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    AcademicYearID = table.Column<int>(type: "integer", nullable: true),
+                    DepartmentID = table.Column<int>(type: "integer", nullable: true),
+                    Capacity = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
@@ -269,12 +289,12 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "Majors",
                 columns: table => new
                 {
-                    MajorID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    DepartmentID = table.Column<int>(type: "int", nullable: true),
-                    MajorName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    MajorID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    DepartmentID = table.Column<int>(type: "integer", nullable: true),
+                    MajorName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "text", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
@@ -288,17 +308,44 @@ namespace GradeManagementSystem.Repository.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "NotificationReads",
+                columns: table => new
+                {
+                    NotificationReadID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    NotificationID = table.Column<int>(type: "integer", nullable: false),
+                    UserID = table.Column<int>(type: "integer", nullable: false),
+                    ReadAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NotificationReads", x => x.NotificationReadID);
+                    table.ForeignKey(
+                        name: "FK_NotificationReads_AspNetUsers_UserID",
+                        column: x => x.UserID,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "UserID",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_NotificationReads_Notifications_NotificationID",
+                        column: x => x.NotificationID,
+                        principalTable: "Notifications",
+                        principalColumn: "NotificationID",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Teachers",
                 columns: table => new
                 {
-                    TeacherID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserID = table.Column<int>(type: "int", nullable: true),
-                    EmployeeCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    DepartmentID = table.Column<int>(type: "int", nullable: true),
-                    HireDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    TeacherID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserID = table.Column<int>(type: "integer", nullable: true),
+                    EmployeeCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    DepartmentID = table.Column<int>(type: "integer", nullable: true),
+                    HireDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Qualifications = table.Column<string>(type: "text", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
@@ -321,11 +368,11 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "UserClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -342,10 +389,10 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "UserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserId = table.Column<int>(type: "int", nullable: false)
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    ProviderKey = table.Column<string>(type: "text", nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "text", nullable: true),
+                    UserId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -362,8 +409,8 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "UserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    RoleId = table.Column<int>(type: "int", nullable: false)
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    RoleId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -386,10 +433,10 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "UserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -406,13 +453,13 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "Competencies",
                 columns: table => new
                 {
-                    CompetencyID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    MajorID = table.Column<int>(type: "int", nullable: true),
-                    CompetencyName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    MaxAttempts = table.Column<int>(type: "int", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()")
+                    CompetencyID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    MajorID = table.Column<int>(type: "integer", nullable: true),
+                    CompetencyName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    MaxAttempts = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -429,16 +476,17 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "Students",
                 columns: table => new
                 {
-                    StudentID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserID = table.Column<int>(type: "int", nullable: true),
-                    NationalID = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    EnrollmentDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CurrentAcademicYearID = table.Column<int>(type: "int", nullable: true),
-                    MajorID = table.Column<int>(type: "int", nullable: true),
-                    ClassID = table.Column<int>(type: "int", nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Gender = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    StudentID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserID = table.Column<int>(type: "integer", nullable: true),
+                    NationalID = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    EnrollmentDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CurrentAcademicYearID = table.Column<int>(type: "integer", nullable: true),
+                    MajorID = table.Column<int>(type: "integer", nullable: true),
+                    DepartmentID = table.Column<int>(type: "integer", nullable: true),
+                    ClassID = table.Column<int>(type: "integer", nullable: true),
+                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Gender = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -462,6 +510,12 @@ namespace GradeManagementSystem.Repository.Migrations
                         principalColumn: "ClassID",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
+                        name: "FK_Students_Departments_DepartmentID",
+                        column: x => x.DepartmentID,
+                        principalTable: "Departments",
+                        principalColumn: "DepartmentID",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_Students_Majors_MajorID",
                         column: x => x.MajorID,
                         principalTable: "Majors",
@@ -473,13 +527,13 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "TeacherAssignments",
                 columns: table => new
                 {
-                    TeacherID = table.Column<int>(type: "int", nullable: false),
-                    ClassID = table.Column<int>(type: "int", nullable: false),
-                    SubjectID = table.Column<int>(type: "int", nullable: false),
-                    AcademicYearID = table.Column<int>(type: "int", nullable: false),
-                    TeacherAssignmentID = table.Column<int>(type: "int", nullable: false),
-                    AssignedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                    TeacherID = table.Column<int>(type: "integer", nullable: false),
+                    ClassID = table.Column<int>(type: "integer", nullable: false),
+                    SubjectID = table.Column<int>(type: "integer", nullable: false),
+                    AcademicYearID = table.Column<int>(type: "integer", nullable: false),
+                    TeacherAssignmentID = table.Column<int>(type: "integer", nullable: false),
+                    AssignedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
@@ -514,12 +568,12 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "Guardians",
                 columns: table => new
                 {
-                    GuardianID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StudentID = table.Column<int>(type: "int", nullable: true),
-                    GuardianName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    GuardianRelation = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    GuardianPhone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
+                    GuardianID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StudentID = table.Column<int>(type: "integer", nullable: true),
+                    GuardianName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    GuardianRelation = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    GuardianPhone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -536,10 +590,10 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "PreviousSchools",
                 columns: table => new
                 {
-                    PreviousSchoolID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StudentID = table.Column<int>(type: "int", nullable: true),
-                    SchoolName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false)
+                    PreviousSchoolID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StudentID = table.Column<int>(type: "integer", nullable: true),
+                    SchoolName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -556,19 +610,19 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "StudentAllResults",
                 columns: table => new
                 {
-                    AllResultID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StudentID = table.Column<int>(type: "int", nullable: true),
-                    SubjectID = table.Column<int>(type: "int", nullable: true),
-                    TermID = table.Column<int>(type: "int", nullable: true),
-                    AcademicYearID = table.Column<int>(type: "int", nullable: true),
-                    FinalSubjectScore = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
-                    TotalTermScore = table.Column<decimal>(type: "decimal(8,2)", nullable: true),
-                    SubjectStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    OverallTermStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Grade = table.Column<int>(type: "int", nullable: true),
-                    GeneratedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    ApprovedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    AllResultID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StudentID = table.Column<int>(type: "integer", nullable: true),
+                    SubjectID = table.Column<int>(type: "integer", nullable: true),
+                    TermID = table.Column<int>(type: "integer", nullable: true),
+                    AcademicYearID = table.Column<int>(type: "integer", nullable: true),
+                    FinalSubjectScore = table.Column<decimal>(type: "numeric(8,2)", nullable: true),
+                    TotalTermScore = table.Column<decimal>(type: "numeric(8,2)", nullable: true),
+                    SubjectStatus = table.Column<string>(type: "text", nullable: false),
+                    OverallTermStatus = table.Column<string>(type: "text", nullable: false),
+                    Grade = table.Column<int>(type: "integer", nullable: true),
+                    GeneratedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    ApprovedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -603,14 +657,14 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "StudentCompetencyStatuses",
                 columns: table => new
                 {
-                    StudentCompetencyStatusID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StudentID = table.Column<int>(type: "int", nullable: true),
-                    CompetencyID = table.Column<int>(type: "int", nullable: true),
-                    StatusID = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    CurrentAttemptNumber = table.Column<int>(type: "int", nullable: false),
-                    MaxAllowedAttempts = table.Column<int>(type: "int", nullable: false),
-                    LastEvaluatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    StudentCompetencyStatusID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StudentID = table.Column<int>(type: "integer", nullable: true),
+                    CompetencyID = table.Column<int>(type: "integer", nullable: true),
+                    StatusID = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    CurrentAttemptNumber = table.Column<int>(type: "integer", nullable: false),
+                    MaxAllowedAttempts = table.Column<int>(type: "integer", nullable: false),
+                    LastEvaluatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -633,16 +687,16 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "StudentPromotions",
                 columns: table => new
                 {
-                    PromotionID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StudentID = table.Column<int>(type: "int", nullable: true),
-                    FromAcademicYearID = table.Column<int>(type: "int", nullable: true),
-                    ToAcademicYearID = table.Column<int>(type: "int", nullable: true),
-                    RequestDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsApproved = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    ApprovedBy = table.Column<int>(type: "int", nullable: true),
-                    ApprovalDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    RequestedBy = table.Column<int>(type: "int", nullable: true)
+                    PromotionID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StudentID = table.Column<int>(type: "integer", nullable: true),
+                    FromAcademicYearID = table.Column<int>(type: "integer", nullable: true),
+                    ToAcademicYearID = table.Column<int>(type: "integer", nullable: true),
+                    RequestDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsApproved = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    ApprovedBy = table.Column<int>(type: "integer", nullable: true),
+                    ApprovalDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    RequestedBy = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -671,21 +725,21 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "StudentSubjectTermResults",
                 columns: table => new
                 {
-                    ResultID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StudentID = table.Column<int>(type: "int", nullable: true),
-                    SubjectID = table.Column<int>(type: "int", nullable: true),
-                    TermID = table.Column<int>(type: "int", nullable: true),
-                    AcademicYearID = table.Column<int>(type: "int", nullable: true),
-                    Quarter1Score = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
-                    Quarter3Score = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
-                    Quarter2Score = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
-                    Quarter4Score = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
-                    FinalExamScore = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
-                    TermTotal = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    LastUpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    ResultID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StudentID = table.Column<int>(type: "integer", nullable: true),
+                    SubjectID = table.Column<int>(type: "integer", nullable: true),
+                    TermID = table.Column<int>(type: "integer", nullable: true),
+                    AcademicYearID = table.Column<int>(type: "integer", nullable: true),
+                    Quarter1Score = table.Column<decimal>(type: "numeric(5,2)", nullable: true),
+                    Quarter3Score = table.Column<decimal>(type: "numeric(5,2)", nullable: true),
+                    Quarter2Score = table.Column<decimal>(type: "numeric(5,2)", nullable: true),
+                    Quarter4Score = table.Column<decimal>(type: "numeric(5,2)", nullable: true),
+                    FinalExamScore = table.Column<decimal>(type: "numeric(5,2)", nullable: true),
+                    TermTotal = table.Column<decimal>(type: "numeric(5,2)", nullable: true),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    LastUpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -720,13 +774,13 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "ResultApprovals",
                 columns: table => new
                 {
-                    ApprovalID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AllResultID = table.Column<int>(type: "int", nullable: true),
-                    Decision = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ApprovalID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AllResultID = table.Column<int>(type: "integer", nullable: true),
+                    Decision = table.Column<string>(type: "text", nullable: false),
                     Notes = table.Column<string>(type: "text", nullable: false),
-                    ApprovedBy = table.Column<int>(type: "int", nullable: true),
-                    ApprovalDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    ApprovedBy = table.Column<int>(type: "integer", nullable: true),
+                    ApprovalDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -743,20 +797,20 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "CompetencyAttempts",
                 columns: table => new
                 {
-                    AttemptID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StudentCompetencyStatusID = table.Column<int>(type: "int", nullable: true),
-                    StudentID = table.Column<int>(type: "int", nullable: true),
-                    AttemptNumber = table.Column<int>(type: "int", nullable: false),
-                    Result = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    EvaluatedBy = table.Column<int>(type: "int", nullable: true),
-                    EvaluatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    AttemptID = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StudentCompetencyStatusID = table.Column<int>(type: "integer", nullable: true),
+                    StudentID = table.Column<int>(type: "integer", nullable: true),
+                    AttemptNumber = table.Column<int>(type: "integer", nullable: false),
+                    Result = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    EvaluatedBy = table.Column<int>(type: "integer", nullable: true),
+                    EvaluatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_CompetencyAttempts", x => x.AttemptID);
                     table.ForeignKey(
-                        name: "FK_CompetencyAttempts_StudentCompetencyStatuses_StudentCompetencyStatusID",
+                        name: "FK_CompetencyAttempts_StudentCompetencyStatuses_StudentCompete~",
                         column: x => x.StudentCompetencyStatusID,
                         principalTable: "StudentCompetencyStatuses",
                         principalColumn: "StudentCompetencyStatusID",
@@ -792,10 +846,10 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "RoleID", "ConcurrencyStamp", "Description", "Id", "Name", "NormalizedName", "RoleName" },
                 values: new object[,]
                 {
-                    { 1, "2411f9e6-9e55-4e6b-a5d7-d662b7880113", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
-                    { 2, "715a5b7d-283a-4684-9723-824074208207", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
-                    { 3, "fa68b0c3-f84f-46ad-9cb4-1183b8ad3620", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
-                    { 4, "5be44d96-bb7f-4aaa-8b15-0410470f15f4", "Student Role", 4, "Student", "STUDENT", "Student" }
+                    { 1, "39081a45-da45-4b25-9aca-787bbaf07b22", "System Administrator", 1, "Admin", "ADMIN", "Admin" },
+                    { 2, "6fea2cca-8207-43aa-90dc-006a3755a606", "Student Affairs Officer", 2, "StudentAffairs", "STUDENTAFFAIRS", "Student Affairs" },
+                    { 3, "7172e6ec-4b75-4da6-8a74-5317a3b4924f", "Teacher Role", 3, "Teacher", "TEACHER", "Teacher" },
+                    { 4, "0adc8fbb-91cb-4dd7-a957-59453987a14f", "Student Role", 4, "Student", "STUDENT", "Student" }
                 });
 
             migrationBuilder.InsertData(
@@ -824,8 +878,8 @@ namespace GradeManagementSystem.Repository.Migrations
                 columns: new[] { "UserID", "AccessFailedCount", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "FirstName", "FullName", "Id", "IsActive", "LastLoginAt", "LastName", "LockoutEnabled", "LockoutEnd", "MiddleName", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RefreshToken", "RefreshTokenExpiryTime", "RoleID", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
-                    { 1, 0, "0050d4b5-f3de-4f1f-a3a5-d408a281451c", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAEKoT7L7yDzgYWCMccdYN11BmjjP2P9vRwg5SIg47SiCLlnC8Bc3WhTAxwamt9f+GCQ==", null, false, null, null, 1, "a361623c-79d6-4a52-98f3-d08842b6153e", false, "admin" },
-                    { 2, 0, "03f43a39-ffb9-45ff-8790-baa254295dc8", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEIy6riqTYm/l//Hty5bEGGbTSnDJvTRIwPDG+wwmVV1dNhNn9YAAc8ya59RGZ3Ed1w==", null, false, null, null, 2, "33397f04-f7ac-443e-b153-bf81416277b1", false, "staff" }
+                    { 1, 0, "be729c7f-d1ce-4543-8f75-9a453025a340", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@system.com", true, "System", "System Admin", 1, true, null, "Admin", false, null, null, "ADMIN@SYSTEM.COM", "ADMIN", "AQAAAAIAAYagAAAAENYA8Zrd5LoGYV68oOm9/E59pSiucbfv+8+e4I5zx9voIAI5REKOkJ2yoA4NxCUPYg==", null, false, null, null, 1, "bc6b0bd0-2e6d-4631-9f37-5cc9540f40d1", false, "admin" },
+                    { 2, 0, "e4d6f077-c63e-4dab-8f76-c8beed69f411", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "staff@system.com", true, "Student", "Student Affairs", 2, true, null, "Affairs", false, null, null, "STAFF@SYSTEM.COM", "STAFF", "AQAAAAIAAYagAAAAEA/hkmvGbeFcTcU81jZWyVAOO+YixBNd9Y/pubiQWCx4FGy9SWa60X1F/fPBQycaEQ==", null, false, null, null, 2, "f9d7a40b-130f-432a-8015-3e6381c6f961", false, "staff" }
                 });
 
             migrationBuilder.InsertData(
@@ -848,11 +902,16 @@ namespace GradeManagementSystem.Repository.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_AcademicYears_YearName_Stage",
+                table: "AcademicYears",
+                columns: new[] { "YearName", "Stage" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "RoleNameIndex",
                 table: "AspNetRoles",
                 column: "NormalizedName",
-                unique: true,
-                filter: "[NormalizedName] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "EmailIndex",
@@ -868,18 +927,12 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "UserNameIndex",
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
-                unique: true,
-                filter: "[NormalizedUserName] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Classes_AcademicYearID",
+                name: "IX_Classes_AcademicYearID_DepartmentID_ClassName",
                 table: "Classes",
-                column: "AcademicYearID");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Classes_ClassName",
-                table: "Classes",
-                column: "ClassName",
+                columns: new[] { "AcademicYearID", "DepartmentID", "ClassName" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -930,12 +983,28 @@ namespace GradeManagementSystem.Repository.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_NotificationReads_NotificationID_UserID",
+                table: "NotificationReads",
+                columns: new[] { "NotificationID", "UserID" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NotificationReads_UserID",
+                table: "NotificationReads",
+                column: "UserID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_TargetRole_CreatedAt",
+                table: "Notifications",
+                columns: new[] { "TargetRole", "CreatedAt" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PreviousSchools_StudentID",
                 table: "PreviousSchools",
                 column: "StudentID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_QuarterGradeSubmissions_StudentID_SubjectID_AcademicYearID_TermID",
+                name: "IX_QuarterGradeSubmissions_StudentID_SubjectID_AcademicYearID_~",
                 table: "QuarterGradeSubmissions",
                 columns: new[] { "StudentID", "SubjectID", "AcademicYearID", "TermID" },
                 unique: true);
@@ -944,8 +1013,7 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "IX_ResultApprovals_AllResultID",
                 table: "ResultApprovals",
                 column: "AllResultID",
-                unique: true,
-                filter: "[AllResultID] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_RoleClaims_RoleId",
@@ -961,8 +1029,7 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "IX_StudentAllResults_StudentID_SubjectID_TermID_AcademicYearID",
                 table: "StudentAllResults",
                 columns: new[] { "StudentID", "SubjectID", "TermID", "AcademicYearID" },
-                unique: true,
-                filter: "[StudentID] IS NOT NULL AND [SubjectID] IS NOT NULL AND [TermID] IS NOT NULL AND [AcademicYearID] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_StudentAllResults_SubjectID",
@@ -983,8 +1050,7 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "IX_StudentCompetencyStatuses_StudentID_CompetencyID",
                 table: "StudentCompetencyStatuses",
                 columns: new[] { "StudentID", "CompetencyID" },
-                unique: true,
-                filter: "[StudentID] IS NOT NULL AND [CompetencyID] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_StudentPromotions_FromAcademicYearID",
@@ -1012,6 +1078,11 @@ namespace GradeManagementSystem.Repository.Migrations
                 column: "CurrentAcademicYearID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Students_DepartmentID",
+                table: "Students",
+                column: "DepartmentID");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Students_MajorID",
                 table: "Students",
                 column: "MajorID");
@@ -1026,8 +1097,7 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "IX_Students_UserID",
                 table: "Students",
                 column: "UserID",
-                unique: true,
-                filter: "[UserID] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_StudentSubjectTermResults_AcademicYearID",
@@ -1035,11 +1105,10 @@ namespace GradeManagementSystem.Repository.Migrations
                 column: "AcademicYearID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StudentSubjectTermResults_StudentID_SubjectID_TermID_AcademicYearID",
+                name: "IX_StudentSubjectTermResults_StudentID_SubjectID_TermID_Academ~",
                 table: "StudentSubjectTermResults",
                 columns: new[] { "StudentID", "SubjectID", "TermID", "AcademicYearID" },
-                unique: true,
-                filter: "[StudentID] IS NOT NULL AND [SubjectID] IS NOT NULL AND [TermID] IS NOT NULL AND [AcademicYearID] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_StudentSubjectTermResults_SubjectID",
@@ -1086,8 +1155,7 @@ namespace GradeManagementSystem.Repository.Migrations
                 name: "IX_Teachers_UserID",
                 table: "Teachers",
                 column: "UserID",
-                unique: true,
-                filter: "[UserID] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Terms_AcademicYearID",
@@ -1121,6 +1189,9 @@ namespace GradeManagementSystem.Repository.Migrations
 
             migrationBuilder.DropTable(
                 name: "Guardians");
+
+            migrationBuilder.DropTable(
+                name: "NotificationReads");
 
             migrationBuilder.DropTable(
                 name: "PreviousSchools");
@@ -1160,6 +1231,9 @@ namespace GradeManagementSystem.Repository.Migrations
 
             migrationBuilder.DropTable(
                 name: "StudentCompetencyStatuses");
+
+            migrationBuilder.DropTable(
+                name: "Notifications");
 
             migrationBuilder.DropTable(
                 name: "StudentAllResults");

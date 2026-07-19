@@ -33,7 +33,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
 
             builder.Property(ar => ar.GeneratedAt)
                 .IsRequired()
-                .HasDefaultValueSql("GETDATE()");
+                .HasDefaultValueSql("NOW()");
 
             builder.HasOne(ar => ar.Student)
                 .WithMany(s => s.AllResults)

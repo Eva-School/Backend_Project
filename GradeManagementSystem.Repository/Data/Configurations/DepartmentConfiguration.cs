@@ -30,7 +30,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
 
             builder.Property(d => d.CreatedAt)
                 .IsRequired()
-                .HasDefaultValueSql("GETDATE()");
+                .HasDefaultValueSql("NOW()");
 
             builder.HasIndex(d => d.DepartmentName).IsUnique();
 

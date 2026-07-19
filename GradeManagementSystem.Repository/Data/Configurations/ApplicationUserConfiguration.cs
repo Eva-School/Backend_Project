@@ -43,7 +43,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
 
             builder.Property(u => u.CreatedAt)
                 .IsRequired()
-                .HasDefaultValueSql("GETDATE()");
+                .HasDefaultValueSql("NOW()");
 
             // Foreign Key to Role
             builder.Property(u => u.RoleId)

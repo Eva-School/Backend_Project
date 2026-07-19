@@ -19,7 +19,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
 
             builder.Property(ta => ta.AssignedAt)
                 .IsRequired()
-                .HasDefaultValueSql("GETDATE()");
+                .HasDefaultValueSql("NOW()");
 
             builder.Property(ta => ta.IsActive)
                 .IsRequired()

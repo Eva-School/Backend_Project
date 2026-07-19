@@ -21,9 +21,11 @@ namespace GradeManagementSystem.Api
 
             // Add services to the container.
 
-            builder.Services.AddDbContext<GradeDbContext>
-                (options => options.UseSqlServer
-                (builder.Configuration.GetConnectionString("DefaultConnection")));
+            var rawConnStr = builder.Configuration.GetConnectionString("DefaultConnection") ?? "";
+            var postgresConnStr = ParseConnectionString(rawConnStr);
+
+            builder.Services.AddDbContext<GradeDbContext>(options =>
+                options.UseNpgsql(postgresConnStr));
 
             builder.Services.AddControllers();
 
@@ -174,6 +176,27 @@ namespace GradeManagementSystem.Api
             app.MapControllers();
 
             app.Run();
+        }
+
+        private static string ParseConnectionString(string connectionString)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+                return connectionString;
+
+            if (connectionString.StartsWith("postgres://") || connectionString.StartsWith("postgresql://"))
+            {
+                var uri = new Uri(connectionString);
+                var userInfo = uri.UserInfo.Split(':');
+                var user = userInfo[0];
+                var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+                var host = uri.Host;
+                var port = uri.Port > 0 ? uri.Port : 5432;
+                var database = uri.AbsolutePath.TrimStart('/');
+
+                return $"Host={host};Port={port};Database={database};Username={user};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
+            }
+
+            return connectionString;
         }
     }
 }

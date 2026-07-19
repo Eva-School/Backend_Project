@@ -14,7 +14,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
 
             builder.Property(x => x.SubmittedAt)
                 .IsRequired()
-                .HasDefaultValueSql("GETDATE()");
+                .HasDefaultValueSql("NOW()");
 
             builder.HasIndex(x => new { x.StudentID, x.SubjectID, x.AcademicYearID, x.TermID })
                 .IsUnique();

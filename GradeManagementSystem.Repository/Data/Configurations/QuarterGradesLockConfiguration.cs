@@ -14,7 +14,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
 
             builder.Property(x => x.LockedAt)
                 .IsRequired()
-                .HasDefaultValueSql("GETDATE()");
+                .HasDefaultValueSql("NOW()");
 
             builder.Property(x => x.LockedBy);
         }

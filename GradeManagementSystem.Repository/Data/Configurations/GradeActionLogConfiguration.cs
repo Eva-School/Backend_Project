@@ -18,7 +18,7 @@ namespace GradeManagementSystem.Repository.Data.Configurations
 
             builder.Property(x => x.Timestamp)
                 .IsRequired()
-                .HasDefaultValueSql("GETDATE()");
+                .HasDefaultValueSql("NOW()");
 
             builder.Property(x => x.BeforeFinalScore)
                 .HasPrecision(18, 2);
