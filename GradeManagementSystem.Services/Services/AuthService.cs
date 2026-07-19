@@ -64,8 +64,8 @@ namespace GradeManagementSystem.Services.Services
             var refreshToken = GenerateRefreshToken();
 
             user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(Convert.ToDouble(_configuration["Jwt:RefreshTokenExpirationDays"]));
-            user.LastLoginAt = DateTime.Now;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(Convert.ToDouble(_configuration["Jwt:RefreshTokenExpirationDays"]));
+            user.LastLoginAt = DateTime.UtcNow;
 
             await _userManager.UpdateAsync(user);
 
@@ -144,7 +144,7 @@ namespace GradeManagementSystem.Services.Services
                 ?? throw new InvalidOperationException("JWT signing key is not configured.");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expires = DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:DurationInMinutes"]));
+            var expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["Jwt:DurationInMinutes"]));
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
@@ -242,7 +242,7 @@ namespace GradeManagementSystem.Services.Services
                     PhoneNumber = cleanPhone,
                     RoleId = role.RoleId,
                     IsActive = true,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 var result = await _userManager.CreateAsync(user, password);
