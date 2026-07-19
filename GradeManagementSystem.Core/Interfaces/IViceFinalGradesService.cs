@@ -6,7 +6,7 @@ namespace GradeManagementSystem.Core.Interfaces
 {
     public interface IViceFinalGradesService
     {
-        Task<ViceFinalStudentsTableResponseDto?> GetFinalStudentsTableAsync(string level, int semester, string department, int? classId);
+        Task<ViceFinalStudentsTableResponseDto?> GetFinalStudentsTableAsync(string level, int semester, string department, int? classId, int subjectId);
 
         Task<int> UpsertFinalGradesBulkAsync(ViceUpsertFinalGradesRequestDTO request);
 

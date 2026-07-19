@@ -209,10 +209,17 @@ namespace GradeManagementSystem.Services.Services
                             studentIds.Contains(r.StudentID.Value) && (r.TermID == firstTermId || r.TermID == secondTermId))
                 .ToListAsync();
 
+            var allResults = await _context.StudentAllResults
+                .Where(r => r.SubjectID == subjectId && r.AcademicYearID == assignment.AcademicYearId && r.StudentID.HasValue &&
+                            studentIds.Contains(r.StudentID.Value) && (r.TermID == firstTermId || r.TermID == secondTermId))
+                .ToListAsync();
+
             return students.Select(student =>
             {
                 var first = results.FirstOrDefault(r => r.StudentID == student.StudentId && r.TermID == firstTermId);
                 var second = results.FirstOrDefault(r => r.StudentID == student.StudentId && r.TermID == secondTermId);
+                var firstAll = allResults.FirstOrDefault(r => r.StudentID == student.StudentId && r.TermID == firstTermId);
+                var secondAll = allResults.FirstOrDefault(r => r.StudentID == student.StudentId && r.TermID == secondTermId);
                 return new TeacherStudentGradeDto
                 {
                     StudentId = student.StudentId,
@@ -223,7 +230,7 @@ namespace GradeManagementSystem.Services.Services
                     Q2 = first?.Quarter2Score,
                     Q3 = second?.Quarter3Score,
                     Q4 = second?.Quarter4Score,
-                    FinalGrade = second?.FinalExamScore ?? first?.FinalExamScore,
+                    FinalGrade = secondAll?.FinalSubjectScore ?? firstAll?.FinalSubjectScore,
                     MaxQ1 = subject.MaxQuarterQ1Score ?? subject.MaxQuarterScore,
                     MaxQ2 = subject.MaxQuarterQ2Score ?? subject.MaxQuarterScore,
                     MaxQ3 = subject.MaxQuarterQ3Score ?? subject.MaxQuarterScore,

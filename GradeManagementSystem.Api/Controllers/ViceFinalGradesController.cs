@@ -26,9 +26,14 @@ namespace GradeManagementSystem.Api.Controllers
             [FromQuery] string level,
             [FromQuery] int semester,
             [FromQuery] string department,
-            [FromQuery] int? classId)
+            [FromQuery] int? classId,
+            [FromQuery] int subjectId)
         {
-            var res = await _viceFinalGradesService.GetFinalStudentsTableAsync(level, semester, department, classId);
+            if (subjectId <= 0)
+            {
+                return BadRequest(new { message = "subjectId is required and must be greater than 0" });
+            }
+            var res = await _viceFinalGradesService.GetFinalStudentsTableAsync(level, semester, department, classId, subjectId);
             if (res == null)
             {
                 return NotFound(new { message = "Final grades not found" });

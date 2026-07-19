@@ -41,6 +41,10 @@ namespace GradeManagementSystem.Core.DTOs.Vice
         [Range(1, int.MaxValue)]
         public int ClassId { get; set; }
 
+        [Required]
+        [Range(1, int.MaxValue)]
+        public int SubjectId { get; set; }
+
         [Required, MinLength(1)]
         public List<ViceUpsertFinalGradeRequestRowDto> Grades { get; set; } = new();
     }
@@ -57,6 +61,10 @@ namespace GradeManagementSystem.Core.DTOs.Vice
         public string Department { get; set; } = string.Empty;
 
         public int? ClassId { get; set; }
+
+        [Required]
+        [Range(1, int.MaxValue)]
+        public int SubjectId { get; set; }
     }
 
     public class ViceFinalApproveRequestDTO
@@ -71,6 +79,10 @@ namespace GradeManagementSystem.Core.DTOs.Vice
         public string Department { get; set; } = string.Empty;
 
         public string? ClassId { get; set; }
+
+        [Required]
+        [Range(1, int.MaxValue)]
+        public int SubjectId { get; set; }
     }
 
     public class ViceFinalGradeHistoryItemDto

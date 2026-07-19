@@ -159,11 +159,32 @@ namespace GradeManagementSystem.Services.Services
 
         public async Task<object> RegisterTeacherAsync(TeacherRegisterRequest request)
         {
-            // 1. Generate Username and Password
-            // Generate username from FullName: firstName.lastName + random number
-            string baseUsername = $"{request.FullName.FirstName.ToLower()}.{request.FullName.LastName.ToLower()}".Replace(" ", "");
-            string username = baseUsername + RandomNumberGenerator.GetInt32(100, 1000);
-            string password = GenerateRandomPassword();
+            // 1. Resolve or Generate Username and Password
+            string username;
+            if (!string.IsNullOrWhiteSpace(request.Username))
+            {
+                username = request.Username.Trim();
+                var userByName = await _userManager.FindByNameAsync(username);
+                if (userByName != null)
+                {
+                    return new { success = false, message = "Username is already taken" };
+                }
+            }
+            else
+            {
+                string baseUsername = $"{request.FullName.FirstName.ToLower()}.{request.FullName.LastName.ToLower()}".Replace(" ", "");
+                username = baseUsername + RandomNumberGenerator.GetInt32(100, 1000);
+                int retries = 5;
+                while (await _userManager.FindByNameAsync(username) != null && retries > 0)
+                {
+                    username = baseUsername + RandomNumberGenerator.GetInt32(100, 1000);
+                    retries--;
+                }
+            }
+
+            string password = !string.IsNullOrWhiteSpace(request.Password) 
+                ? request.Password 
+                : GenerateRandomPassword();
 
             var existingUser = await _userManager.FindByEmailAsync(request.Email);
             if (existingUser != null)
@@ -183,7 +204,7 @@ namespace GradeManagementSystem.Services.Services
             var deptStr = request.Department?.Trim() ?? "";
             var department = await _context.Departments.FirstOrDefaultAsync(d =>
                 d.DepartmentName.ToLower() == deptStr.ToLower() ||
-                d.Description.ToLower().Contains(deptStr.ToLower()) ||
+                d.Description.Contains(deptStr) ||
                 d.DepartmentID.ToString() == deptStr)
                 ?? await _context.Departments.FirstOrDefaultAsync(d => d.IsActive)
                 ?? await _context.Departments.FirstOrDefaultAsync();

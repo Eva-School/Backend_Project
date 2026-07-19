@@ -22,6 +22,10 @@ namespace GradeManagementSystem.Core.DTOs.Teacher
         [RegularExpression(@"^\d+$", ErrorMessage = "Phone number must be digits only")]
         public string Phone { get; set; } = string.Empty;
 
+        public string? Username { get; set; }
+
+        public string? Password { get; set; }
+
         [Required]
         public FullNameDto FullName { get; set; } = new();
     }

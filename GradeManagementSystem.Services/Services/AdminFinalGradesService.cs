@@ -60,8 +60,9 @@ namespace GradeManagementSystem.Services.Services
                 return null;
             }
 
-            var subjectId = await ResolvePrimarySubjectIdAsync(academicYear.AcademicYearID);
-            if (subjectId == null)
+            var subjectExists = await _context.Subjects
+                .AnyAsync(s => s.SubjectID == request.SubjectId && s.IsActive && s.AcademicYearID == academicYear.AcademicYearID);
+            if (!subjectExists)
             {
                 return null;
             }
@@ -75,7 +76,7 @@ namespace GradeManagementSystem.Services.Services
 
             IQueryable<StudentAllResults> rowsQuery = _context.StudentAllResults
                 .Where(ar =>
-                    ar.SubjectID == subjectId.Value &&
+                    ar.SubjectID == request.SubjectId &&
                     ar.TermID == termId.Value &&
                     ar.AcademicYearID == academicYear.AcademicYearID &&
                     ar.StudentID.HasValue)
@@ -127,7 +128,7 @@ namespace GradeManagementSystem.Services.Services
                     ActorUserID = null,
                     ActorName = "Admin",
                     StudentID = row.StudentID,
-                    SubjectID = subjectId.Value,
+                    SubjectID = request.SubjectId,
                     AcademicYearID = academicYear.AcademicYearID,
                     DepartmentID = dept.DepartmentID,
                     ClassID = row.Student?.ClassID,
@@ -141,16 +142,6 @@ namespace GradeManagementSystem.Services.Services
 
             await _context.SaveChangesAsync();
             return "Grades locked successfully";
-        }
-
-        private async Task<int?> ResolvePrimarySubjectIdAsync(int academicYearId)
-        {
-            return await _context.Subjects
-                .AsNoTracking()
-                .Where(s => s.IsActive && s.AcademicYearID == academicYearId)
-                .OrderBy(s => s.SubjectID)
-                .Select(s => (int?)s.SubjectID)
-                .FirstOrDefaultAsync();
         }
 
         private async Task<int?> ResolveTermIdAsync(int academicYearId, int semester)

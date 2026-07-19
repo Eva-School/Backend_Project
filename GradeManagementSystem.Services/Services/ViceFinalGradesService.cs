@@ -20,7 +20,7 @@ namespace GradeManagementSystem.Services.Services
             _context = context;
         }
 
-        public async Task<ViceFinalStudentsTableResponseDto?> GetFinalStudentsTableAsync(string level, int semester, string department, int? classId)
+        public async Task<ViceFinalStudentsTableResponseDto?> GetFinalStudentsTableAsync(string level, int semester, string department, int? classId, int subjectId)
         {
             if (!Enum.TryParse<EducationStage>(level, true, out var stage))
             {
@@ -48,13 +48,7 @@ namespace GradeManagementSystem.Services.Services
                 return null;
             }
 
-            var subjectId = await ResolvePrimarySubjectIdAsync(academicYear.AcademicYearID);
-            if (subjectId == null)
-            {
-                return null;
-            }
-
-            var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectID == subjectId.Value);
+            var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectID == subjectId && s.IsActive && s.AcademicYearID == academicYear.AcademicYearID);
             if (subject == null)
             {
                 return null;
@@ -97,7 +91,7 @@ namespace GradeManagementSystem.Services.Services
             var allResults = await _context.StudentAllResults
                 .AsNoTracking()
                 .Where(ar =>
-                    ar.SubjectID == subjectId.Value &&
+                    ar.SubjectID == subjectId &&
                     ar.TermID == termId.Value &&
                     ar.AcademicYearID == academicYear.AcademicYearID &&
                     ar.StudentID.HasValue &&
@@ -165,16 +159,10 @@ namespace GradeManagementSystem.Services.Services
                 return 0;
             }
 
-            var subjectId = await ResolvePrimarySubjectIdAsync(academicYear.AcademicYearID);
-            if (subjectId == null)
-            {
-                return 0;
-            }
-
-            var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectID == subjectId.Value);
+            var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectID == request.SubjectId && s.IsActive && s.AcademicYearID == academicYear.AcademicYearID);
             if (subject == null)
             {
-                return 0;
+                throw new ArgumentException("The selected subject does not exist or does not belong to the selected academic year/stage.");
             }
 
             var cls = await _context.Classes
@@ -232,7 +220,7 @@ namespace GradeManagementSystem.Services.Services
             var existingApproved = await _context.StudentAllResults
                 .AsNoTracking()
                 .Where(ar =>
-                    ar.SubjectID == subjectId.Value &&
+                    ar.SubjectID == request.SubjectId &&
                     ar.TermID == termId.Value &&
                     ar.AcademicYearID == academicYear.AcademicYearID &&
                     ar.StudentID.HasValue &&
@@ -248,7 +236,7 @@ namespace GradeManagementSystem.Services.Services
 
             var existingRows = await _context.StudentAllResults
                 .Where(ar =>
-                    ar.SubjectID == subjectId.Value &&
+                    ar.SubjectID == request.SubjectId &&
                     ar.TermID == termId.Value &&
                     ar.AcademicYearID == academicYear.AcademicYearID &&
                     ar.StudentID.HasValue &&
@@ -270,7 +258,7 @@ namespace GradeManagementSystem.Services.Services
                     row = new StudentAllResults
                     {
                         StudentID = sid,
-                        SubjectID = subjectId.Value,
+                        SubjectID = request.SubjectId,
                         TermID = termId.Value,
                         AcademicYearID = academicYear.AcademicYearID,
                         GeneratedAt = now
@@ -293,7 +281,7 @@ namespace GradeManagementSystem.Services.Services
                     ActorUserID = null,
                     ActorName = "Vice",
                     StudentID = sid,
-                    SubjectID = subjectId.Value,
+                    SubjectID = request.SubjectId,
                     AcademicYearID = academicYear.AcademicYearID,
                     DepartmentID = dept.DepartmentID,
                     ClassID = request.ClassId,
@@ -344,15 +332,16 @@ namespace GradeManagementSystem.Services.Services
                 return false;
             }
 
-            var subjectId = await ResolvePrimarySubjectIdAsync(academicYear.AcademicYearID);
-            if (subjectId == null)
+            var subjectExists = await _context.Subjects
+                .AnyAsync(s => s.SubjectID == request.SubjectId && s.IsActive && s.AcademicYearID == academicYear.AcademicYearID);
+            if (!subjectExists)
             {
                 return false;
             }
 
             IQueryable<StudentAllResults> query = _context.StudentAllResults
                 .Where(ar =>
-                    ar.SubjectID == subjectId.Value &&
+                    ar.SubjectID == request.SubjectId &&
                     ar.TermID == termId.Value &&
                     ar.AcademicYearID == academicYear.AcademicYearID &&
                     ar.StudentID.HasValue)
@@ -406,7 +395,7 @@ namespace GradeManagementSystem.Services.Services
                     ActorUserID = null,
                     ActorName = "Vice",
                     StudentID = sid,
-                    SubjectID = subjectId.Value,
+                    SubjectID = request.SubjectId,
                     AcademicYearID = academicYear.AcademicYearID,
                     DepartmentID = dept.DepartmentID,
                     ClassID = logClassId,
@@ -448,17 +437,6 @@ namespace GradeManagementSystem.Services.Services
                 BeforeScore = l.BeforeFinalScore,
                 AfterScore = l.AfterFinalScore
             }).ToList();
-        }
-
-        private async Task<int?> ResolvePrimarySubjectIdAsync(int academicYearId)
-        {
-            // Deterministic pick: the smallest SubjectID inside the academicYear.
-            return await _context.Subjects
-                .AsNoTracking()
-                .Where(s => s.IsActive && s.AcademicYearID == academicYearId)
-                .OrderBy(s => s.SubjectID)
-                .Select(s => (int?)s.SubjectID)
-                .FirstOrDefaultAsync();
         }
 
         private async Task<int?> ResolveTermIdAsync(int academicYearId, int semester)

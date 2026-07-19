@@ -126,14 +126,23 @@ namespace GradeManagementSystem.Services.Services
                 return null;
             }
 
-            var grades = await _context.StudentSubjectTermResults
-                .Where(r => r.StudentID == contextInfo.Value.StudentId && r.AcademicYearID == contextInfo.Value.AcademicYearId)
+            var grades = await _context.StudentAllResults
+                .Where(r => r.StudentID == contextInfo.Value.StudentId && r.AcademicYearID == contextInfo.Value.AcademicYearId && r.ResultApproval != null && r.ResultApproval.Decision == Decision.Approved)
                 .Include(r => r.Subject)
+                .Select(r => new
+                {
+                    r.Subject.SubjectName,
+                    YourGrade = r.FinalSubjectScore ?? 0,
+                    QuarterGrade = _context.StudentSubjectTermResults
+                        .Where(q => q.StudentID == r.StudentID && q.SubjectID == r.SubjectID && q.TermID == r.TermID && q.AcademicYearID == r.AcademicYearID)
+                        .Select(q => (q.Quarter1Score ?? 0) + (q.Quarter2Score ?? 0) + (q.Quarter3Score ?? 0) + (q.Quarter4Score ?? 0))
+                        .FirstOrDefault()
+                })
                 .Select(r => new StudentGradeItemDto
                 {
-                    Subject = r.Subject.SubjectName,
-                    YourGrade = r.FinalExamScore ?? 0,
-                    QuarterGrade = r.FinalExamScore ?? 0
+                    Subject = r.SubjectName,
+                    YourGrade = r.YourGrade,
+                    QuarterGrade = r.QuarterGrade
                 })
                 .ToListAsync();
 
@@ -188,7 +197,10 @@ namespace GradeManagementSystem.Services.Services
                     r.Quarter2Score,
                     r.Quarter3Score,
                     r.Quarter4Score,
-                    r.FinalExamScore,
+                    FinalExamScore = _context.StudentAllResults
+                        .Where(ar => ar.StudentID == r.StudentID && ar.SubjectID == r.SubjectID && ar.TermID == r.TermID && ar.AcademicYearID == r.AcademicYearID && ar.ResultApproval != null && ar.ResultApproval.Decision == Decision.Approved)
+                        .Select(ar => ar.FinalSubjectScore)
+                        .FirstOrDefault(),
                     r.Subject.MaxQuarterQ1Score,
                     r.Subject.MaxQuarterQ2Score,
                     r.Subject.MaxQuarterQ3Score,
@@ -270,7 +282,10 @@ namespace GradeManagementSystem.Services.Services
                     item.Quarter2Score,
                     item.Quarter3Score,
                     item.Quarter4Score,
-                    item.FinalExamScore,
+                    FinalExamScore = _context.StudentAllResults
+                        .Where(ar => ar.StudentID == item.StudentID && ar.SubjectID == item.SubjectID && ar.TermID == item.TermID && ar.AcademicYearID == item.AcademicYearID && ar.ResultApproval != null && ar.ResultApproval.Decision == Decision.Approved)
+                        .Select(ar => ar.FinalSubjectScore)
+                        .FirstOrDefault(),
                     item.Subject.MaxQuarterQ1Score,
                     item.Subject.MaxQuarterQ2Score,
                     item.Subject.MaxQuarterQ3Score,
