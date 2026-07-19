@@ -180,11 +180,30 @@ namespace GradeManagementSystem.Services.Services
                 return new { success = false, message = "Teacher role is not configured" };
             }
 
-            var department = await _context.Departments.FirstOrDefaultAsync(d => d.DepartmentName == request.Department);
+            var deptStr = request.Department?.Trim() ?? "";
+            var department = await _context.Departments.FirstOrDefaultAsync(d =>
+                d.DepartmentName.ToLower() == deptStr.ToLower() ||
+                d.Description.ToLower().Contains(deptStr.ToLower()) ||
+                d.DepartmentID.ToString() == deptStr)
+                ?? await _context.Departments.FirstOrDefaultAsync(d => d.IsActive)
+                ?? await _context.Departments.FirstOrDefaultAsync();
+
             if (department == null)
             {
-                return new { success = false, message = $"Department '{request.Department}' not found" };
+                department = new Department
+                {
+                    DepartmentName = string.IsNullOrWhiteSpace(deptStr) ? "General" : deptStr,
+                    Description = "General Department",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Departments.Add(department);
+                await _context.SaveChangesAsync();
             }
+
+            var cleanPhone = System.Text.RegularExpressions.Regex.Replace(request.Phone ?? "", @"\D", "");
+            if (cleanPhone.Length < 8) cleanPhone = cleanPhone.PadLeft(8, '0');
+            if (cleanPhone.Length > 15) cleanPhone = cleanPhone.Substring(0, 15);
 
             // Start Transaction to ensure both user and teacher are created or neither
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -199,7 +218,7 @@ namespace GradeManagementSystem.Services.Services
                     MiddleName = request.FullName.MiddleName,
                     LastName = request.FullName.LastName,
                     FullName = $"{request.FullName.FirstName} {(string.IsNullOrEmpty(request.FullName.MiddleName) ? "" : request.FullName.MiddleName + " ")}{request.FullName.LastName}",
-                    PhoneNumber = request.Phone,
+                    PhoneNumber = cleanPhone,
                     RoleId = role.RoleId,
                     IsActive = true,
                     CreatedAt = DateTime.Now
@@ -221,7 +240,7 @@ namespace GradeManagementSystem.Services.Services
                         UserID = user.UserId,
                         HireDate = request.HireDate,
                         DepartmentID = department.DepartmentID,
-                Qualifications = request.Qualifications.Trim(),
+                        Qualifications = request.Qualifications.Trim(),
                         IsActive = true,
                         EmployeeCode = "TCH-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper()
                     };

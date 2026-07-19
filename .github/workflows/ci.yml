@@ -1,18 +1,67 @@
-name: Backend CI
+name: Backend CI / CD
 
+# ────────────────────────────────────────────────────────────────────────────
+# Trigger on every push / PR to the dev branch.
+# Deploy step only runs on direct pushes (not PRs) to keep secrets safe.
+# ────────────────────────────────────────────────────────────────────────────
 on:
   push:
+    branches: [dev]
   pull_request:
+    branches: [dev]
 
 jobs:
-  validate:
+  # ── 1. Continuous Integration ────────────────────────────────────────────────
+  ci:
+    name: 🔨 Build & Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-      - run: dotnet restore GradeManagementSystem.Api.sln
-      - run: dotnet build GradeManagementSystem.Api.sln --no-restore --configuration Release
-      - run: dotnet restore GradeManagementSystem.Tests/GradeManagementSystem.Tests.csproj
-      - run: dotnet test GradeManagementSystem.Tests/GradeManagementSystem.Tests.csproj --no-restore --configuration Release
+
+      - name: Restore dependencies
+        run: dotnet restore GradeManagementSystem.Api.sln
+
+      - name: Build (Release)
+        run: dotnet build GradeManagementSystem.Api.sln --no-restore --configuration Release
+
+      - name: Run tests
+        run: dotnet test GradeManagementSystem.Tests/GradeManagementSystem.Tests.csproj \
+               --no-restore --configuration Release \
+               --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: "**/*.trx"
+
+  # ── 2. Continuous Deployment → Render.com ────────────────────────────────────
+  # Runs only on direct pushes to `dev` (not on PRs).
+  # Render re-builds the Docker image automatically when the deploy hook is hit.
+  #
+  # Required GitHub Secret:
+  #   RENDER_DEPLOY_HOOK_URL  – copy from Render dashboard:
+  #                             Service → Settings → Deploy Hook
+  deploy:
+    name: 🚀 Deploy to Render
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    steps:
+      - name: Trigger Render deploy
+        run: |
+          echo "Triggering Render deploy hook…"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
+          echo "HTTP status: $HTTP_STATUS"
+          if [[ "$HTTP_STATUS" -lt 200 || "$HTTP_STATUS" -ge 300 ]]; then
+            echo "::error::Render deploy hook returned unexpected status $HTTP_STATUS"
+            exit 1
+          fi
+          echo "Deploy triggered successfully ✅"

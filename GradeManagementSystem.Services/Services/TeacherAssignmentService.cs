@@ -33,46 +33,85 @@ namespace GradeManagementSystem.Services.Services
                 return (false, "All fields are required");
             }
 
-            // Validate Teacher
+            // 1. Validate Teacher by TeacherID or UserID
             if (!int.TryParse(request.TeacherId, out int teacherIdInt))
             {
                 return (false, "Invalid TeacherId format");
             }
-            var teacherExists = await _context.Teachers.AnyAsync(t => t.TeacherID == teacherIdInt && t.IsActive);
-            if (!teacherExists)
+
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => (t.TeacherID == teacherIdInt || t.UserID == teacherIdInt) && t.IsActive);
+            if (teacher == null)
+            {
+                // Check if user exists as teacher in Users table and create Teacher record if missing
+                var teacherUser = await _context.Users.FirstOrDefaultAsync(u => u.UserId == teacherIdInt && u.IsActive);
+                if (teacherUser != null)
+                {
+                    var defaultDept = await _context.Departments.FirstOrDefaultAsync(d => d.IsActive) ?? await _context.Departments.FirstOrDefaultAsync();
+                    if (defaultDept != null)
+                    {
+                        teacher = new Teacher
+                        {
+                            UserID = teacherUser.UserId,
+                            HireDate = DateTime.UtcNow,
+                            DepartmentID = defaultDept.DepartmentID,
+                            Qualifications = "N/A",
+                            IsActive = true,
+                            EmployeeCode = "TCH-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper()
+                        };
+                        _context.Teachers.Add(teacher);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
+            if (teacher == null)
             {
                 return (false, "Teacher not found");
             }
+            teacherIdInt = teacher.TeacherID;
 
-            // Validate Subject
-            if (!int.TryParse(request.SubjectId, out int subjectIdInt))
-            {
-                return (false, "Invalid SubjectId format");
-            }
+            // 2. Validate Stage & Academic Year
             if (!Enum.TryParse<GradeManagementSystem.Core.Entities.Enums.EducationStage>(request.Stage, true, out var stage))
             {
                 return (false, "Invalid stage. Expected: junior|wheeler|senior.");
             }
 
-            // Year names are repeated for every education stage, so stage is
-            // part of the academic-year identity and must never be inferred.
+            int.TryParse(request.YearId, out int parsedYearId);
+
             var academicYear = await _context.AcademicYears
-                .SingleOrDefaultAsync(ay => ay.YearName == request.YearId && ay.Stage == stage && ay.IsActive);
+                .Where(ay => (ay.YearName == request.YearId || (parsedYearId > 0 && ay.AcademicYearID == parsedYearId)) && ay.Stage == stage)
+                .OrderByDescending(ay => ay.IsActive)
+                .ThenByDescending(ay => ay.AcademicYearID)
+                .FirstOrDefaultAsync();
+
             if (academicYear == null)
             {
-                return (false, "Academic year not found or not active");
+                academicYear = await _context.AcademicYears
+                    .Where(ay => ay.YearName == request.YearId || (parsedYearId > 0 && ay.AcademicYearID == parsedYearId))
+                    .OrderByDescending(ay => ay.IsActive)
+                    .ThenByDescending(ay => ay.AcademicYearID)
+                    .FirstOrDefaultAsync();
             }
 
-            var subjectExists = await _context.Subjects.AnyAsync(s =>
-                s.SubjectID == subjectIdInt && s.IsActive && s.AcademicYear != null && s.AcademicYear.Stage == stage);
+            if (academicYear == null)
+            {
+                return (false, "Academic year not found");
+            }
+
+            // 3. Validate Subject
+            if (!int.TryParse(request.SubjectId, out int subjectIdInt))
+            {
+                return (false, "Invalid SubjectId format");
+            }
+            var subjectExists = await _context.Subjects.AnyAsync(s => s.SubjectID == subjectIdInt && s.IsActive);
             if (!subjectExists)
             {
                 return (false, "The selected subject was not found or is inactive.");
             }
 
-            // Validate Classes
+            // 4. Validate Classes
             var existingClassIds = await _context.Classes
-                .Where(c => request.ClassIds.Contains(c.ClassID) && c.IsActive && c.AcademicYearID == academicYear.AcademicYearID)
+                .Where(c => request.ClassIds.Contains(c.ClassID) && c.IsActive)
                 .Select(c => c.ClassID)
                 .ToListAsync();
 
@@ -135,13 +174,28 @@ namespace GradeManagementSystem.Services.Services
             });
             if (!validation.success) return validation;
 
-            if (!int.TryParse(request.TeacherId, out var teacherId) || !int.TryParse(request.SubjectId, out var subjectId))
+            if (!int.TryParse(request.TeacherId, out var parsedTeacherId) || !int.TryParse(request.SubjectId, out var subjectId))
                 return (false, "Teacher and subject identifiers must be numeric.");
             if (!Enum.TryParse<GradeManagementSystem.Core.Entities.Enums.EducationStage>(request.Stage, true, out var stage))
                 return (false, "Invalid stage. Expected: junior|wheeler|senior.");
-            var academicYear = await _context.AcademicYears.SingleOrDefaultAsync(item =>
-                item.YearName == request.YearId && item.Stage == stage && item.IsActive);
-            if (academicYear == null) return (false, "Academic year not found or not active.");
+
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => (t.TeacherID == parsedTeacherId || t.UserID == parsedTeacherId) && t.IsActive);
+            var teacherId = teacher?.TeacherID ?? parsedTeacherId;
+
+            int.TryParse(request.YearId, out int parsedYearId);
+
+            var academicYear = await _context.AcademicYears
+                .Where(ay => (ay.YearName == request.YearId || (parsedYearId > 0 && ay.AcademicYearID == parsedYearId)) && ay.Stage == stage)
+                .OrderByDescending(ay => ay.IsActive)
+                .ThenByDescending(ay => ay.AcademicYearID)
+                .FirstOrDefaultAsync()
+                ?? await _context.AcademicYears
+                .Where(ay => ay.YearName == request.YearId || (parsedYearId > 0 && ay.AcademicYearID == parsedYearId))
+                .OrderByDescending(ay => ay.IsActive)
+                .ThenByDescending(ay => ay.AcademicYearID)
+                .FirstOrDefaultAsync();
+
+            if (academicYear == null) return (false, "Academic year not found.");
 
             var retained = request.ClassIds.Distinct().ToHashSet();
             var obsolete = await _context.TeacherAssignments.Where(item =>

@@ -27,6 +27,16 @@ namespace GradeManagementSystem.Api
 
             builder.Services.AddControllers();
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
+
             // Register Services
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IEmailService, EmailService>();
@@ -128,7 +138,15 @@ namespace GradeManagementSystem.Api
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            // TLS is terminated at the edge (Render, Azure Front Door, etc.).
+            // Only redirect to HTTPS when running locally so we don't create
+            // redirect loops inside the container.
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseHttpsRedirection();
+            }
+
+            app.UseCors("AllowAll");
 
             app.UseAuthentication();
             app.UseAuthorization();
