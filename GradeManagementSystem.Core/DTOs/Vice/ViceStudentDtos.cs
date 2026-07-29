@@ -13,6 +13,7 @@ namespace GradeManagementSystem.Core.DTOs.Vice
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
         public string Department { get; set; } = string.Empty;
         public string ClassName { get; set; } = string.Empty;
         public string Year { get; set; } = string.Empty;
@@ -39,6 +40,8 @@ namespace GradeManagementSystem.Core.DTOs.Vice
         [Phone(ErrorMessage = "phone is invalid")]
         public string? Phone { get; set; }
 
+        public string? Address { get; set; }
+
         [Required(ErrorMessage = "department is required")]
         public string Department { get; set; } = string.Empty;
 
@@ -52,5 +55,14 @@ namespace GradeManagementSystem.Core.DTOs.Vice
 
     public class ViceUpdateStudentRequestDTO : ViceCreateStudentRequestDTO
     {
+    }
+
+    public class ViceBulkImportStudentsResponseDTO
+    {
+        public int TotalRows { get; set; }
+        public int SuccessCount { get; set; }
+        public int FailureCount { get; set; }
+        public System.Collections.Generic.List<string> Errors { get; set; } = new System.Collections.Generic.List<string>();
+        public System.Collections.Generic.List<ViceStudentDto> ImportedStudents { get; set; } = new System.Collections.Generic.List<ViceStudentDto>();
     }
 }

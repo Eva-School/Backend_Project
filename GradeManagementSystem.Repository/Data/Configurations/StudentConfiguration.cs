@@ -1,4 +1,4 @@
-﻿using GradeManagementSystem.Core.Entities.Domain;
+using GradeManagementSystem.Core.Entities.Domain;
 using GradeManagementSystem.Core.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -30,6 +30,9 @@ namespace GradeManagementSystem.Repository.Data.Configurations
             builder.Property(s => s.Gender)
                 .IsRequired()
                 .HasConversion<string>();
+
+            builder.Property(s => s.Address)
+                .HasMaxLength(250);
 
             builder.HasOne<ApplicationUser>()
              .WithOne(u => u.Student)

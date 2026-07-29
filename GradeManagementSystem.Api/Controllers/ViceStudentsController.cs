@@ -149,5 +149,29 @@ namespace GradeManagementSystem.Api.Controllers
 
             return Ok(new { message = "Student deleted successfully" });
         }
+
+        [HttpPost("import")]
+        public async Task<IActionResult> ImportStudents(
+            Microsoft.AspNetCore.Http.IFormFile file,
+            [FromQuery] string year = "junior",
+            [FromQuery] string department = "OM",
+            [FromQuery] string? academicYearName = null)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new { message = "Please select an Excel or CSV file to upload." });
+            }
+
+            try
+            {
+                using var stream = file.OpenReadStream();
+                var result = await _viceStudentService.ImportStudentsFromExcelAsync(stream, file.FileName, year, department, academicYearName);
+                return Ok(result);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(new { message = $"Failed to process file: {ex.Message}" });
+            }
+        }
     }
 }

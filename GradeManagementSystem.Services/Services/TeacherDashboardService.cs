@@ -339,5 +339,284 @@ namespace GradeManagementSystem.Services.Services
             if (!score.HasValue || !maximum.HasValue || maximum.Value <= 0) return;
             if (score.Value > maximum.Value) throw new ArgumentException($"{quarter} cannot exceed the configured maximum of {maximum.Value}.");
         }
+
+        #region Quiz Operations
+
+        public async Task<List<QuizDto>> GetQuizzesAsync(int userId, int classId, int subjectId)
+        {
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserID == userId && t.IsActive);
+            if (teacher == null) return new List<QuizDto>();
+
+            var assignment = await _context.TeacherAssignments
+                .Where(ta => ta.TeacherID == teacher.TeacherID && ta.IsActive && ta.ClassID == classId &&
+                             ta.SubjectID == subjectId && ta.AcademicYearID.HasValue && ta.AcademicYear.IsActive)
+                .Select(ta => new { AcademicYearId = ta.AcademicYearID!.Value })
+                .FirstOrDefaultAsync();
+
+            if (assignment == null) return new List<QuizDto>();
+
+            var quizzes = await _context.Quizzes
+                .Where(q => q.ClassID == classId && q.SubjectID == subjectId && q.AcademicYearID == assignment.AcademicYearId)
+                .OrderByDescending(q => q.QuizDate)
+                .ThenByDescending(q => q.CreatedAt)
+                .Select(q => new
+                {
+                    Quiz = q,
+                    GradedCount = q.QuizGrades.Count(g => g.Score.HasValue)
+                })
+                .ToListAsync();
+
+            var totalStudents = await _context.Students
+                .CountAsync(s => s.ClassID == classId && s.CurrentAcademicYearID == assignment.AcademicYearId);
+
+            return quizzes.Select(q => new QuizDto
+            {
+                QuizId = q.Quiz.QuizID,
+                Title = q.Quiz.Title,
+                MaxScore = q.Quiz.MaxScore,
+                QuizDate = q.Quiz.QuizDate,
+                ClassId = q.Quiz.ClassID,
+                SubjectId = q.Quiz.SubjectID,
+                AcademicYearId = q.Quiz.AcademicYearID,
+                Description = q.Quiz.Description,
+                CreatedAt = q.Quiz.CreatedAt,
+                GradedStudentsCount = q.GradedCount,
+                TotalStudentsCount = totalStudents
+            }).ToList();
+        }
+
+        public async Task<QuizDetailDto?> GetQuizByIdAsync(int userId, int quizId)
+        {
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserID == userId && t.IsActive);
+            if (teacher == null) return null;
+
+            var quiz = await _context.Quizzes
+                .Include(q => q.QuizGrades)
+                .FirstOrDefaultAsync(q => q.QuizID == quizId);
+
+            if (quiz == null) return null;
+
+            var isAssigned = await _context.TeacherAssignments
+                .AnyAsync(ta => ta.TeacherID == teacher.TeacherID && ta.IsActive && ta.ClassID == quiz.ClassID && ta.SubjectID == quiz.SubjectID);
+            if (!isAssigned) return null;
+
+            var students = await _context.Students
+                .Where(s => s.ClassID == quiz.ClassID && s.CurrentAcademicYearID == quiz.AcademicYearID && s.UserID.HasValue)
+                .Join(_context.Users, s => s.UserID!.Value, u => u.UserId, (s, u) => new { Student = s, FullName = u.FullName })
+                .OrderBy(s => s.FullName)
+                .ToListAsync();
+
+            var grades = students.Select(st =>
+            {
+                var qg = quiz.QuizGrades.FirstOrDefault(g => g.StudentID == st.Student.StudentID);
+                return new StudentQuizGradeDto
+                {
+                    StudentId = st.Student.StudentID,
+                    StudentName = st.FullName,
+                    StudentCode = st.Student.NationalID,
+                    Score = qg?.Score,
+                    Notes = qg?.Notes,
+                    GradedAt = qg?.GradedAt
+                };
+            }).ToList();
+
+            var totalStudents = students.Count;
+            var gradedCount = grades.Count(g => g.Score.HasValue);
+
+            return new QuizDetailDto
+            {
+                Quiz = new QuizDto
+                {
+                    QuizId = quiz.QuizID,
+                    Title = quiz.Title,
+                    MaxScore = quiz.MaxScore,
+                    QuizDate = quiz.QuizDate,
+                    ClassId = quiz.ClassID,
+                    SubjectId = quiz.SubjectID,
+                    AcademicYearId = quiz.AcademicYearID,
+                    Description = quiz.Description,
+                    CreatedAt = quiz.CreatedAt,
+                    GradedStudentsCount = gradedCount,
+                    TotalStudentsCount = totalStudents
+                },
+                Grades = grades
+            };
+        }
+
+        public async Task<QuizDto?> CreateQuizAsync(int userId, CreateQuizRequestDto dto)
+        {
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserID == userId && t.IsActive);
+            if (teacher == null) return null;
+
+            var assignment = await _context.TeacherAssignments
+                .Where(ta => ta.TeacherID == teacher.TeacherID && ta.IsActive && ta.ClassID == dto.ClassId &&
+                             ta.SubjectID == dto.SubjectId && ta.AcademicYearID.HasValue && ta.AcademicYear.IsActive)
+                .Select(ta => new { AcademicYearId = ta.AcademicYearID!.Value })
+                .FirstOrDefaultAsync();
+
+            if (assignment == null)
+                throw new ArgumentException("Teacher is not assigned to this class and subject.");
+
+            var now = DateTime.UtcNow;
+            var quiz = new Quiz
+            {
+                Title = dto.Title,
+                MaxScore = dto.MaxScore,
+                QuizDate = dto.QuizDate?.ToUniversalTime() ?? now,
+                ClassID = dto.ClassId,
+                SubjectID = dto.SubjectId,
+                AcademicYearID = assignment.AcademicYearId,
+                CreatedByTeacherID = teacher.TeacherID,
+                Description = dto.Description,
+                CreatedAt = now
+            };
+
+            _context.Quizzes.Add(quiz);
+            await _context.SaveChangesAsync();
+
+            // Populate initial empty grade records for enrolled students
+            var enrolledStudentIds = await _context.Students
+                .Where(s => s.ClassID == dto.ClassId && s.CurrentAcademicYearID == assignment.AcademicYearId)
+                .Select(s => s.StudentID)
+                .ToListAsync();
+
+            foreach (var studentId in enrolledStudentIds)
+            {
+                _context.QuizGrades.Add(new QuizGrade
+                {
+                    QuizID = quiz.QuizID,
+                    StudentID = studentId,
+                    Score = null,
+                    Notes = null,
+                    GradedAt = now
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new QuizDto
+            {
+                QuizId = quiz.QuizID,
+                Title = quiz.Title,
+                MaxScore = quiz.MaxScore,
+                QuizDate = quiz.QuizDate,
+                ClassId = quiz.ClassID,
+                SubjectId = quiz.SubjectID,
+                AcademicYearId = quiz.AcademicYearID,
+                Description = quiz.Description,
+                CreatedAt = quiz.CreatedAt,
+                GradedStudentsCount = 0,
+                TotalStudentsCount = enrolledStudentIds.Count
+            };
+        }
+
+        public async Task<QuizDto?> UpdateQuizAsync(int userId, int quizId, UpdateQuizRequestDto dto)
+        {
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserID == userId && t.IsActive);
+            if (teacher == null) return null;
+
+            var quiz = await _context.Quizzes.FirstOrDefaultAsync(q => q.QuizID == quizId);
+            if (quiz == null) return null;
+
+            var isAssigned = await _context.TeacherAssignments
+                .AnyAsync(ta => ta.TeacherID == teacher.TeacherID && ta.IsActive && ta.ClassID == quiz.ClassID && ta.SubjectID == quiz.SubjectID);
+            if (!isAssigned) throw new InvalidOperationException("Unauthorized to modify this quiz.");
+
+            quiz.Title = dto.Title;
+            quiz.MaxScore = dto.MaxScore;
+            if (dto.QuizDate.HasValue) quiz.QuizDate = dto.QuizDate.Value.ToUniversalTime();
+            quiz.Description = dto.Description;
+
+            await _context.SaveChangesAsync();
+
+            var gradedCount = await _context.QuizGrades.CountAsync(g => g.QuizID == quizId && g.Score.HasValue);
+            var totalStudents = await _context.Students.CountAsync(s => s.ClassID == quiz.ClassID && s.CurrentAcademicYearID == quiz.AcademicYearID);
+
+            return new QuizDto
+            {
+                QuizId = quiz.QuizID,
+                Title = quiz.Title,
+                MaxScore = quiz.MaxScore,
+                QuizDate = quiz.QuizDate,
+                ClassId = quiz.ClassID,
+                SubjectId = quiz.SubjectID,
+                AcademicYearId = quiz.AcademicYearID,
+                Description = quiz.Description,
+                CreatedAt = quiz.CreatedAt,
+                GradedStudentsCount = gradedCount,
+                TotalStudentsCount = totalStudents
+            };
+        }
+
+        public async Task<bool> DeleteQuizAsync(int userId, int quizId)
+        {
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserID == userId && t.IsActive);
+            if (teacher == null) return false;
+
+            var quiz = await _context.Quizzes.FirstOrDefaultAsync(q => q.QuizID == quizId);
+            if (quiz == null) return false;
+
+            var isAssigned = await _context.TeacherAssignments
+                .AnyAsync(ta => ta.TeacherID == teacher.TeacherID && ta.IsActive && ta.ClassID == quiz.ClassID && ta.SubjectID == quiz.SubjectID);
+            if (!isAssigned) throw new InvalidOperationException("Unauthorized to delete this quiz.");
+
+            _context.Quizzes.Remove(quiz);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<QuizDetailDto?> UpsertQuizGradesAsync(int userId, int quizId, UpsertQuizGradesRequestDto dto)
+        {
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserID == userId && t.IsActive);
+            if (teacher == null) return null;
+
+            var quiz = await _context.Quizzes.FirstOrDefaultAsync(q => q.QuizID == quizId);
+            if (quiz == null) return null;
+
+            var isAssigned = await _context.TeacherAssignments
+                .AnyAsync(ta => ta.TeacherID == teacher.TeacherID && ta.IsActive && ta.ClassID == quiz.ClassID && ta.SubjectID == quiz.SubjectID);
+            if (!isAssigned) throw new InvalidOperationException("Unauthorized to grade this quiz.");
+
+            var now = DateTime.UtcNow;
+
+            foreach (var gradeInput in dto.Grades)
+            {
+                if (gradeInput.Score.HasValue)
+                {
+                    if (gradeInput.Score.Value < 0)
+                        throw new ArgumentException($"Score for student {gradeInput.StudentId} cannot be negative.");
+
+                    if (gradeInput.Score.Value > quiz.MaxScore)
+                        throw new ArgumentException($"Score ({gradeInput.Score.Value}) cannot exceed quiz maximum score ({quiz.MaxScore}).");
+                }
+
+                var qg = await _context.QuizGrades
+                    .FirstOrDefaultAsync(g => g.QuizID == quizId && g.StudentID == gradeInput.StudentId);
+
+                if (qg == null)
+                {
+                    _context.QuizGrades.Add(new QuizGrade
+                    {
+                        QuizID = quizId,
+                        StudentID = gradeInput.StudentId,
+                        Score = gradeInput.Score,
+                        Notes = gradeInput.Notes,
+                        GradedAt = now
+                    });
+                }
+                else
+                {
+                    qg.Score = gradeInput.Score;
+                    qg.Notes = gradeInput.Notes;
+                    qg.GradedAt = now;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return await GetQuizByIdAsync(userId, quizId);
+        }
+
+        #endregion
     }
 }

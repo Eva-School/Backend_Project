@@ -1,4 +1,4 @@
-﻿using GradeManagementSystem.Core.Entities.Enums;
+using GradeManagementSystem.Core.Entities.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -38,6 +38,78 @@ namespace GradeManagementSystem.Core.Entities.Domain
 
         [Required]
         public Gender Gender { get; set; }
+
+        [StringLength(250)]
+        public string? Address { get; set; }
+
+        [StringLength(50)]
+        public string? StudentCode { get; set; }
+
+        [StringLength(250)]
+        public string? NameArabic { get; set; }
+
+        [StringLength(250)]
+        public string? NameEnglish { get; set; }
+
+        [StringLength(100)]
+        public string? Nationality { get; set; }
+
+        public DateTime? DateOfBirth { get; set; }
+
+        [StringLength(150)]
+        public string? PlaceOfBirth { get; set; }
+
+        [StringLength(250)]
+        public string? AddressArabic { get; set; }
+
+        [StringLength(250)]
+        public string? Email { get; set; }
+
+        [StringLength(100)]
+        public string? Governorate { get; set; }
+
+        [StringLength(200)]
+        public string? FatherName { get; set; }
+
+        [StringLength(30)]
+        public string? FatherPhone { get; set; }
+
+        [StringLength(150)]
+        public string? FatherProfession { get; set; }
+
+        [StringLength(200)]
+        public string? MotherName { get; set; }
+
+        [StringLength(30)]
+        public string? MotherPhone { get; set; }
+
+        [StringLength(150)]
+        public string? MotherProfession { get; set; }
+
+        [StringLength(200)]
+        public string? RelativeName { get; set; }
+
+        [StringLength(30)]
+        public string? RelativePhone { get; set; }
+
+        [StringLength(50)]
+        public string? Religion { get; set; }
+
+        [StringLength(30)]
+        public string? StudentPhone { get; set; }
+
+        [StringLength(500)]
+        public string? HealthProblems { get; set; }
+
+        [StringLength(500)]
+        public string? MissingDocumentation { get; set; }
+
+        public bool DocumentsDelivered { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? PreparatoryGrade { get; set; }
+
+        public bool FeesPaid { get; set; }
 
         // Navigation Properties
         public virtual AcademicYear? CurrentAcademicYear { get; set; }

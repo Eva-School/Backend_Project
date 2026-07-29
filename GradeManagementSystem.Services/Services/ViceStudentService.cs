@@ -1,3 +1,4 @@
+using ExcelDataReader;
 using GradeManagementSystem.Core.DTOs.Vice;
 using GradeManagementSystem.Core.Entities.Domain;
 using GradeManagementSystem.Core.Entities.Enums;
@@ -8,6 +9,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -89,6 +92,7 @@ namespace GradeManagementSystem.Services.Services
                         LastName = x.User.LastName,
                         Email = x.User.Email ?? string.Empty,
                         Phone = x.User.PhoneNumber ?? string.Empty,
+                        Address = x.Student.Address ?? string.Empty,
                         Department = dept.DepartmentName,
                         ClassName = string.Empty,
                         Year = year.ToLowerInvariant(),
@@ -128,6 +132,7 @@ namespace GradeManagementSystem.Services.Services
                         LastName = x.User.LastName,
                         Email = x.User.Email ?? string.Empty,
                         Phone = x.User.PhoneNumber ?? string.Empty,
+                        Address = x.Student.Address ?? string.Empty,
                         Department = dept.DepartmentName,
                         ClassName = x.Class != null ? x.Class.ClassName : string.Empty,
                         Year = year.ToLowerInvariant(),
@@ -161,6 +166,7 @@ namespace GradeManagementSystem.Services.Services
                     LastName = x.User.LastName,
                     Email = x.User.Email ?? string.Empty,
                     Phone = x.User.PhoneNumber ?? string.Empty,
+                    Address = x.Student.Address ?? string.Empty,
                     Department = dept.DepartmentName,
                     ClassName = x.Class.ClassName,
                     Year = year.ToLowerInvariant(),
@@ -277,7 +283,8 @@ namespace GradeManagementSystem.Services.Services
                 DepartmentID = dept.DepartmentID,
                 ClassID = cls?.ClassID,
                 Status = "Active",
-                Gender = Gender.Male
+                Gender = Gender.Male,
+                Address = request.Address
             };
 
             _context.Students.Add(student);
@@ -307,6 +314,7 @@ namespace GradeManagementSystem.Services.Services
                 LastName = user.LastName,
                 Email = user.Email ?? string.Empty,
                 Phone = user.PhoneNumber ?? string.Empty,
+                Address = student.Address ?? string.Empty,
                 Department = dept.DepartmentName,
                 ClassName = cls?.ClassName ?? string.Empty,
                 Year = request.Year.ToLowerInvariant(),
@@ -401,6 +409,7 @@ namespace GradeManagementSystem.Services.Services
             }
 
             student.DepartmentID = dept.DepartmentID;
+            student.Address = request.Address;
             if (request.ClassId.HasValue)
             {
                 var cls = await _context.Classes.FirstOrDefaultAsync(c =>
@@ -431,6 +440,7 @@ namespace GradeManagementSystem.Services.Services
                 LastName = user.LastName,
                 Email = user.Email ?? string.Empty,
                 Phone = user.PhoneNumber ?? string.Empty,
+                Address = student.Address ?? string.Empty,
                 Department = request.Department,
                 ClassName = (await _context.Classes.FirstOrDefaultAsync(c => c.ClassID == student.ClassID))?.ClassName ?? string.Empty,
                 Year = request.Year.ToLowerInvariant(),
@@ -507,6 +517,7 @@ namespace GradeManagementSystem.Services.Services
                 ClassId = student.ClassID ?? 0,
                 StudentCode = student.NationalID ?? string.Empty,
                 Name = user?.FullName ?? string.Empty,
+                Address = student.Address ?? string.Empty,
                 Department = department?.DepartmentName ?? string.Empty,
                 ClassName = assignedClass?.ClassName ?? string.Empty,
                 Year = academicYear?.Stage.ToString().ToLowerInvariant() ?? string.Empty
@@ -580,6 +591,298 @@ namespace GradeManagementSystem.Services.Services
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
             return students.Count;
+        }
+
+        public async Task<ViceBulkImportStudentsResponseDTO> ImportStudentsFromExcelAsync(Stream stream, string fileName, string defaultYear, string defaultDepartment, string? defaultAcademicYearName = null)
+        {
+            var response = new ViceBulkImportStudentsResponseDTO();
+
+            if (stream == null || stream.Length == 0)
+            {
+                response.Errors.Add("File is empty or not provided.");
+                return response;
+            }
+
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+            using var reader = fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                ? ExcelReaderFactory.CreateCsvReader(stream)
+                : ExcelReaderFactory.CreateReader(stream);
+
+            var dataset = reader.AsDataSet();
+            if (dataset.Tables.Count == 0)
+            {
+                response.Errors.Add("No worksheets or data tables found in the file.");
+                return response;
+            }
+
+            var table = dataset.Tables[0];
+            var role = await _roleManager.Roles.FirstOrDefaultAsync(r => r.RoleName == "Student");
+            if (role == null)
+            {
+                response.Errors.Add("Student role not found in the database.");
+                return response;
+            }
+
+            var departments = await _context.Departments.Where(d => d.IsActive).ToListAsync();
+            var academicYears = await _context.AcademicYears.ToListAsync();
+            var classes = await _context.Classes.Where(c => c.IsActive).ToListAsync();
+
+            var defaultDeptObj = departments.FirstOrDefault(d => d.DepartmentName.Equals(defaultDepartment.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            string GetVal(DataRow r, int idx)
+            {
+                if (idx >= 0 && idx < r.ItemArray.Length)
+                {
+                    return r[idx]?.ToString()?.Trim() ?? string.Empty;
+                }
+                return string.Empty;
+            }
+
+            bool IsYes(string val)
+            {
+                if (string.IsNullOrWhiteSpace(val)) return false;
+                val = val.Trim().ToLowerInvariant();
+                return val == "yes" || val == "نعم" || val == "true" || val == "1" || val == "y";
+            }
+
+            int rowIndex = 0;
+            foreach (DataRow row in table.Rows)
+            {
+                rowIndex++;
+
+                string col0 = GetVal(row, 0);
+                string studentCode = GetVal(row, 1);
+                string nationalId = GetVal(row, 2);
+                string nameAr = GetVal(row, 3);
+                string nameEn = GetVal(row, 4);
+                string genderStr = GetVal(row, 5);
+                string nationality = GetVal(row, 6);
+                string dobStr = GetVal(row, 7);
+                string pob = GetVal(row, 8);
+                string addressEn = GetVal(row, 9);
+                string addressAr = GetVal(row, 10);
+                string emailStr = GetVal(row, 11);
+                string governorate = GetVal(row, 12);
+                string fatherName = GetVal(row, 13);
+                string motherName = GetVal(row, 14);
+                string relativeName = GetVal(row, 15);
+                string fatherPhone = GetVal(row, 16);
+                string motherPhone = GetVal(row, 17);
+                string studentPhone = GetVal(row, 18);
+                string relativePhone = GetVal(row, 19);
+                string religion = GetVal(row, 20);
+                string fatherProfession = GetVal(row, 21);
+                string motherProfession = GetVal(row, 22);
+                string healthProblems = GetVal(row, 23);
+                string missingDocs = GetVal(row, 24);
+                string docsDeliveredStr = GetVal(row, 25);
+                string prepGradeStr = GetVal(row, 26);
+                string feesPaidStr = GetVal(row, 27);
+                string classNameStr = GetVal(row, 28);
+                string schoolYearStr = GetVal(row, 29);
+                string statusStr = GetVal(row, 30);
+
+                if (string.IsNullOrWhiteSpace(studentCode) && string.IsNullOrWhiteSpace(nationalId) && string.IsNullOrWhiteSpace(nameAr) && string.IsNullOrWhiteSpace(nameEn))
+                {
+                    continue;
+                }
+
+                if (studentCode.Equals("COOD", StringComparison.OrdinalIgnoreCase) || studentCode.Contains("كود") ||
+                    nationalId.Equals("ID", StringComparison.OrdinalIgnoreCase) || nationalId.Contains("الرقم") ||
+                    nameAr.Contains("اسم الطالب") || nameEn.Contains("Student Name"))
+                {
+                    continue;
+                }
+
+                response.TotalRows++;
+
+                try
+                {
+                    var code = !string.IsNullOrWhiteSpace(studentCode) ? studentCode : (!string.IsNullOrWhiteSpace(nationalId) ? nationalId : Guid.NewGuid().ToString("N")[..8]);
+                    var natId = !string.IsNullOrWhiteSpace(nationalId) ? nationalId : code;
+
+                    var fullName = !string.IsNullOrWhiteSpace(nameAr) ? nameAr : nameEn;
+                    if (string.IsNullOrWhiteSpace(fullName))
+                    {
+                        fullName = $"Student {code}";
+                    }
+
+                    var nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var firstName = nameParts.Length > 0 ? nameParts[0] : "Student";
+                    var lastName = nameParts.Length > 1 ? nameParts[^1] : code;
+                    var middleName = nameParts.Length > 2 ? string.Join(" ", nameParts[1..^1]) : string.Empty;
+
+                    var stage = EducationStage.Junior;
+                    if (!string.IsNullOrWhiteSpace(schoolYearStr))
+                    {
+                        if (schoolYearStr.Contains("الأول") || schoolYearStr.Contains("1") || schoolYearStr.Equals("junior", StringComparison.OrdinalIgnoreCase))
+                            stage = EducationStage.Junior;
+                        else if (schoolYearStr.Contains("الثاني") || schoolYearStr.Contains("2") || schoolYearStr.Equals("wheeler", StringComparison.OrdinalIgnoreCase))
+                            stage = EducationStage.Wheeler;
+                        else if (schoolYearStr.Contains("الثالث") || schoolYearStr.Contains("3") || schoolYearStr.Equals("senior", StringComparison.OrdinalIgnoreCase))
+                            stage = EducationStage.Senior;
+                    }
+                    else if (Enum.TryParse<EducationStage>(defaultYear, true, out var parsedDefaultStage))
+                    {
+                        stage = parsedDefaultStage;
+                    }
+
+                    AcademicYear? ay = null;
+                    if (!string.IsNullOrWhiteSpace(defaultAcademicYearName))
+                    {
+                        ay = academicYears.FirstOrDefault(a => a.Stage == stage && a.YearName.Equals(defaultAcademicYearName.Trim(), StringComparison.OrdinalIgnoreCase));
+                    }
+                    if (ay == null)
+                    {
+                        ay = academicYears.Where(a => a.Stage == stage && a.IsActive).OrderByDescending(a => a.AcademicYearID).FirstOrDefault()
+                             ?? academicYears.Where(a => a.Stage == stage).OrderByDescending(a => a.AcademicYearID).FirstOrDefault();
+                    }
+
+                    if (ay == null)
+                    {
+                        response.FailureCount++;
+                        response.Errors.Add($"Row {rowIndex}: Academic year for stage {stage} not found.");
+                        continue;
+                    }
+
+                    var dept = defaultDeptObj;
+
+                    Class? cls = null;
+                    if (!string.IsNullOrWhiteSpace(classNameStr) && dept != null)
+                    {
+                        cls = classes.FirstOrDefault(c => c.AcademicYearID == ay.AcademicYearID && c.DepartmentID == dept.DepartmentID && c.ClassName.Equals(classNameStr.Trim(), StringComparison.OrdinalIgnoreCase));
+                    }
+
+                    if (await _context.Students.AnyAsync(s => s.NationalID == code || s.StudentCode == code))
+                    {
+                        response.FailureCount++;
+                        response.Errors.Add($"Row {rowIndex}: Student code/ID '{code}' already exists in database.");
+                        continue;
+                    }
+
+                    var email = !string.IsNullOrWhiteSpace(emailStr) ? emailStr.Trim() : $"{code}@school.edu.eg";
+                    var normalizedEmail = email.ToUpperInvariant();
+
+                    if (await _context.Users.AnyAsync(u => u.NormalizedEmail == normalizedEmail))
+                    {
+                        email = $"{code}.{new Random().Next(100, 999)}@school.edu.eg";
+                    }
+
+                    var username = $"{firstName}.{lastName}".Replace(" ", "").ToLowerInvariant() + "-" + new Random().Next(100, 999);
+
+                    var gender = Gender.Male;
+                    if (!string.IsNullOrWhiteSpace(genderStr))
+                    {
+                        if (genderStr.Contains("أنثى") || genderStr.Equals("female", StringComparison.OrdinalIgnoreCase) || genderStr.Equals("f", StringComparison.OrdinalIgnoreCase))
+                        {
+                            gender = Gender.Female;
+                        }
+                    }
+
+                    DateTime? dob = null;
+                    if (DateTime.TryParse(dobStr, out var parsedDob))
+                    {
+                        dob = parsedDob;
+                    }
+
+                    decimal? prepGrade = null;
+                    if (decimal.TryParse(prepGradeStr, out var parsedGrade))
+                    {
+                        prepGrade = parsedGrade;
+                    }
+
+                    var user = new ApplicationUser
+                    {
+                        UserName = username,
+                        Email = email,
+                        FirstName = firstName,
+                        MiddleName = middleName,
+                        LastName = lastName,
+                        FullName = fullName,
+                        PhoneNumber = !string.IsNullOrWhiteSpace(studentPhone) ? studentPhone : fatherPhone,
+                        RoleId = role.RoleId,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow,
+                        EmailConfirmed = true
+                    };
+
+                    var createdUser = await _userManager.CreateAsync(user, "Student@123");
+                    if (!createdUser.Succeeded)
+                    {
+                        response.FailureCount++;
+                        var errStr = string.Join("; ", createdUser.Errors.Select(e => e.Description));
+                        response.Errors.Add($"Row {rowIndex}: Failed to create user account ({errStr}).");
+                        continue;
+                    }
+
+                    var student = new Student
+                    {
+                        UserID = user.UserId,
+                        NationalID = natId,
+                        StudentCode = code,
+                        EnrollmentDate = DateTime.UtcNow.Date,
+                        CurrentAcademicYearID = ay.AcademicYearID,
+                        DepartmentID = dept?.DepartmentID,
+                        ClassID = cls?.ClassID,
+                        Status = !string.IsNullOrWhiteSpace(statusStr) ? statusStr : "Active",
+                        Gender = gender,
+                        Address = !string.IsNullOrWhiteSpace(addressEn) ? addressEn : addressAr,
+                        NameArabic = nameAr,
+                        NameEnglish = nameEn,
+                        Nationality = nationality,
+                        DateOfBirth = dob,
+                        PlaceOfBirth = pob,
+                        AddressArabic = addressAr,
+                        Email = email,
+                        Governorate = governorate,
+                        FatherName = fatherName,
+                        FatherPhone = fatherPhone,
+                        FatherProfession = fatherProfession,
+                        MotherName = motherName,
+                        MotherPhone = motherPhone,
+                        MotherProfession = motherProfession,
+                        RelativeName = relativeName,
+                        RelativePhone = relativePhone,
+                        Religion = religion,
+                        StudentPhone = studentPhone,
+                        HealthProblems = healthProblems,
+                        MissingDocumentation = missingDocs,
+                        DocumentsDelivered = IsYes(docsDeliveredStr),
+                        PreparatoryGrade = prepGrade,
+                        FeesPaid = IsYes(feesPaidStr)
+                    };
+
+                    _context.Students.Add(student);
+                    await _context.SaveChangesAsync();
+
+                    response.SuccessCount++;
+                    response.ImportedStudents.Add(new ViceStudentDto
+                    {
+                        Id = student.StudentID.ToString(),
+                        ClassId = cls?.ClassID ?? 0,
+                        StudentCode = code,
+                        Name = fullName,
+                        FirstName = firstName,
+                        MiddleName = middleName ?? string.Empty,
+                        LastName = lastName,
+                        Email = email,
+                        Phone = studentPhone,
+                        Address = student.Address ?? string.Empty,
+                        Department = dept?.DepartmentName ?? defaultDepartment,
+                        ClassName = cls?.ClassName ?? string.Empty,
+                        Year = stage.ToString().ToLowerInvariant(),
+                        AcademicYearName = ay.YearName
+                    });
+                }
+                catch (Exception ex)
+                {
+                    response.FailureCount++;
+                    response.Errors.Add($"Row {rowIndex}: Unexpected error ({ex.Message}).");
+                }
+            }
+
+            return response;
         }
     }
 }

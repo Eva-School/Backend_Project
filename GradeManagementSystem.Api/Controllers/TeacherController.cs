@@ -159,6 +159,179 @@ namespace GradeManagementSystem.Api.Controllers
             }
         }
 
+        #region Quiz Endpoints
+
+        [HttpGet("quizzes")]
+        public async Task<IActionResult> GetQuizzes([FromQuery] int classId, [FromQuery] int subjectId)
+        {
+            if (classId <= 0 || subjectId <= 0)
+            {
+                return BadRequest(new { message = "classId and subjectId must be > 0." });
+            }
+
+            if (!TryGetUserId(out var userId))
+            {
+                return Unauthorized(new { message = "Unauthenticated" });
+            }
+
+            var quizzes = await _teacherDashboardService.GetQuizzesAsync(userId, classId, subjectId);
+            return Ok(quizzes);
+        }
+
+        [HttpGet("quizzes/{quizId}")]
+        public async Task<IActionResult> GetQuizById(int quizId)
+        {
+            if (quizId <= 0)
+            {
+                return BadRequest(new { message = "quizId must be > 0." });
+            }
+
+            if (!TryGetUserId(out var userId))
+            {
+                return Unauthorized(new { message = "Unauthenticated" });
+            }
+
+            var quizDetail = await _teacherDashboardService.GetQuizByIdAsync(userId, quizId);
+            if (quizDetail == null)
+            {
+                return NotFound(new { message = "Quiz not found or unauthorized access." });
+            }
+
+            return Ok(quizDetail);
+        }
+
+        [HttpPost("quizzes")]
+        public async Task<IActionResult> CreateQuiz([FromBody] CreateQuizRequestDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!TryGetUserId(out var userId))
+            {
+                return Unauthorized(new { message = "Unauthenticated" });
+            }
+
+            try
+            {
+                var quiz = await _teacherDashboardService.CreateQuizAsync(userId, request);
+                if (quiz == null)
+                {
+                    return BadRequest(new { message = "Could not create quiz. Teacher assignment not found." });
+                }
+
+                return CreatedAtAction(nameof(GetQuizById), new { quizId = quiz.QuizId }, quiz);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("quizzes/{quizId}")]
+        public async Task<IActionResult> UpdateQuiz(int quizId, [FromBody] UpdateQuizRequestDto request)
+        {
+            if (quizId <= 0)
+            {
+                return BadRequest(new { message = "quizId must be > 0." });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!TryGetUserId(out var userId))
+            {
+                return Unauthorized(new { message = "Unauthenticated" });
+            }
+
+            try
+            {
+                var quiz = await _teacherDashboardService.UpdateQuizAsync(userId, quizId, request);
+                if (quiz == null)
+                {
+                    return NotFound(new { message = "Quiz not found." });
+                }
+
+                return Ok(quiz);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("quizzes/{quizId}")]
+        public async Task<IActionResult> DeleteQuiz(int quizId)
+        {
+            if (quizId <= 0)
+            {
+                return BadRequest(new { message = "quizId must be > 0." });
+            }
+
+            if (!TryGetUserId(out var userId))
+            {
+                return Unauthorized(new { message = "Unauthenticated" });
+            }
+
+            try
+            {
+                var deleted = await _teacherDashboardService.DeleteQuizAsync(userId, quizId);
+                if (!deleted)
+                {
+                    return NotFound(new { message = "Quiz not found." });
+                }
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("quizzes/{quizId}/grades")]
+        public async Task<IActionResult> UpsertQuizGrades(int quizId, [FromBody] UpsertQuizGradesRequestDto request)
+        {
+            if (quizId <= 0)
+            {
+                return BadRequest(new { message = "quizId must be > 0." });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!TryGetUserId(out var userId))
+            {
+                return Unauthorized(new { message = "Unauthenticated" });
+            }
+
+            try
+            {
+                var result = await _teacherDashboardService.UpsertQuizGradesAsync(userId, quizId, request);
+                if (result == null)
+                {
+                    return NotFound(new { message = "Quiz not found or unauthorized access." });
+                }
+
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+            }
+        }
+
+        #endregion
+
         private bool TryGetUserId(out int userId)
         {
             userId = 0;

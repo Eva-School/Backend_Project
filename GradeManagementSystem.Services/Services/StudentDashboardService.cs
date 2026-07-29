@@ -54,7 +54,8 @@ namespace GradeManagementSystem.Services.Services
                 .Where(s => s.UserID == userId)
                 .Select(s => new
                 {
-                    YearStage = s.CurrentAcademicYear != null ? s.CurrentAcademicYear.Stage.ToString() : string.Empty
+                    YearStage = s.CurrentAcademicYear != null ? s.CurrentAcademicYear.Stage.ToString() : string.Empty,
+                    Address = s.Address ?? string.Empty
                 })
                 .FirstOrDefaultAsync();
 
@@ -69,7 +70,8 @@ namespace GradeManagementSystem.Services.Services
                 Name = await _context.Users.Where(u => u.UserId == userId).Select(u => u.FirstName).FirstOrDefaultAsync() ?? "Student",
                 Year = yearLabel,
                 Subtitle = "Your academic overview",
-                CurrentAcademicYear = student.YearStage.ToLowerInvariant()
+                CurrentAcademicYear = student.YearStage.ToLowerInvariant(),
+                Address = student.Address
             };
         }
 

@@ -41,6 +41,8 @@ namespace GradeManagementSystem.Repository.Data
         public DbSet<GradeActionLog> GradeActionLogs { get; set; }
         public DbSet<AppNotification> Notifications { get; set; }
         public DbSet<AppNotificationRead> NotificationReads { get; set; }
+        public DbSet<Quiz> Quizzes { get; set; }
+        public DbSet<QuizGrade> QuizGrades { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -75,6 +77,8 @@ namespace GradeManagementSystem.Repository.Data
             modelBuilder.ApplyConfiguration(new GradeActionLogConfiguration());
             modelBuilder.ApplyConfiguration(new AppNotificationConfiguration());
             modelBuilder.ApplyConfiguration(new AppNotificationReadConfiguration());
+            modelBuilder.ApplyConfiguration(new QuizConfiguration());
+            modelBuilder.ApplyConfiguration(new QuizGradeConfiguration());
 
             // Configure Identity table names
             modelBuilder.Entity<Microsoft.AspNetCore.Identity.IdentityUserRole<int>>()

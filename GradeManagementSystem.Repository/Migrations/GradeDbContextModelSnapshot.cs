@@ -638,6 +638,10 @@ namespace GradeManagementSystem.Repository.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("StudentID"));
 
+                    b.Property<string>("Address")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
                     b.Property<int?>("ClassID")
                         .HasColumnType("integer");
 
@@ -1940,6 +1944,91 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.Navigation("AllResults");
 
                     b.Navigation("SubjectTermResults");
+                });
+
+            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.Quiz", b =>
+                {
+                    b.Property<int>("QuizID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("QuizID"));
+
+                    b.Property<int>("AcademicYearID")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ClassID")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedByTeacherID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal>("MaxScore")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("QuizDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SubjectID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("QuizID");
+
+                    b.HasIndex("AcademicYearID");
+
+                    b.HasIndex("ClassID");
+
+                    b.HasIndex("CreatedByTeacherID");
+
+                    b.HasIndex("SubjectID");
+
+                    b.ToTable("Quizzes", (string)null);
+                });
+
+            modelBuilder.Entity("GradeManagementSystem.Core.Entities.Domain.QuizGrade", b =>
+                {
+                    b.Property<int>("QuizGradeID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("QuizGradeID"));
+
+                    b.Property<DateTime>("GradedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<int>("QuizID")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("Score")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("StudentID")
+                        .HasColumnType("integer");
+
+                    b.HasKey("QuizGradeID");
+
+                    b.HasIndex("StudentID");
+
+                    b.HasIndex("QuizID", "StudentID")
+                        .IsUnique();
+
+                    b.ToTable("QuizGrades", (string)null);
                 });
 
             modelBuilder.Entity("GradeManagementSystem.Core.Entities.Identity.ApplicationRole", b =>
