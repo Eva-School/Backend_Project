@@ -43,4 +43,4 @@ services:
         value: "true"
 
       - key: RUN_SEED
-        value: "false"
+        value: "true"
