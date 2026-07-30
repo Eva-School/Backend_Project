@@ -6,7 +6,7 @@ databases:
     databaseName: neondb
     user: neondb_owner
     plan: free
-    region: oregon
+    region: frankfurt
 
 services:
   - type: web
@@ -15,7 +15,7 @@ services:
     dockerContext: .
     dockerfilePath: Dockerfile
     plan: free
-    region: oregon
+    region: frankfurt
     branch: dev
 
     envVars:
