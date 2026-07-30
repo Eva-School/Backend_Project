@@ -162,10 +162,11 @@ namespace GradeManagementSystem.Api
                 db.Database.Migrate();
             }
 
-            // Seed data is development-only. Set RUN_SEED=false to skip it locally.
+            // Seed data runs if RUN_SEED=true or during Development mode
             var runSeed = Environment.GetEnvironmentVariable("RUN_SEED");
-            if (app.Environment.IsDevelopment() &&
-                !string.Equals(runSeed, "false", StringComparison.OrdinalIgnoreCase))
+            var shouldRunSeed = string.Equals(runSeed, "true", StringComparison.OrdinalIgnoreCase) ||
+                (app.Environment.IsDevelopment() && !string.Equals(runSeed, "false", StringComparison.OrdinalIgnoreCase));
+            if (shouldRunSeed)
             {
                 LocalTestAccountsSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
                 StudentDashboardSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
