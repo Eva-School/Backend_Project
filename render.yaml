@@ -1,45 +1,35 @@
 # render.yaml – Infrastructure as Code for Render.com
-# This file auto-provisions the backend Web Service when you connect
-# the repo to Render.  https://render.com/docs/infrastructure-as-code
-#
-# HOW TO USE
-# ----------
-# 1. Push this file to your GitHub repo (on the `dev` branch).
-# 2. In Render dashboard → New → Blueprint → connect this repo.
-# 3. Set the environment variables marked sync:false in the Render dashboard
-#    (or pass them via Render's "Environment Groups").
+version: "1"
+
+databases:
+  - name: grade-postgres-db
+    databaseName: neondb
+    user: neondb_owner
+    plan: free
+    region: oregon
 
 services:
   - type: web
     name: grade-management-api
-    runtime: docker
+    env: docker
     dockerContext: .
-    dockerfilePath: ./Dockerfile
-    plan: free                      # free tier
-    region: oregon                  # closest free region; change if needed
-    branch: dev                     # auto-deploy on pushes to dev
+    dockerfilePath: Dockerfile
+    plan: free
+    region: oregon
+    branch: dev
 
-    # ── Health check (optional but recommended) ──────────────────────────────
-    # The /api/health endpoint is a lightweight 200 OK ping.
-    # Remove this block if you haven't added the endpoint yet.
-    # healthCheckPath: /api/health
-
-    # ── Environment variables ─────────────────────────────────────────────────
     envVars:
-      # ASP.NET Core environment
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
 
-      # *** Set these in Render dashboard → Environment → Add Secret File ***
-      # Connection string to Azure SQL (copy from Azure portal):
       - key: ConnectionStrings__DefaultConnection
-        sync: false          # must be set manually in Render dashboard
+        fromDatabase:
+          name: grade-postgres-db
+          property: connectionString
 
-      # JWT signing key (keep it secret!)
       - key: Jwt__Key
-        sync: false
+        generateValue: true
 
-      # JWT issuer / audience (non-secret, can be hard-coded)
       - key: Jwt__Issuer
         value: GradeManagementSystem
       - key: Jwt__Audience
@@ -49,24 +39,8 @@ services:
       - key: Jwt__RefreshTokenExpirationDays
         value: "7"
 
-      # Run EF Core migrations on every cold-start (safe for idempotent migrations)
       - key: APPLY_MIGRATIONS
         value: "true"
 
-      # Disable seed data in production (real users are in the DB)
       - key: RUN_SEED
         value: "false"
-
-      # SMTP (optional – only needed if email features are used in production)
-      - key: SmtpSettings__Host
-        value: smtp.gmail.com
-      - key: SmtpSettings__Port
-        value: "587"
-      - key: SmtpSettings__EnableSsl
-        value: "true"
-      - key: SmtpSettings__UserName
-        sync: false
-      - key: SmtpSettings__Password
-        sync: false
-      - key: SmtpSettings__From
-        sync: false
