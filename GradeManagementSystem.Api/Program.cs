@@ -19,7 +19,11 @@ namespace GradeManagementSystem.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            // Disable FileSystemWatcher reloadOnChange on Linux containers to avoid inotify instance limits on shared hosts
+            foreach (var source in builder.Configuration.Sources.OfType<Microsoft.Extensions.Configuration.FileConfigurationSource>())
+            {
+                source.ReloadOnChange = false;
+            }
 
             var rawConnStr = builder.Configuration.GetConnectionString("DefaultConnection") ?? "";
             var postgresConnStr = ParseConnectionString(rawConnStr);

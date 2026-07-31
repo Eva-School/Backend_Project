@@ -44,3 +44,6 @@ services:
 
       - key: RUN_SEED
         value: "true"
+
+      - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
+        value: "false"
