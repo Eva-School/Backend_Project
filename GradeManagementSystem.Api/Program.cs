@@ -162,7 +162,14 @@ namespace GradeManagementSystem.Api
                 db.Database.Migrate();
             }
 
-            // Seed data runs if RUN_SEED=true or during Development mode
+            // AdminSeed always runs (all environments) to guarantee at least one
+            // Admin account exists. Credentials come from env vars:
+            //   ADMIN_USERNAME  (default: admin)
+            //   ADMIN_PASSWORD  (default: Admin@123456!)
+            //   ADMIN_EMAIL     (default: admin@grading-system.local)
+            AdminSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
+
+            // The remaining seeds are for local development / staging only.
             var runSeed = Environment.GetEnvironmentVariable("RUN_SEED");
             var shouldRunSeed = string.Equals(runSeed, "true", StringComparison.OrdinalIgnoreCase) ||
                 (app.Environment.IsDevelopment() && !string.Equals(runSeed, "false", StringComparison.OrdinalIgnoreCase));

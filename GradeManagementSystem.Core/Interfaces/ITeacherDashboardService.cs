@@ -12,5 +12,13 @@ namespace GradeManagementSystem.Core.Interfaces
         Task<List<ClassResponseDTO>?> GetClassesAsync(int userId, string year, string subject);
         Task<List<TeacherStudentGradeDto>?> GetStudentsAsync(int userId, int classId, int subjectId);
         Task<TeacherGradeUpdateResponseDto?> UpsertGradeAsync(int userId, TeacherGradeUpdateRequestDTO request);
+
+        // Quiz Methods
+        Task<List<QuizDto>> GetQuizzesAsync(int userId, int classId, int subjectId);
+        Task<QuizDetailDto?> GetQuizByIdAsync(int userId, int quizId);
+        Task<QuizDto?> CreateQuizAsync(int userId, CreateQuizRequestDto dto);
+        Task<QuizDto?> UpdateQuizAsync(int userId, int quizId, UpdateQuizRequestDto dto);
+        Task<bool> DeleteQuizAsync(int userId, int quizId);
+        Task<QuizDetailDto?> UpsertQuizGradesAsync(int userId, int quizId, UpsertQuizGradesRequestDto dto);
     }
 }

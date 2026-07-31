@@ -14,6 +14,7 @@ namespace GradeManagementSystem.Core.DTOs.Student
         public string Year { get; set; } = string.Empty;
         public string Subtitle { get; set; } = "Your academic overview";
         public string CurrentAcademicYear { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
     }
 
     public class StudentYearOptionDto
