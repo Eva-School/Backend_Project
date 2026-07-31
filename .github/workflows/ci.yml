@@ -30,9 +30,7 @@ jobs:
         run: dotnet build GradeManagementSystem.Api.sln --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test GradeManagementSystem.Tests/GradeManagementSystem.Tests.csproj \
-               --no-restore --configuration Release \
-               --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test GradeManagementSystem.Tests/GradeManagementSystem.Tests.csproj --no-restore --configuration Release --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload test results
         if: always()
