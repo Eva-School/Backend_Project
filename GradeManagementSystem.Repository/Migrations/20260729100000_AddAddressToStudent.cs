@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace GradeManagementSystem.Repository.Migrations
 {
-    /// <inheritdoc />
+    [Microsoft.EntityFrameworkCore.Infrastructure.DbContext(typeof(GradeManagementSystem.Repository.Data.GradeDbContext))]
+    [Microsoft.EntityFrameworkCore.Migrations.Migration("20260729100000_AddAddressToStudent")]
     public partial class AddAddressToStudent : Migration
     {
         /// <inheritdoc />
