@@ -28,9 +28,9 @@ namespace GradeManagementSystem.Api.Controllers
         // 23 GET /api/vice/grades/dashboard
         [HttpGet("grades/dashboard")]
         [Authorize(Roles = "Student Affairs,StudentAffairs,Admin")]
-        public async Task<IActionResult> GetGradesDashboard()
+        public async Task<IActionResult> GetGradesDashboard([FromQuery] string? academicYear)
         {
-            var dashboard = await _viceDashboardService.GetGradesDashboardAsync();
+            var dashboard = await _viceDashboardService.GetGradesDashboardAsync(academicYear);
             return Ok(dashboard);
         }
     }

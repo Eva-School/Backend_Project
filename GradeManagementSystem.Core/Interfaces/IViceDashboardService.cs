@@ -7,7 +7,7 @@ namespace GradeManagementSystem.Core.Interfaces
     public interface IViceDashboardService
     {
         Task<IEnumerable<ViceDashboardCardDto>> GetCardsAsync();
-        Task<ViceGradesDashboardResponseDto> GetGradesDashboardAsync();
+        Task<ViceGradesDashboardResponseDto> GetGradesDashboardAsync(string? academicYear = null);
     }
 }
 
