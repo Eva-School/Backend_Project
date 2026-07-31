@@ -53,6 +53,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     steps:
       - name: Trigger Render deploy
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
         run: |
           echo "Triggering Render deploy hook…"
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
