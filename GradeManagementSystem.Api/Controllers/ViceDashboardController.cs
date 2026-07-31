@@ -30,8 +30,15 @@ namespace GradeManagementSystem.Api.Controllers
         [Authorize(Roles = "Student Affairs,StudentAffairs,Admin")]
         public async Task<IActionResult> GetGradesDashboard([FromQuery] string? academicYear)
         {
-            var dashboard = await _viceDashboardService.GetGradesDashboardAsync(academicYear);
-            return Ok(dashboard);
+            try
+            {
+                var dashboard = await _viceDashboardService.GetGradesDashboardAsync(academicYear);
+                return Ok(dashboard);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Failed to load grades dashboard.", detail = ex.Message });
+            }
         }
     }
 }

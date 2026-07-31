@@ -1,4 +1,5 @@
 using GradeManagementSystem.Core.Entities.Domain;
+using GradeManagementSystem.Core.Entities.Enums;
 using GradeManagementSystem.Repository.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,9 +36,11 @@ namespace GradeManagementSystem.Api.Controllers
             AcademicYear? academicYear = null;
             if (!string.IsNullOrWhiteSpace(cleanYear))
             {
+                var lowerYear = cleanYear.ToLower();
+                Enum.TryParse<EducationStage>(cleanYear, true, out var parsedStage);
+
                 academicYear = await _context.AcademicYears.AsNoTracking()
-                    .FirstOrDefaultAsync(a => a.YearName.Equals(cleanYear, StringComparison.OrdinalIgnoreCase) ||
-                                              a.Stage.ToString().Equals(cleanYear, StringComparison.OrdinalIgnoreCase));
+                    .FirstOrDefaultAsync(a => a.YearName.ToLower() == lowerYear || a.Stage == parsedStage);
             }
 
             if (academicYear == null)

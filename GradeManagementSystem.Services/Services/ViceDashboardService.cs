@@ -1,5 +1,6 @@
 using GradeManagementSystem.Core.DTOs.Vice;
 using GradeManagementSystem.Core.Entities.Domain;
+using GradeManagementSystem.Core.Entities.Enums;
 using GradeManagementSystem.Core.Interfaces;
 using GradeManagementSystem.Repository.Data;
 using Microsoft.EntityFrameworkCore;
@@ -57,9 +58,19 @@ namespace GradeManagementSystem.Services.Services
             if (!string.IsNullOrWhiteSpace(academicYear))
             {
                 var cleanYear = academicYear.Trim();
-                yearEntity = await _context.AcademicYears.AsNoTracking()
-                    .FirstOrDefaultAsync(y => y.YearName.Equals(cleanYear, StringComparison.OrdinalIgnoreCase) ||
-                                              y.Stage.ToString().Equals(cleanYear, StringComparison.OrdinalIgnoreCase));
+                var lowerYear = cleanYear.ToLower();
+                var stageParsed = Enum.TryParse<EducationStage>(cleanYear, true, out var parsedStage);
+
+                if (stageParsed)
+                {
+                    yearEntity = await _context.AcademicYears.AsNoTracking()
+                        .FirstOrDefaultAsync(y => y.YearName.ToLower() == lowerYear || y.Stage == parsedStage);
+                }
+                else
+                {
+                    yearEntity = await _context.AcademicYears.AsNoTracking()
+                        .FirstOrDefaultAsync(y => y.YearName.ToLower() == lowerYear);
+                }
             }
 
             if (yearEntity == null)
