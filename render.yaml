@@ -47,3 +47,12 @@ services:
 
       - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
         value: "false"
+
+      - key: ADMIN_USERNAME
+        value: "admin"
+
+      - key: ADMIN_PASSWORD
+        generateValue: true
+
+      - key: ADMIN_EMAIL
+        value: "admin@grading-system.local"
