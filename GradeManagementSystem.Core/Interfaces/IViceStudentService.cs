@@ -15,6 +15,6 @@ namespace GradeManagementSystem.Core.Interfaces
         Task<bool> DeleteStudentAsync(string studentId);
         Task<ViceStudentDto?> AssignStudentToClassAsync(string studentId, int? classId);
         Task<int> PromoteStudentsAsync(VicePromoteStudentsRequestDTO request, int? requestedBy);
-        Task<ViceBulkImportStudentsResponseDTO> ImportStudentsFromExcelAsync(System.IO.Stream fileStream, string fileName, string defaultYear, string defaultDepartment, string? defaultAcademicYearName = null);
+        Task<ViceBulkImportStudentsResponseDTO> ImportStudentsFromExcelAsync(System.IO.Stream fileStream, string fileName, string defaultYear, string defaultDepartment, string? defaultAcademicYearName = null, CancellationToken cancellationToken = default);
     }
 }

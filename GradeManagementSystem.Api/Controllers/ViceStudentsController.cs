@@ -155,7 +155,8 @@ namespace GradeManagementSystem.Api.Controllers
             Microsoft.AspNetCore.Http.IFormFile file,
             [FromQuery] string year = "junior",
             [FromQuery] string department = "OM",
-            [FromQuery] string? academicYearName = null)
+            [FromQuery] string? academicYearName = null,
+            CancellationToken cancellationToken = default)
         {
             if (file == null || file.Length == 0)
             {
@@ -165,7 +166,7 @@ namespace GradeManagementSystem.Api.Controllers
             try
             {
                 using var stream = file.OpenReadStream();
-                var result = await _viceStudentService.ImportStudentsFromExcelAsync(stream, file.FileName, year, department, academicYearName);
+                var result = await _viceStudentService.ImportStudentsFromExcelAsync(stream, file.FileName, year, department, academicYearName, cancellationToken);
                 return Ok(result);
             }
             catch (System.Exception ex)

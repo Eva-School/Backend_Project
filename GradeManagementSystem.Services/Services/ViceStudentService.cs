@@ -593,7 +593,13 @@ namespace GradeManagementSystem.Services.Services
             return students.Count;
         }
 
-        public async Task<ViceBulkImportStudentsResponseDTO> ImportStudentsFromExcelAsync(Stream stream, string fileName, string defaultYear, string defaultDepartment, string? defaultAcademicYearName = null)
+        public async Task<ViceBulkImportStudentsResponseDTO> ImportStudentsFromExcelAsync(
+            Stream stream,
+            string fileName,
+            string defaultYear,
+            string defaultDepartment,
+            string? defaultAcademicYearName = null,
+            CancellationToken cancellationToken = default)
         {
             var response = new ViceBulkImportStudentsResponseDTO();
 
@@ -617,18 +623,33 @@ namespace GradeManagementSystem.Services.Services
             }
 
             var table = dataset.Tables[0];
-            var role = await _roleManager.Roles.FirstOrDefaultAsync(r => r.RoleName == "Student");
+            var role = await _roleManager.Roles.FirstOrDefaultAsync(r => r.RoleName == "Student", cancellationToken);
             if (role == null)
             {
                 response.Errors.Add("Student role not found in the database.");
                 return response;
             }
 
-            var departments = await _context.Departments.Where(d => d.IsActive).ToListAsync();
-            var academicYears = await _context.AcademicYears.ToListAsync();
-            var classes = await _context.Classes.Where(c => c.IsActive).ToListAsync();
+            var departments = await _context.Departments.AsNoTracking().Where(d => d.IsActive).ToListAsync(cancellationToken);
+            var academicYears = await _context.AcademicYears.AsNoTracking().ToListAsync(cancellationToken);
+            var classes = await _context.Classes.AsNoTracking().Where(c => c.IsActive).ToListAsync(cancellationToken);
 
             var defaultDeptObj = departments.FirstOrDefault(d => d.DepartmentName.Equals(defaultDepartment.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            // Pre-fetch existing StudentCodes / NationalIDs and Emails into HashSets to eliminate N+1 database queries inside the row loop
+            var existingCodes = new HashSet<string>(
+                await _context.Students.AsNoTracking()
+                    .Where(s => s.NationalID != null || s.StudentCode != null)
+                    .Select(s => (s.NationalID ?? s.StudentCode)!)
+                    .ToListAsync(cancellationToken),
+                StringComparer.OrdinalIgnoreCase);
+
+            var existingEmails = new HashSet<string>(
+                await _context.Users.AsNoTracking()
+                    .Where(u => u.NormalizedEmail != null)
+                    .Select(u => u.NormalizedEmail!)
+                    .ToListAsync(cancellationToken),
+                StringComparer.OrdinalIgnoreCase);
 
             string GetVal(DataRow r, int idx)
             {
@@ -647,6 +668,8 @@ namespace GradeManagementSystem.Services.Services
             }
 
             int rowIndex = 0;
+            var pendingStudents = new List<(Student Student, ViceStudentDto Dto)>();
+
             foreach (DataRow row in table.Rows)
             {
                 rowIndex++;
@@ -754,7 +777,8 @@ namespace GradeManagementSystem.Services.Services
                         cls = classes.FirstOrDefault(c => c.AcademicYearID == ay.AcademicYearID && c.DepartmentID == dept.DepartmentID && c.ClassName.Equals(classNameStr.Trim(), StringComparison.OrdinalIgnoreCase));
                     }
 
-                    if (await _context.Students.AnyAsync(s => s.NationalID == code || s.StudentCode == code))
+                    // Check duplicate code / National ID using pre-fetched HashSet
+                    if (existingCodes.Contains(code) || (natId != code && existingCodes.Contains(natId)))
                     {
                         response.FailureCount++;
                         response.Errors.Add($"Row {rowIndex}: Student code/ID '{code}' already exists in database.");
@@ -764,12 +788,13 @@ namespace GradeManagementSystem.Services.Services
                     var email = !string.IsNullOrWhiteSpace(emailStr) ? emailStr.Trim() : $"{code}@school.edu.eg";
                     var normalizedEmail = email.ToUpperInvariant();
 
-                    if (await _context.Users.AnyAsync(u => u.NormalizedEmail == normalizedEmail))
+                    if (existingEmails.Contains(normalizedEmail))
                     {
-                        email = $"{code}.{new Random().Next(100, 999)}@school.edu.eg";
+                        email = $"{code}.{Random.Shared.Next(100, 999)}@school.edu.eg";
+                        normalizedEmail = email.ToUpperInvariant();
                     }
 
-                    var username = $"{firstName}.{lastName}".Replace(" ", "").ToLowerInvariant() + "-" + new Random().Next(100, 999);
+                    var username = $"{firstName}.{lastName}".Replace(" ", "").ToLowerInvariant() + "-" + Random.Shared.Next(100, 999);
 
                     var gender = Gender.Male;
                     if (!string.IsNullOrWhiteSpace(genderStr))
@@ -816,6 +841,11 @@ namespace GradeManagementSystem.Services.Services
                         continue;
                     }
 
+                    // Track used codes & emails in HashSets
+                    existingCodes.Add(code);
+                    existingCodes.Add(natId);
+                    existingEmails.Add(normalizedEmail);
+
                     var student = new Student
                     {
                         UserID = user.UserId,
@@ -854,12 +884,9 @@ namespace GradeManagementSystem.Services.Services
                     };
 
                     _context.Students.Add(student);
-                    await _context.SaveChangesAsync();
 
-                    response.SuccessCount++;
-                    response.ImportedStudents.Add(new ViceStudentDto
+                    var dto = new ViceStudentDto
                     {
-                        Id = student.StudentID.ToString(),
                         ClassId = cls?.ClassID ?? 0,
                         StudentCode = code,
                         Name = fullName,
@@ -873,13 +900,40 @@ namespace GradeManagementSystem.Services.Services
                         ClassName = cls?.ClassName ?? string.Empty,
                         Year = stage.ToString().ToLowerInvariant(),
                         AcademicYearName = ay.YearName
-                    });
+                    };
+
+                    pendingStudents.Add((student, dto));
+                    response.SuccessCount++;
+
+                    // Save batch every 50 records to keep memory lean and batch DB writes
+                    if (pendingStudents.Count >= 50)
+                    {
+                        await _context.SaveChangesAsync(cancellationToken);
+                        foreach (var (savedStudent, savedDto) in pendingStudents)
+                        {
+                            savedDto.Id = savedStudent.StudentID.ToString();
+                            response.ImportedStudents.Add(savedDto);
+                        }
+                        pendingStudents.Clear();
+                    }
                 }
                 catch (Exception ex)
                 {
                     response.FailureCount++;
                     response.Errors.Add($"Row {rowIndex}: Unexpected error ({ex.Message}).");
                 }
+            }
+
+            // Save any remaining pending students
+            if (pendingStudents.Count > 0)
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+                foreach (var (savedStudent, savedDto) in pendingStudents)
+                {
+                    savedDto.Id = savedStudent.StudentID.ToString();
+                    response.ImportedStudents.Add(savedDto);
+                }
+                pendingStudents.Clear();
             }
 
             return response;
