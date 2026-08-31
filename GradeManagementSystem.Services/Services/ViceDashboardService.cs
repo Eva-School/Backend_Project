@@ -89,10 +89,6 @@ namespace GradeManagementSystem.Services.Services
                 studentsQuery = studentsQuery.Where(s => s.CurrentAcademicYearID == yearId.Value);
             }
             var totalStudents = await studentsQuery.CountAsync();
-            if (totalStudents == 0)
-            {
-                totalStudents = await _context.Students.AsNoTracking().CountAsync();
-            }
 
             var subjectsQuery = _context.Subjects.AsNoTracking().Where(s => s.IsActive);
             if (yearId.HasValue)
@@ -100,10 +96,6 @@ namespace GradeManagementSystem.Services.Services
                 subjectsQuery = subjectsQuery.Where(s => s.AcademicYearID == yearId.Value);
             }
             var totalSubjects = await subjectsQuery.CountAsync();
-            if (totalSubjects == 0)
-            {
-                totalSubjects = await _context.Subjects.AsNoTracking().Where(s => s.IsActive).CountAsync();
-            }
 
             var submittedKeys = _context.QuarterGradeSubmissions
                 .AsNoTracking()
@@ -161,25 +153,6 @@ namespace GradeManagementSystem.Services.Services
                     Timestamp = x.Timestamp
                 })
                 .ToListAsync();
-
-            if (recentActivity.Count == 0)
-            {
-                recentActivity = await _context.GradeActionLogs
-                    .AsNoTracking()
-                    .OrderByDescending(x => x.Timestamp)
-                    .Take(20)
-                    .Select(x => new ViceRecentActivityDto
-                    {
-                        Id = x.ActionLogID.ToString(),
-                        TeacherName = x.ActorName ?? string.Empty,
-                        Action = x.Action ?? string.Empty,
-                        Subject = x.SubjectName ?? string.Empty,
-                        ClassName = x.ClassName ?? string.Empty,
-                        Level = x.Level ?? string.Empty,
-                        Timestamp = x.Timestamp
-                    })
-                    .ToListAsync();
-            }
 
             return new ViceGradesDashboardResponseDto
             {
