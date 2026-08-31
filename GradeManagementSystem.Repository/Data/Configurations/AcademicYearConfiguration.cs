@@ -1,4 +1,4 @@
-﻿using GradeManagementSystem.Core.Entities.Domain;
+using GradeManagementSystem.Core.Entities.Domain;
 using GradeManagementSystem.Core.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -32,37 +32,22 @@ namespace GradeManagementSystem.Repository.Data.Configurations
                 new AcademicYear
                 {
                     AcademicYearID = 1,
-                    YearName = "2022-2023",
+                    YearName = "2024-2025",
                     Stage = EducationStage.Junior,
-                    IsActive = false
+                    IsActive = true
                 },
                 new AcademicYear
                 {
                     AcademicYearID = 2,
-                    YearName = "2023-2024",
+                    YearName = "2024-2025",
                     Stage = EducationStage.Wheeler,
-                    IsActive = false
+                    IsActive = true
                 },
                 new AcademicYear
                 {
                     AcademicYearID = 3,
                     YearName = "2024-2025",
                     Stage = EducationStage.Senior,
-                    IsActive = true
-                },
-                new AcademicYear
-                {
-                    AcademicYearID = 4,
-                    YearName = "2024-2025",
-                    Stage = EducationStage.Junior,
-                    IsActive = true
-                }
-                ,
-                new AcademicYear
-                {
-                    AcademicYearID = 5,
-                    YearName = "2024-2025",
-                    Stage = EducationStage.Wheeler,
                     IsActive = true
                 }
             );

@@ -180,8 +180,6 @@ namespace GradeManagementSystem.Api
             if (shouldRunSeed)
             {
                 LocalTestAccountsSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
-                StudentDashboardSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
-                TeacherDashboardSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
                 ViceGradesSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
             }
 

@@ -1,4 +1,4 @@
-﻿using GradeManagementSystem.Core.Entities.Domain;
+using GradeManagementSystem.Core.Entities.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -43,12 +43,6 @@ namespace GradeManagementSystem.Repository.Data.Configurations
             // within its academic year and department.
             builder.HasIndex(c => new { c.AcademicYearID, c.DepartmentID, c.ClassName })
                 .IsUnique();
-
-            builder.HasData(
-                new Class { ClassID = 1, ClassName = "Class 1A", AcademicYearID = 3, Capacity = 30, IsActive = true },
-                new Class { ClassID = 2, ClassName = "Class 1B", AcademicYearID = 3, Capacity = 30, IsActive = true },
-                new Class { ClassID = 3, ClassName = "Class 2A", AcademicYearID = 3, Capacity = 30, IsActive = true }
-            );
         }
     }
 }
