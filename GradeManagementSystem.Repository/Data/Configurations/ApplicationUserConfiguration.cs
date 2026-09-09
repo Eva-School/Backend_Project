@@ -22,6 +22,10 @@ namespace GradeManagementSystem.Repository.Data.Configurations
             builder.Property(u => u.UserId)
                 .HasColumnName("UserID");
 
+            builder.HasIndex(u => u.NormalizedEmail)
+                .IsUnique()
+                .HasDatabaseName("EmailIndex");
+
             builder.Property(u => u.FirstName)
                 .IsRequired()
                 .HasMaxLength(100);

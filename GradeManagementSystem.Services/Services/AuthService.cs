@@ -47,18 +47,53 @@ namespace GradeManagementSystem.Services.Services
 
         public async Task<AuthResponse?> LoginAsync(LoginRequest request)
         {
-            var normalizedUsername = request.Username?.Trim().ToUpper();
-            var user = await _userManager.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.NormalizedUserName == normalizedUsername || u.UserName == request.Username);
-
-            if (user == null || !user.IsActive || !await _userManager.CheckPasswordAsync(user, request.Password))
+            if (request == null || string.IsNullOrWhiteSpace(request.Email))
             {
                 return null;
             }
 
-            // Get Role Name from the navigation property
+            var trimmedEmail = request.Email.Trim();
+            var normalizedEmail = _userManager.NormalizeEmail(trimmedEmail);
+
+            var user = await _userManager.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
+
+            if (user == null)
+            {
+                _logger.LogWarning("Login failed: Account with email '{Email}' was not found.", trimmedEmail);
+                return null;
+            }
+
+            if (!user.IsActive)
+            {
+                _logger.LogWarning("Login failed: Account with email '{Email}' is deactivated.", trimmedEmail);
+                return null;
+            }
+
+            if (await _userManager.IsLockedOutAsync(user))
+            {
+                _logger.LogWarning("Login failed: Account with email '{Email}' is locked out.", trimmedEmail);
+                return null;
+            }
+
+            var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
+            if (!isPasswordValid)
+            {
+                await _userManager.AccessFailedAsync(user);
+                _logger.LogWarning("Login failed: Invalid password for account with email '{Email}'.", trimmedEmail);
+                return null;
+            }
+
+            await _userManager.ResetAccessFailedCountAsync(user);
+
+            // Get Role Name from the navigation property (authoritative role)
             var role = user.Role?.RoleName ?? "Student";
+
+            if (string.IsNullOrEmpty(user.SecurityStamp))
+            {
+                user.SecurityStamp = Guid.NewGuid().ToString();
+            }
 
             var accessToken = GenerateJwtToken(user, role);
             var refreshToken = GenerateRefreshToken();
@@ -89,6 +124,11 @@ namespace GradeManagementSystem.Services.Services
             }
 
             var role = user.Role?.RoleName ?? "Student";
+
+            if (string.IsNullOrEmpty(user.SecurityStamp))
+            {
+                user.SecurityStamp = Guid.NewGuid().ToString();
+            }
 
             var newAccessToken = GenerateJwtToken(user, role);
             var newRefreshToken = GenerateRefreshToken();
@@ -133,11 +173,14 @@ namespace GradeManagementSystem.Services.Services
 
         private string GenerateJwtToken(ApplicationUser user, string role)
         {
+            var securityStamp = user.SecurityStamp ?? string.Empty;
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                 new Claim(ClaimTypes.Name, user.UserName ?? ""),
-                new Claim(ClaimTypes.Role, role)
+                new Claim(ClaimTypes.Role, role),
+                new Claim("security_stamp", securityStamp)
             };
 
             var jwtKey = _configuration["Jwt:Key"]

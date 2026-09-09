@@ -7,6 +7,7 @@ using GradeManagementSystem.Services.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -43,8 +44,11 @@ namespace GradeManagementSystem.Api
                 });
             });
 
+            builder.Services.AddMemoryCache();
+
             // Register Services
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IAdminAccountService, AdminAccountService>();
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<ISubjectService, SubjectService>();
             builder.Services.AddScoped<IClassService, ClassService>();
@@ -132,6 +136,73 @@ namespace GradeManagementSystem.Api
                     ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidAudience = builder.Configuration["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey))
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = async context =>
+                    {
+                        var cache = context.HttpContext.RequestServices.GetRequiredService<IMemoryCache>();
+                        var db = context.HttpContext.RequestServices.GetRequiredService<GradeDbContext>();
+
+                        var userIdClaim = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                        if (!int.TryParse(userIdClaim, out var userId))
+                        {
+                            context.Fail("Invalid or missing user identifier in token.");
+                            return;
+                        }
+
+                        var cacheKey = $"auth_user_{userId}";
+                        if (!cache.TryGetValue(cacheKey, out (bool IsActive, string SecurityStamp, string RoleName) userState))
+                        {
+                            var userFromDb = await db.Users
+                                .AsNoTracking()
+                                .Include(u => u.Role)
+                                .Where(u => u.UserId == userId)
+                                .Select(u => new
+                                {
+                                    u.IsActive,
+                                    SecurityStamp = u.SecurityStamp ?? string.Empty,
+                                    RoleName = u.Role != null ? u.Role.RoleName : "Student"
+                                })
+                                .FirstOrDefaultAsync();
+
+                            if (userFromDb == null)
+                            {
+                                context.Fail("User account no longer exists.");
+                                return;
+                            }
+
+                            userState = (userFromDb.IsActive, userFromDb.SecurityStamp, userFromDb.RoleName);
+                            cache.Set(cacheKey, userState, TimeSpan.FromSeconds(30));
+                        }
+
+                        // 1. Account must be active
+                        if (!userState.IsActive)
+                        {
+                            context.Fail("User account is disabled or inactive.");
+                            return;
+                        }
+
+                        // 2. Validate Security Stamp (rejects tokens after password reset or session revocation)
+                        var tokenStamp = context.Principal?.FindFirst("security_stamp")?.Value;
+                        if (!string.IsNullOrEmpty(userState.SecurityStamp) &&
+                            !string.IsNullOrEmpty(tokenStamp) &&
+                            !string.Equals(tokenStamp, userState.SecurityStamp, StringComparison.Ordinal))
+                        {
+                            context.Fail("Security stamp mismatch. Active session has been revoked.");
+                            return;
+                        }
+
+                        // 3. Validate Role consistency (rejects tokens with stale role claims after role change)
+                        var tokenRole = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+                        if (!string.IsNullOrEmpty(tokenRole) &&
+                            !string.Equals(tokenRole, userState.RoleName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            context.Fail("User role has been modified. Please sign in again.");
+                            return;
+                        }
+                    }
                 };
             });
 

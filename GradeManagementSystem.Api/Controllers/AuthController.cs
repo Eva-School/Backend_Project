@@ -23,13 +23,17 @@ namespace GradeManagementSystem.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new { message = "Username and password are required" });
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                return BadRequest(new { message = "Invalid request data", errors });
             }
 
             var response = await _authService.LoginAsync(request);
             if (response == null)
             {
-                return Unauthorized(new { message = "Invalid username or password" });
+                return Unauthorized(new { message = "Invalid email or password" });
             }
 
             return Ok(response);

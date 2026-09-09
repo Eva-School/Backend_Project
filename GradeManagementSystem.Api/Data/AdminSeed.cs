@@ -20,7 +20,7 @@ namespace GradeManagementSystem.Api.Data;
 public static class AdminSeed
 {
     private const string DefaultUsername = "admin";
-    private const string DefaultEmail    = "admin@grading-system.local";
+    private const string DefaultEmail    = "admin@system.com";
 
     /// <summary>
     /// The fallback password satisfies ASP.NET Core Identity's default policy
@@ -28,7 +28,7 @@ public static class AdminSeed
     /// It is intentionally complex so that leaving it unchanged in production
     /// is still safer than a trivially guessable credential.
     /// </summary>
-    private const string DefaultPassword = "Admin@123456!";
+    private const string DefaultPassword = "Admin@123";
 
     public static async Task SeedAsync(IServiceProvider serviceProvider)
     {
@@ -38,13 +38,15 @@ public static class AdminSeed
         var userManager = provider.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = provider.GetRequiredService<RoleManager<ApplicationRole>>();
         var logger      = provider.GetRequiredService<ILogger<Program>>();
+        var hostEnv     = provider.GetService<IHostEnvironment>();
 
         // ------------------------------------------------------------------
         // Resolve credentials (env vars → safe fallback)
         // ------------------------------------------------------------------
+        var adminPasswordEnv = Environment.GetEnvironmentVariable("ADMIN_PASSWORD")?.Trim();
         var username = Environment.GetEnvironmentVariable("ADMIN_USERNAME")?.Trim()
                        ?? DefaultUsername;
-        var password = Environment.GetEnvironmentVariable("ADMIN_PASSWORD")?.Trim()
+        var password = adminPasswordEnv
                        ?? DefaultPassword;
         var email    = Environment.GetEnvironmentVariable("ADMIN_EMAIL")?.Trim()
                        ?? DefaultEmail;
@@ -58,15 +60,15 @@ public static class AdminSeed
         }
 
         // ------------------------------------------------------------------
-        // Locate the Admin role
+        // Ensure Admin Role exists
         // ------------------------------------------------------------------
         var adminRole = await roleManager.Roles
             .SingleOrDefaultAsync(r => r.RoleName == "Admin");
 
-        if (adminRole == null)
+        if (adminRole is null)
         {
             logger.LogError(
-                "AdminSeed: The 'Admin' role does not exist in the database. " +
+                "AdminSeed: Role 'Admin' does not exist in the database. " +
                 "Run the application once with APPLY_MIGRATIONS=true to create it.");
             return;
         }
@@ -79,22 +81,64 @@ public static class AdminSeed
 
         if (existingAdmin is not null)
         {
-            // Ensure the existing user actually has the Admin role.
+            var needsUpdate = false;
             if (existingAdmin.RoleId != adminRole.RoleId)
             {
                 existingAdmin.RoleId = adminRole.RoleId;
-                await userManager.UpdateAsync(existingAdmin);
-                logger.LogInformation(
-                    "AdminSeed: Re-assigned existing user '{Username}' to the Admin role.",
-                    username);
+                needsUpdate = true;
             }
-            else
+            if (!existingAdmin.IsActive)
             {
-                logger.LogInformation(
-                    "AdminSeed: Admin account '{Username}' already exists – skipping creation.",
-                    username);
+                existingAdmin.IsActive = true;
+                needsUpdate = true;
+            }
+            if (!existingAdmin.EmailConfirmed)
+            {
+                existingAdmin.EmailConfirmed = true;
+                needsUpdate = true;
+            }
+            if (existingAdmin.LockoutEnd != null)
+            {
+                existingAdmin.LockoutEnd = null;
+                needsUpdate = true;
+            }
+            if (existingAdmin.AccessFailedCount > 0)
+            {
+                existingAdmin.AccessFailedCount = 0;
+                needsUpdate = true;
             }
 
+            if (!string.Equals(existingAdmin.Email, email, StringComparison.OrdinalIgnoreCase))
+            {
+                var existingEmailOwner = await userManager.FindByEmailAsync(email);
+                if (existingEmailOwner == null || existingEmailOwner.UserId == existingAdmin.UserId)
+                {
+                    existingAdmin.Email = email;
+                    existingAdmin.NormalizedEmail = userManager.NormalizeEmail(email);
+                    needsUpdate = true;
+                }
+            }
+
+            if (needsUpdate)
+            {
+                await userManager.UpdateAsync(existingAdmin);
+            }
+
+            // In development or when explicitly configured via ADMIN_PASSWORD, align password
+            var isDev = hostEnv?.IsDevelopment() ?? false;
+            var hasExplicitPassword = !string.IsNullOrEmpty(adminPasswordEnv);
+
+            if ((isDev || hasExplicitPassword) && !await userManager.CheckPasswordAsync(existingAdmin, password))
+            {
+                var token = await userManager.GeneratePasswordResetTokenAsync(existingAdmin);
+                var res = await userManager.ResetPasswordAsync(existingAdmin, token, password);
+                if (!res.Succeeded)
+                {
+                    await userManager.RemovePasswordAsync(existingAdmin);
+                    await userManager.AddPasswordAsync(existingAdmin, password);
+                }
+                logger.LogInformation("AdminSeed: Aligned password for Admin account '{Username}'.", username);
+            }
             return;
         }
 

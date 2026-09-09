@@ -1299,6 +1299,7 @@ namespace GradeManagementSystem.Repository.Migrations
                     b.HasKey("UserId");
 
                     b.HasIndex("NormalizedEmail")
+                        .IsUnique()
                         .HasDatabaseName("EmailIndex");
 
                     b.HasIndex("NormalizedUserName")
