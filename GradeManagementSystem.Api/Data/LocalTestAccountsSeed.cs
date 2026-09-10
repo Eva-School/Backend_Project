@@ -172,6 +172,38 @@ public static class LocalTestAccountsSeed
                     teacher.IsActive = true;
                     await context.SaveChangesAsync();
                 }
+
+                var hasAssignment = await context.TeacherAssignments
+                    .AnyAsync(ta => ta.TeacherID == teacher.TeacherID && ta.IsActive);
+                if (!hasAssignment)
+                {
+                    var academicYear = await context.AcademicYears
+                        .Where(y => y.IsActive)
+                        .OrderByDescending(y => y.AcademicYearID)
+                        .FirstOrDefaultAsync()
+                        ?? await context.AcademicYears.FirstOrDefaultAsync();
+
+                    var targetClass = academicYear != null
+                        ? await context.Classes.FirstOrDefaultAsync(c => c.IsActive && c.AcademicYearID == academicYear.AcademicYearID)
+                        : await context.Classes.FirstOrDefaultAsync();
+
+                    var targetSubject = academicYear != null
+                        ? await context.Subjects.FirstOrDefaultAsync(s => s.IsActive && s.AcademicYearID == academicYear.AcademicYearID)
+                        : await context.Subjects.FirstOrDefaultAsync();
+
+                    if (academicYear != null && targetClass != null && targetSubject != null)
+                    {
+                        context.TeacherAssignments.Add(new TeacherAssignment
+                        {
+                            TeacherID = teacher.TeacherID,
+                            ClassID = targetClass.ClassID,
+                            SubjectID = targetSubject.SubjectID,
+                            AcademicYearID = academicYear.AcademicYearID,
+                            IsActive = true
+                        });
+                        await context.SaveChangesAsync();
+                    }
+                }
             }
 
             // Ensure Student domain profile
@@ -211,6 +243,47 @@ public static class LocalTestAccountsSeed
                     await context.SaveChangesAsync();
                 }
             }
+        }
+
+        // Ensure baseline seed notifications exist so notification bell displays realistic data
+        if (!await context.Notifications.AnyAsync())
+        {
+            var adminUser = await userManager.FindByNameAsync("admin");
+            var adminId = adminUser?.UserId;
+
+            context.Notifications.AddRange(
+                new AppNotification
+                {
+                    Type = "announcement",
+                    Title = "Welcome to Eva School Portal",
+                    Message = "The academic term has commenced. Review your schedules, assignments, and curriculum updates.",
+                    Priority = "medium",
+                    TargetRole = null, // broadcast to all
+                    CreatedByUserID = adminId,
+                    CreatedAt = DateTime.UtcNow.AddHours(-2)
+                },
+                new AppNotification
+                {
+                    Type = "reminder",
+                    Title = "Quarter 1 Grade Entry Open",
+                    Message = "Quarter 1 grade submission is now open for all assigned subjects. Please submit before the deadline.",
+                    Priority = "high",
+                    TargetRole = "Teacher",
+                    CreatedByUserID = adminId,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(-45)
+                },
+                new AppNotification
+                {
+                    Type = "grade",
+                    Title = "Academic Progress Overview Available",
+                    Message = "Your semester performance overview has been updated. You can check your subjects and competencies.",
+                    Priority = "low",
+                    TargetRole = "Student",
+                    CreatedByUserID = adminId,
+                    CreatedAt = DateTime.UtcNow.AddMinutes(-30)
+                }
+            );
+            await context.SaveChangesAsync();
         }
     }
 }

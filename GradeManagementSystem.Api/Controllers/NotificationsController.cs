@@ -28,9 +28,11 @@ public class NotificationsController : ControllerBase
             return Unauthorized(new { message = "Unauthenticated" });
         }
 
+        var roleAliases = GetRoleAliases(role);
+
         var notifications = await _context.Notifications
             .AsNoTracking()
-            .Where(item => item.TargetRole == null || item.TargetRole == role)
+            .Where(item => item.TargetRole == null || roleAliases.Contains(item.TargetRole.ToLower()))
             .OrderByDescending(item => item.CreatedAt)
             .Take(50)
             .Select(item => new
@@ -63,8 +65,11 @@ public class NotificationsController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(request.TargetRole))
         {
-            var roleExists = await _context.Roles.AnyAsync(item => item.RoleName == request.TargetRole.Trim());
-            if (!roleExists)
+            var trimmed = request.TargetRole.Trim().ToLower();
+            var roleExists = await _context.Roles.AnyAsync(item =>
+                (item.RoleName != null && item.RoleName.ToLower() == trimmed) ||
+                (item.Name != null && item.Name.ToLower() == trimmed));
+            if (!roleExists && !GetRoleAliases(trimmed).Any(a => a is "student affairs" or "studentaffairs" or "vice" or "staff"))
             {
                 return BadRequest(new { message = "Target role does not exist." });
             }
@@ -103,8 +108,9 @@ public class NotificationsController : ControllerBase
             return Unauthorized(new { message = "Unauthenticated" });
         }
 
+        var roleAliases = GetRoleAliases(role);
         var query = _context.Notifications
-            .Where(item => item.TargetRole == null || item.TargetRole == role);
+            .Where(item => item.TargetRole == null || roleAliases.Contains(item.TargetRole.ToLower()));
         if (request.MarkAllRead)
         {
             var unreadIds = await query
@@ -146,6 +152,16 @@ public class NotificationsController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    private static string[] GetRoleAliases(string role)
+    {
+        var normalized = role.Trim().ToLowerInvariant();
+        if (normalized is "student affairs" or "studentaffairs" or "vice" or "staff")
+        {
+            return new[] { "student affairs", "studentaffairs", "vice", "staff" };
+        }
+        return new[] { normalized };
     }
 
     private bool TryGetUser(out int userId, out string role)

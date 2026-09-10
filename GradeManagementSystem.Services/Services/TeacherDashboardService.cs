@@ -22,48 +22,68 @@ namespace GradeManagementSystem.Services.Services
 
         public async Task<TeacherProfileDto?> GetProfileAsync(int userId)
         {
+            var user = await _context.Users
+                .Where(u => u.UserId == userId)
+                .Select(u => new { u.FullName, u.FirstName, u.LastName })
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                return null;
+            }
+
             var teacher = await _context.Teachers
                 .FirstOrDefaultAsync(t => t.UserID == userId && t.IsActive);
 
-            if (teacher == null)
-            {
-                return null;
-            }
+            AcademicYear? currentAcademicYear = null;
+            string? firstSubject = null;
 
-            var currentAcademicYear = await _context.TeacherAssignments
-                .Where(ta => ta.TeacherID == teacher.TeacherID && ta.IsActive && ta.AcademicYear.IsActive)
-                .OrderByDescending(ta => ta.AcademicYearID)
-                .Select(ta => ta.AcademicYear)
-                .FirstOrDefaultAsync();
+            if (teacher != null)
+            {
+                currentAcademicYear = await _context.TeacherAssignments
+                    .Where(ta => ta.TeacherID == teacher.TeacherID && ta.IsActive && ta.AcademicYear.IsActive)
+                    .OrderByDescending(ta => ta.AcademicYearID)
+                    .Select(ta => ta.AcademicYear)
+                    .FirstOrDefaultAsync();
+
+                if (currentAcademicYear != null)
+                {
+                    firstSubject = await _context.TeacherAssignments
+                        .Where(ta => ta.TeacherID == teacher.TeacherID
+                                     && ta.IsActive
+                                     && ta.AcademicYearID == currentAcademicYear.AcademicYearID
+                                     && ta.Subject.IsActive)
+                        .OrderBy(ta => ta.SubjectID)
+                        .Select(ta => ta.Subject.SubjectName)
+                        .FirstOrDefaultAsync();
+                }
+            }
 
             if (currentAcademicYear == null)
             {
-                return null;
+                currentAcademicYear = await _context.AcademicYears
+                    .Where(ay => ay.IsActive)
+                    .OrderByDescending(ay => ay.AcademicYearID)
+                    .FirstOrDefaultAsync();
             }
-
-            var firstSubject = await _context.TeacherAssignments
-                .Where(ta => ta.TeacherID == teacher.TeacherID
-                             && ta.IsActive
-                             && ta.AcademicYearID == currentAcademicYear.AcademicYearID
-                             && ta.Subject.IsActive)
-                .OrderBy(ta => ta.SubjectID)
-                .Select(ta => ta.Subject.SubjectName)
-                .FirstOrDefaultAsync();
 
             var subtitle = !string.IsNullOrWhiteSpace(firstSubject)
                 ? firstSubject
                 : "Teacher";
 
-            var user = await _context.Users
-                .Where(u => u.UserId == userId)
-                .Select(u => new { u.FullName })
-                .FirstOrDefaultAsync();
+            var fullName = !string.IsNullOrWhiteSpace(user.FullName)
+                ? user.FullName
+                : $"{user.FirstName} {user.LastName}".Trim();
+
+            var yearKey = currentAcademicYear != null
+                ? currentAcademicYear.Stage.ToString().ToLowerInvariant()
+                : "senior";
 
             return new TeacherProfileDto
             {
-                Name = user?.FullName ?? "Teacher",
+                Name = !string.IsNullOrWhiteSpace(fullName) ? fullName : "Teacher",
                 Subtitle = subtitle,
-                CurrentAcademicYear = currentAcademicYear.YearName
+                CurrentAcademicYear = yearKey
             };
         }
 

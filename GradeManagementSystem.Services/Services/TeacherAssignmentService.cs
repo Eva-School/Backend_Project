@@ -104,8 +104,8 @@ namespace GradeManagementSystem.Services.Services
             {
                 return (false, "Invalid SubjectId format");
             }
-            var subjectExists = await _context.Subjects.AnyAsync(s => s.SubjectID == subjectIdInt && s.IsActive);
-            if (!subjectExists)
+            var subject = await _context.Subjects.FirstOrDefaultAsync(s => s.SubjectID == subjectIdInt && s.IsActive);
+            if (subject == null)
             {
                 return (false, "The selected subject was not found or is inactive.");
             }
@@ -158,6 +158,17 @@ namespace GradeManagementSystem.Services.Services
             }
 
             if (assignmentsToAdd.Any()) await _context.TeacherAssignments.AddRangeAsync(assignmentsToAdd);
+
+            _context.Notifications.Add(new AppNotification
+            {
+                Type = "system",
+                Title = "New Teaching Assignment",
+                Message = $"You have been assigned to teach {subject.SubjectName} ({academicYear.YearName}).",
+                Priority = "medium",
+                TargetRole = "Teacher",
+                CreatedAt = DateTime.UtcNow
+            });
+
             await _context.SaveChangesAsync();
 
             return (true, "Teacher assigned successfully");
