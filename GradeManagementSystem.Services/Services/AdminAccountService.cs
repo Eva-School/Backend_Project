@@ -780,9 +780,24 @@ namespace GradeManagementSystem.Services.Services
 
             await ValidatePasswordPolicyAsync(request.NewPassword, user);
 
-            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var resetResult = await _userManager.ResetPasswordAsync(user, resetToken, request.NewPassword);
+            if (string.IsNullOrWhiteSpace(user.SecurityStamp))
+            {
+                user.SecurityStamp = Guid.NewGuid().ToString("N");
+                await _userManager.UpdateSecurityStampAsync(user);
+            }
 
+            IdentityResult resetResult;
+            if (await _userManager.HasPasswordAsync(user))
+            {
+                var removeResult = await _userManager.RemovePasswordAsync(user);
+                if (!removeResult.Succeeded)
+                {
+                    var removeErrors = string.Join("; ", removeResult.Errors.Select(e => e.Description));
+                    throw new InvalidOperationException($"Password reset failed during removal: {removeErrors}");
+                }
+            }
+
+            resetResult = await _userManager.AddPasswordAsync(user, request.NewPassword);
             if (!resetResult.Succeeded)
             {
                 var errors = string.Join("; ", resetResult.Errors.Select(e => e.Description));

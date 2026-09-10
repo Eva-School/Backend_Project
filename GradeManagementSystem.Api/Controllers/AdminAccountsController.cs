@@ -216,6 +216,14 @@ namespace GradeManagementSystem.Api.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while resetting the password: " + ex.Message });
+            }
         }
     }
 }
