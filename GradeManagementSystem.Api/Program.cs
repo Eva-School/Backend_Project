@@ -27,7 +27,7 @@ namespace GradeManagementSystem.Api
             }
 
             var rawConnStr = builder.Configuration.GetConnectionString("DefaultConnection") ?? "";
-            var postgresConnStr = ParseConnectionString(rawConnStr);
+            var postgresConnStr = PostgresConnectionParser.Parse(rawConnStr);
 
             builder.Services.AddDbContext<GradeDbContext>(options =>
                 options.UseNpgsql(postgresConnStr));
@@ -234,6 +234,32 @@ namespace GradeManagementSystem.Api
             {
                 using var scope = app.Services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<GradeDbContext>();
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+                // Pre-creation Data API lockout: Ensure tables in public schema are NEVER exposed to PostgREST anon/authenticated roles
+                try
+                {
+                    db.Database.ExecuteSqlRaw(@"
+                        DO $$
+                        BEGIN
+                            IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+                                REVOKE USAGE ON SCHEMA public FROM anon, authenticated;
+                                REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated, PUBLIC;
+                                REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated, PUBLIC;
+                                REVOKE ALL ON ALL ROUTINES IN SCHEMA public FROM anon, authenticated, PUBLIC;
+                                ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM anon, authenticated, PUBLIC;
+                                ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, authenticated, PUBLIC;
+                                ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON ROUTINES FROM anon, authenticated, PUBLIC;
+                            END IF;
+                        END $$;
+                    ");
+                    logger.LogInformation("Supabase Data API lockout successfully verified/applied.");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Could not apply Supabase Data API lockout SQL (non-fatal if permissions restricted).");
+                }
+
                 db.Database.Migrate();
             }
 
@@ -244,10 +270,14 @@ namespace GradeManagementSystem.Api
             //   ADMIN_EMAIL     (default: admin@grading-system.local)
             AdminSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
 
-            // The remaining seeds are for local development / staging only.
+            // The test accounts and domain seeders are strictly guarded for local development / staging.
+            // They will NEVER execute in Production.
+            var isProduction = app.Environment.IsProduction() ||
+                string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Production", StringComparison.OrdinalIgnoreCase);
+
             var runSeed = Environment.GetEnvironmentVariable("RUN_SEED");
-            var shouldRunSeed = string.Equals(runSeed, "true", StringComparison.OrdinalIgnoreCase) ||
-                (app.Environment.IsDevelopment() && !string.Equals(runSeed, "false", StringComparison.OrdinalIgnoreCase));
+            var shouldRunSeed = !isProduction && (string.Equals(runSeed, "true", StringComparison.OrdinalIgnoreCase) ||
+                (app.Environment.IsDevelopment() && !string.Equals(runSeed, "false", StringComparison.OrdinalIgnoreCase)));
             if (shouldRunSeed)
             {
                 LocalTestAccountsSeed.SeedAsync(app.Services).GetAwaiter().GetResult();
@@ -257,27 +287,6 @@ namespace GradeManagementSystem.Api
             app.MapControllers();
 
             app.Run();
-        }
-
-        private static string ParseConnectionString(string connectionString)
-        {
-            if (string.IsNullOrWhiteSpace(connectionString))
-                return connectionString;
-
-            if (connectionString.StartsWith("postgres://") || connectionString.StartsWith("postgresql://"))
-            {
-                var uri = new Uri(connectionString);
-                var userInfo = uri.UserInfo.Split(':');
-                var user = userInfo[0];
-                var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
-                var host = uri.Host;
-                var port = uri.Port > 0 ? uri.Port : 5432;
-                var database = uri.AbsolutePath.TrimStart('/');
-
-                return $"Host={host};Port={port};Database={database};Username={user};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
-            }
-
-            return connectionString;
         }
     }
 }

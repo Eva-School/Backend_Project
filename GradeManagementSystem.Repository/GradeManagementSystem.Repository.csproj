@@ -19,4 +19,8 @@
     <ProjectReference Include="..\GradeManagementSystem.Core\GradeManagementSystem.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Certificates\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

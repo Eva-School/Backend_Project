@@ -18,9 +18,15 @@ namespace GradeManagementSystem.Tests
             _output = output;
         }
 
-        private GradeDbContext CreateDbContext()
+        private GradeDbContext? CreateDbContext()
         {
-            var connectionString = "Host=ep-still-water-au7x5jn8.c-10.us-east-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_s6hGZPx0WDpm;SSL Mode=Require;Trust Server Certificate=true;Timeout=60;Command Timeout=60;Keepalive=30;";
+            var raw = Environment.GetEnvironmentVariable("TEST_CONNECTION_STRING");
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return null;
+            }
+
+            var connectionString = PostgresConnectionParser.Parse(raw);
             var options = new DbContextOptionsBuilder<GradeDbContext>()
                 .UseNpgsql(connectionString)
                 .Options;
@@ -32,6 +38,11 @@ namespace GradeManagementSystem.Tests
         public async Task Audit_Existing_User_Emails()
         {
             await using var context = CreateDbContext();
+            if (context == null)
+            {
+                _output.WriteLine("SKIPPED: 'TEST_CONNECTION_STRING' environment variable is not set. Skipping live DB audit.");
+                return;
+            }
             var users = await context.Users
                 .Select(u => new
                 {
