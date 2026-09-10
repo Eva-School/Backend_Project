@@ -1,4 +1,4 @@
-﻿using GradeManagementSystem.Core.DTOs.Class;
+using GradeManagementSystem.Core.DTOs.Class;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,11 @@ namespace GradeManagementSystem.Core.Interfaces
 {
     public interface IClassService
     {
-        Task<IEnumerable<ClassResponseDTO>> GetClassesByYearIdAsync(string yearId, string? stage = null);
+        Task<IEnumerable<ClassCohortSummaryDTO>> GetCohortsSummaryAsync();
+        Task<IEnumerable<ClassResponseDTO>> GetClassesByYearIdAsync(string? yearId = null, string? stage = null);
+        Task<ClassDetailsDTO?> GetClassDetailsAsync(int classId);
         Task<ClassResponseDTO?> CreateClassAsync(CreateClassRequestDTO request);
+        Task<ClassResponseDTO?> UpdateClassAsync(int classId, UpdateClassRequestDTO request);
+        Task<(bool Success, string Message)> DeleteClassAsync(int classId);
     }
 }

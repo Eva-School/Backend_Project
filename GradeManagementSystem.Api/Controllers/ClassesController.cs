@@ -1,9 +1,11 @@
-﻿using GradeManagementSystem.Core.DTOs.Class;
+using GradeManagementSystem.Core.DTOs.Class;
 using GradeManagementSystem.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GradeManagementSystem.Api.Controllers
 {
@@ -19,12 +21,19 @@ namespace GradeManagementSystem.Api.Controllers
             _classService = classService;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetClasses([FromQuery] string yearId, [FromQuery] string? stage)
+        [HttpGet("cohorts-summary")]
+        public async Task<IActionResult> GetCohortsSummary()
         {
-            if (string.IsNullOrWhiteSpace(yearId))
+            var summaries = await _classService.GetCohortsSummaryAsync();
+            return Ok(summaries);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetClasses([FromQuery] string? yearId, [FromQuery] string? stage)
+        {
+            if (string.IsNullOrWhiteSpace(yearId) && string.IsNullOrWhiteSpace(stage))
             {
-                return BadRequest(new { message = "YearId parameter is required" });
+                return BadRequest(new { message = "Either yearId or stage parameter is required." });
             }
 
             var classes = await _classService.GetClassesByYearIdAsync(yearId, stage);
@@ -33,6 +42,19 @@ namespace GradeManagementSystem.Api.Controllers
             // an empty collection so Student Affairs can create its first class
             // without treating the request as an error.
             return Ok(classes ?? Enumerable.Empty<ClassResponseDTO>());
+        }
+
+        [HttpGet("{classId:int}")]
+        [HttpGet("{classId:int}/details")]
+        public async Task<IActionResult> GetClassDetails([FromRoute] int classId)
+        {
+            var details = await _classService.GetClassDetailsAsync(classId);
+            if (details == null)
+            {
+                return NotFound(new { message = $"Class with ID {classId} was not found." });
+            }
+
+            return Ok(details);
         }
 
         [HttpPost]
@@ -51,7 +73,7 @@ namespace GradeManagementSystem.Api.Controllers
                     return BadRequest(new { message = "The selected academic year or department was not found." });
                 }
 
-                return CreatedAtAction(nameof(GetClasses), new { yearId = request.YearId }, created);
+                return CreatedAtAction(nameof(GetClassDetails), new { classId = created.ClassId }, created);
             }
             catch (InvalidOperationException exception)
             {
@@ -61,6 +83,46 @@ namespace GradeManagementSystem.Api.Controllers
             {
                 return Conflict(new { message = "The class could not be saved. Check that its name is unique for the selected year and department." });
             }
+        }
+
+        [HttpPut("{classId:int}")]
+        public async Task<IActionResult> UpdateClass([FromRoute] int classId, [FromBody] UpdateClassRequestDTO request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var updated = await _classService.UpdateClassAsync(classId, request);
+                if (updated == null)
+                {
+                    return NotFound(new { message = $"Class with ID {classId} was not found." });
+                }
+
+                return Ok(updated);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (DbUpdateException)
+            {
+                return Conflict(new { message = "Could not update class. Ensure class name is unique for the department and year." });
+            }
+        }
+
+        [HttpDelete("{classId:int}")]
+        public async Task<IActionResult> DeleteClass([FromRoute] int classId)
+        {
+            var (success, message) = await _classService.DeleteClassAsync(classId);
+            if (!success)
+            {
+                return NotFound(new { message });
+            }
+
+            return Ok(new { message });
         }
     }
 }
