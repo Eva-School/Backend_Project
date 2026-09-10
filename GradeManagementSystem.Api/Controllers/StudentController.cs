@@ -1,7 +1,9 @@
+using GradeManagementSystem.Core.DTOs.Student;
 using GradeManagementSystem.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace GradeManagementSystem.Api.Controllers
 {
@@ -41,6 +43,24 @@ namespace GradeManagementSystem.Api.Controllers
             return Ok(profile);
         }
 
+        [HttpPut("profile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateStudentContactDto request)
+        {
+            if (!TryGetUserId(out var userId))
+            {
+                return Unauthorized(new { message = "Unauthenticated" });
+            }
+
+            var success = await _studentDashboardService.UpdateProfileAsync(userId, request);
+            if (!success)
+            {
+                return NotFound(new { message = "Student record not found." });
+            }
+
+            var updatedProfile = await _studentDashboardService.GetProfileAsync(userId);
+            return Ok(updatedProfile);
+        }
+
         [HttpGet("years")]
         public async Task<IActionResult> GetYears()
         {
@@ -49,7 +69,7 @@ namespace GradeManagementSystem.Api.Controllers
         }
 
         [HttpGet("grades/quarter")]
-        public async Task<IActionResult> GetQuarterGrades([FromQuery] string year)
+        public async Task<IActionResult> GetQuarterGrades([FromQuery] string year, [FromQuery] int? termId)
         {
             if (string.IsNullOrWhiteSpace(year))
             {
@@ -61,7 +81,7 @@ namespace GradeManagementSystem.Api.Controllers
                 return Unauthorized(new { message = "Unauthenticated" });
             }
 
-            var response = await _studentDashboardService.GetQuarterGradesAsync(userId, year);
+            var response = await _studentDashboardService.GetQuarterGradesAsync(userId, year, termId);
             if (response == null)
             {
                 return NotFound(new { message = "No quarter grades found for the provided year." });
@@ -128,6 +148,23 @@ namespace GradeManagementSystem.Api.Controllers
             }
 
             var response = await _studentDashboardService.GetProgressAsync(userId, year);
+            return Ok(response);
+        }
+
+        [HttpGet("enrollment")]
+        public async Task<IActionResult> GetEnrollmentDetails()
+        {
+            if (!TryGetUserId(out var userId))
+            {
+                return Unauthorized(new { message = "Unauthenticated" });
+            }
+
+            var response = await _studentDashboardService.GetEnrollmentDetailsAsync(userId);
+            if (response == null)
+            {
+                return NotFound(new { message = "Student enrollment details not found." });
+            }
+
             return Ok(response);
         }
 
