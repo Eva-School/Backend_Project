@@ -27,10 +27,9 @@ namespace GradeManagementSystem.Core.DTOs.Admin.Account
 
     public class CreateAccountDto
     {
-        [Required(ErrorMessage = "Username is required.")]
-        [StringLength(100, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 100 characters.")]
+        [StringLength(100, ErrorMessage = "Username cannot exceed 100 characters.")]
         [RegularExpression(@"^[a-zA-Z0-9._-]+$", ErrorMessage = "Username can only contain letters, numbers, dots, underscores, and hyphens.")]
-        public string Username { get; set; } = string.Empty;
+        public string? Username { get; set; }
 
         [Required(ErrorMessage = "Email is required.")]
         [EmailAddress(ErrorMessage = "Invalid email format.")]
@@ -114,6 +113,8 @@ namespace GradeManagementSystem.Core.DTOs.Admin.Account
         public string? StudentCode { get; set; }
         [StringLength(20)]
         public string? Gender { get; set; }
+        public int? AcademicYearId { get; set; }
+        public int? ClassId { get; set; }
         [StringLength(250)]
         public string? Address { get; set; }
     }
@@ -158,5 +159,41 @@ namespace GradeManagementSystem.Core.DTOs.Admin.Account
         public string RoleName { get; set; } = string.Empty;
         public string NormalizedName { get; set; } = string.Empty;
         public string? Description { get; set; }
+    }
+
+    public class AcademicYearOptionDto
+    {
+        public int AcademicYearId { get; set; }
+        public string YearName { get; set; } = string.Empty;
+        public string Stage { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+    }
+
+    public class ClassOptionDto
+    {
+        public int ClassId { get; set; }
+        public string ClassName { get; set; } = string.Empty;
+        public int? AcademicYearId { get; set; }
+        public string AcademicYearName { get; set; } = string.Empty;
+        public string Stage { get; set; } = string.Empty;
+        public int? DepartmentId { get; set; }
+        public string? DepartmentName { get; set; }
+        public int? Capacity { get; set; }
+        public int CurrentStudentCount { get; set; }
+    }
+
+    public class DepartmentOptionDto
+    {
+        public int DepartmentId { get; set; }
+        public string DepartmentName { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+    }
+
+    public class AccountFormOptionsDto
+    {
+        public IReadOnlyList<RoleOptionDto> Roles { get; set; } = new List<RoleOptionDto>();
+        public IReadOnlyList<AcademicYearOptionDto> AcademicYears { get; set; } = new List<AcademicYearOptionDto>();
+        public IReadOnlyList<ClassOptionDto> Classes { get; set; } = new List<ClassOptionDto>();
+        public IReadOnlyList<DepartmentOptionDto> Departments { get; set; } = new List<DepartmentOptionDto>();
     }
 }

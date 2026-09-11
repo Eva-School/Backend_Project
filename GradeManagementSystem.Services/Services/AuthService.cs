@@ -24,6 +24,7 @@ namespace GradeManagementSystem.Services.Services
         private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
         private readonly IEmailService _emailService;
+        private readonly IUsernameService _usernameService;
         private readonly GradeDbContext _context;
         private readonly ILogger<AuthService> _logger;
 
@@ -33,6 +34,7 @@ namespace GradeManagementSystem.Services.Services
             IConfiguration configuration,
             IMapper mapper,
             IEmailService emailService,
+            IUsernameService usernameService,
             GradeDbContext context,
             ILogger<AuthService> logger)
         {
@@ -41,6 +43,7 @@ namespace GradeManagementSystem.Services.Services
             _configuration = configuration;
             _mapper = mapper;
             _emailService = emailService;
+            _usernameService = usernameService;
             _context = context;
             _logger = logger;
         }
@@ -215,14 +218,7 @@ namespace GradeManagementSystem.Services.Services
             }
             else
             {
-                string baseUsername = $"{request.FullName.FirstName.ToLower()}.{request.FullName.LastName.ToLower()}".Replace(" ", "");
-                username = baseUsername + RandomNumberGenerator.GetInt32(100, 1000);
-                int retries = 5;
-                while (await _userManager.FindByNameAsync(username) != null && retries > 0)
-                {
-                    username = baseUsername + RandomNumberGenerator.GetInt32(100, 1000);
-                    retries--;
-                }
+                username = await _usernameService.GenerateUniqueUsernameFromEmailAsync(request.Email);
             }
 
             string password = !string.IsNullOrWhiteSpace(request.Password) 

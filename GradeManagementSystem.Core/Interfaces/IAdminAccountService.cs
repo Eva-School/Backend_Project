@@ -15,5 +15,6 @@ namespace GradeManagementSystem.Core.Interfaces
         Task<bool> SetStatusAsync(int userId, bool isActive, int currentAdminUserId, string? ipAddress = null, CancellationToken cancellationToken = default);
         Task<bool> ResetPasswordAsync(int userId, ResetPasswordDto request, int currentAdminUserId, string? ipAddress = null, CancellationToken cancellationToken = default);
         Task<IReadOnlyList<RoleOptionDto>> GetRolesAsync(CancellationToken cancellationToken = default);
+        Task<AccountFormOptionsDto> GetFormOptionsAsync(CancellationToken cancellationToken = default);
     }
 }

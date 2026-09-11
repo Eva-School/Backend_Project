@@ -60,6 +60,7 @@ namespace GradeManagementSystem.Api
             builder.Services.AddScoped<IViceQuarterGradesService, ViceQuarterGradesService>();
             builder.Services.AddScoped<IViceFinalGradesService, ViceFinalGradesService>();
             builder.Services.AddScoped<IAdminFinalGradesService, AdminFinalGradesService>();
+            builder.Services.AddScoped<IUsernameService, UsernameService>();
             builder.Services.AddAutoMapper(
                 _ => { },
                 typeof(AuthMappingProfile).Assembly);

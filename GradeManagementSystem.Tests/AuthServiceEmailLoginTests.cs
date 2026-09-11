@@ -78,6 +78,7 @@ namespace GradeManagementSystem.Tests
 
             services.AddAutoMapper(cfg => { });
             services.AddScoped<IEmailService, DummyEmailService>();
+            services.AddScoped<IUsernameService, UsernameService>();
             services.AddScoped<AuthService>();
 
             _serviceProvider = services.BuildServiceProvider();

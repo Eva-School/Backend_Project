@@ -53,6 +53,14 @@ namespace GradeManagementSystem.Api.Controllers
             return Ok(roles);
         }
 
+        // GET: /api/admin/accounts/options
+        [HttpGet("options")]
+        public async Task<IActionResult> GetFormOptions(CancellationToken cancellationToken)
+        {
+            var options = await _accountService.GetFormOptionsAsync(cancellationToken);
+            return Ok(options);
+        }
+
         // GET: /api/admin/accounts/{id:int}
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetAccountById(int id, CancellationToken cancellationToken)

@@ -21,15 +21,18 @@ namespace GradeManagementSystem.Services.Services
         private readonly GradeDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
+        private readonly IUsernameService _usernameService;
 
         public ViceStudentService(
             GradeDbContext context,
             UserManager<ApplicationUser> userManager,
-            RoleManager<ApplicationRole> roleManager)
+            RoleManager<ApplicationRole> roleManager,
+            IUsernameService usernameService)
         {
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
+            _usernameService = usernameService;
         }
 
         public async Task<List<ViceStudentDto>> GetStudentsAsync(string year, string department, int? classId, bool unassigned = false, string? academicYearName = null)
@@ -246,7 +249,7 @@ namespace GradeManagementSystem.Services.Services
                 }
             }
 
-            var username = (request.FirstName + "." + request.LastName).Replace(" ", "").ToLowerInvariant() + "-" + new Random().Next(100, 999);
+            var username = await _usernameService.GenerateUniqueUsernameFromEmailAsync(email);
 
             // Create app user.
             var user = new ApplicationUser
@@ -651,6 +654,8 @@ namespace GradeManagementSystem.Services.Services
                     .ToListAsync(cancellationToken),
                 StringComparer.OrdinalIgnoreCase);
 
+            var reservedUsernames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             string GetVal(DataRow r, int idx)
             {
                 if (idx >= 0 && idx < r.ItemArray.Length)
@@ -794,7 +799,8 @@ namespace GradeManagementSystem.Services.Services
                         normalizedEmail = email.ToUpperInvariant();
                     }
 
-                    var username = $"{firstName}.{lastName}".Replace(" ", "").ToLowerInvariant() + "-" + Random.Shared.Next(100, 999);
+                    var username = await _usernameService.GenerateUniqueUsernameFromEmailAsync(email, reservedInBatch: reservedUsernames);
+                    reservedUsernames.Add(username);
 
                     var gender = Gender.Male;
                     if (!string.IsNullOrWhiteSpace(genderStr))

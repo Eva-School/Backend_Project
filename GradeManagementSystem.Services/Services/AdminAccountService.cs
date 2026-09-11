@@ -26,19 +26,22 @@ namespace GradeManagementSystem.Services.Services
         private readonly GradeDbContext _context;
         private readonly IMemoryCache _cache;
         private readonly ILogger<AdminAccountService> _logger;
+        private readonly IUsernameService _usernameService;
 
         public AdminAccountService(
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager,
             GradeDbContext context,
             IMemoryCache cache,
-            ILogger<AdminAccountService> logger)
+            ILogger<AdminAccountService> logger,
+            IUsernameService usernameService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _context = context;
             _cache = cache;
             _logger = logger;
+            _usernameService = usernameService;
         }
 
         public static string ResolveCanonicalRole(string roleInput)
@@ -80,6 +83,64 @@ namespace GradeManagementSystem.Services.Services
                 NormalizedName = ToFrontendRole(r.RoleName),
                 Description = r.Description
             }).ToList();
+        }
+
+        public async Task<AccountFormOptionsDto> GetFormOptionsAsync(CancellationToken cancellationToken = default)
+        {
+            var roles = await GetRolesAsync(cancellationToken);
+
+            var academicYears = await _context.AcademicYears
+                .AsNoTracking()
+                .OrderByDescending(y => y.IsActive)
+                .ThenByDescending(y => y.AcademicYearID)
+                .Select(y => new AcademicYearOptionDto
+                {
+                    AcademicYearId = y.AcademicYearID,
+                    YearName = y.YearName,
+                    Stage = y.Stage.ToString(),
+                    IsActive = y.IsActive
+                })
+                .ToListAsync(cancellationToken);
+
+            var classes = await _context.Classes
+                .AsNoTracking()
+                .Include(c => c.AcademicYear)
+                .Include(c => c.Department)
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.ClassName)
+                .Select(c => new ClassOptionDto
+                {
+                    ClassId = c.ClassID,
+                    ClassName = c.ClassName,
+                    AcademicYearId = c.AcademicYearID,
+                    AcademicYearName = c.AcademicYear != null ? c.AcademicYear.YearName : string.Empty,
+                    Stage = c.AcademicYear != null ? c.AcademicYear.Stage.ToString() : string.Empty,
+                    DepartmentId = c.DepartmentID,
+                    DepartmentName = c.Department != null ? c.Department.DepartmentName : null,
+                    Capacity = c.Capacity,
+                    CurrentStudentCount = c.Students.Count(s => s.Status == "Active")
+                })
+                .ToListAsync(cancellationToken);
+
+            var departments = await _context.Departments
+                .AsNoTracking()
+                .Where(d => d.IsActive)
+                .OrderBy(d => d.DepartmentName)
+                .Select(d => new DepartmentOptionDto
+                {
+                    DepartmentId = d.DepartmentID,
+                    DepartmentName = d.DepartmentName,
+                    IsActive = d.IsActive
+                })
+                .ToListAsync(cancellationToken);
+
+            return new AccountFormOptionsDto
+            {
+                Roles = roles,
+                AcademicYears = academicYears,
+                Classes = classes,
+                Departments = departments
+            };
         }
 
         public async Task<AccountPagedResultDto<AccountSummaryDto>> GetAccountsAsync(AccountListQueryDto query, CancellationToken cancellationToken = default)
@@ -273,17 +334,25 @@ namespace GradeManagementSystem.Services.Services
                 throw new InvalidOperationException($"Role '{canonicalRole}' is not configured in the database.");
             }
 
-            // Check username & email uniqueness
-            var cleanUsername = request.Username.Trim();
-            if (await _userManager.FindByNameAsync(cleanUsername) != null)
-            {
-                throw new InvalidOperationException($"Username '{cleanUsername}' is already taken.");
-            }
-
             var cleanEmail = request.Email.Trim().ToLowerInvariant();
             if (await _userManager.FindByEmailAsync(cleanEmail) != null)
             {
                 throw new InvalidOperationException($"Email '{cleanEmail}' is already registered.");
+            }
+
+            // Resolve or generate unique username from email
+            string cleanUsername;
+            if (!string.IsNullOrWhiteSpace(request.Username))
+            {
+                cleanUsername = request.Username.Trim();
+                if (await _userManager.FindByNameAsync(cleanUsername) != null)
+                {
+                    throw new InvalidOperationException($"Username '{cleanUsername}' is already taken.");
+                }
+            }
+            else
+            {
+                cleanUsername = await _usernameService.GenerateUniqueUsernameFromEmailAsync(cleanEmail);
             }
 
             // Password handling
@@ -357,8 +426,33 @@ namespace GradeManagementSystem.Services.Services
                 }
                 else if (canonicalRole == "Student")
                 {
-                    var department = await ResolveDepartmentAsync(request.DepartmentId, cancellationToken);
-                    var academicYear = await ResolveAcademicYearAsync(request.AcademicYearId, cancellationToken);
+                    Class? assignedClass = null;
+                    if (request.ClassId.HasValue && request.ClassId.Value > 0)
+                    {
+                        assignedClass = await _context.Classes
+                            .Include(c => c.AcademicYear)
+                            .Include(c => c.Department)
+                            .FirstOrDefaultAsync(c => c.ClassID == request.ClassId.Value, cancellationToken);
+
+                        if (assignedClass == null)
+                        {
+                            throw new InvalidOperationException($"Selected class with ID {request.ClassId.Value} was not found.");
+                        }
+
+                        if (request.AcademicYearId.HasValue && request.AcademicYearId.Value > 0 && request.AcademicYearId.Value != assignedClass.AcademicYearID)
+                        {
+                            throw new InvalidOperationException($"Selected class '{assignedClass.ClassName}' belongs to academic year '{assignedClass.AcademicYear?.YearName ?? assignedClass.AcademicYearID.ToString()}', which does not match the selected academic year.");
+                        }
+                    }
+
+                    var targetAcademicYearId = assignedClass != null
+                        ? assignedClass.AcademicYearID
+                        : request.AcademicYearId;
+
+                    var academicYear = await ResolveAcademicYearAsync(targetAcademicYearId, cancellationToken);
+
+                    var targetDepartmentId = request.DepartmentId ?? assignedClass?.DepartmentID;
+                    var department = await ResolveDepartmentAsync(targetDepartmentId, cancellationToken);
                     var gender = ParseGender(request.Gender);
 
                     var nationalId = string.IsNullOrWhiteSpace(request.NationalId)
@@ -377,7 +471,7 @@ namespace GradeManagementSystem.Services.Services
                         EnrollmentDate = DateTime.UtcNow.Date,
                         CurrentAcademicYearID = academicYear?.AcademicYearID,
                         DepartmentID = department.DepartmentID,
-                        ClassID = request.ClassId,
+                        ClassID = assignedClass?.ClassID,
                         Status = "Active",
                         Gender = gender,
                         Address = request.Address?.Trim()
@@ -492,6 +586,52 @@ namespace GradeManagementSystem.Services.Services
                 if (request.Address != null)
                 {
                     user.Student.Address = string.IsNullOrWhiteSpace(request.Address) ? null : request.Address.Trim();
+                }
+
+                // Update Academic Stage / Year
+                if (request.AcademicYearId.HasValue && request.AcademicYearId.Value > 0)
+                {
+                    var targetYear = await _context.AcademicYears.FindAsync(new object[] { request.AcademicYearId.Value }, cancellationToken);
+                    if (targetYear == null)
+                    {
+                        throw new KeyNotFoundException($"Academic year with ID {request.AcademicYearId.Value} was not found.");
+                    }
+                    user.Student.CurrentAcademicYearID = targetYear.AcademicYearID;
+
+                    // If existing class belongs to a different academic year, unassign it unless a new class is also provided
+                    if (user.Student.ClassID.HasValue && !request.ClassId.HasValue)
+                    {
+                        var currentClass = await _context.Classes.FindAsync(new object[] { user.Student.ClassID.Value }, cancellationToken);
+                        if (currentClass != null && currentClass.AcademicYearID != targetYear.AcademicYearID)
+                        {
+                            user.Student.ClassID = null;
+                        }
+                    }
+                }
+
+                // Update Class Assignment
+                if (request.ClassId.HasValue)
+                {
+                    if (request.ClassId.Value > 0)
+                    {
+                        var targetClass = await _context.Classes.FirstOrDefaultAsync(c => c.ClassID == request.ClassId.Value, cancellationToken);
+                        if (targetClass == null)
+                        {
+                            throw new KeyNotFoundException($"Class with ID {request.ClassId.Value} was not found.");
+                        }
+
+                        user.Student.ClassID = targetClass.ClassID;
+                        user.Student.CurrentAcademicYearID = targetClass.AcademicYearID;
+                        if (targetClass.DepartmentID.HasValue && (!request.DepartmentId.HasValue || request.DepartmentId.Value <= 0))
+                        {
+                            user.Student.DepartmentID = targetClass.DepartmentID.Value;
+                        }
+                    }
+                    else
+                    {
+                        // ClassId = 0 or negative indicates explicitly unassigned
+                        user.Student.ClassID = null;
+                    }
                 }
             }
 

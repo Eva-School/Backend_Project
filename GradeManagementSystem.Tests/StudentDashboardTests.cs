@@ -242,7 +242,7 @@ namespace GradeManagementSystem.Tests
         }
 
         [Fact]
-        public async Task GetFinalGradesAsync_ComputesGpaAndStanding()
+        public async Task GetFinalGradesAsync_ComputesPercentageAndStanding()
         {
             await using var context = CreateInMemoryDbContext();
 
@@ -294,9 +294,135 @@ namespace GradeManagementSystem.Tests
             Assert.Equal("Physics", grade.Subject);
             Assert.Equal(87m, grade.TotalScore);
             Assert.Equal("A", grade.LetterGrade);
-            Assert.NotNull(response.TermGpa);
-            Assert.True(response.TermGpa > 3.0m);
-            Assert.Equal("Excellent Standing", response.Standing);
+            Assert.NotNull(response.CumulativeAverage);
+            Assert.True(response.CumulativeAverage > 80m);
+            Assert.Equal(87m, response.TotalEarnedScore);
+            Assert.Equal(100m, response.TotalMaxScore);
+            Assert.Equal("Excellent (ممتاز)", response.Standing);
+        }
+
+        [Fact]
+        public async Task GetFinalGradesAsync_UnreleasedGrades_ReturnsNullsAndNotReleased()
+        {
+            await using var context = CreateInMemoryDbContext();
+
+            var year = new AcademicYear { AcademicYearID = 1, YearName = "2025-2026", Stage = EducationStage.Junior, IsActive = true };
+            var term1 = new Term { TermID = 1, TermName = "Term 1", AcademicYearID = 1, StartDate = DateTime.UtcNow, EndDate = DateTime.UtcNow.AddMonths(4) };
+            var term2 = new Term { TermID = 2, TermName = "Term 2", AcademicYearID = 1, StartDate = DateTime.UtcNow.AddMonths(4), EndDate = DateTime.UtcNow.AddMonths(8) };
+            var student = new Student
+            {
+                StudentID = 9,
+                UserID = 90,
+                NationalID = "30909090000000",
+                Gender = Gender.Male,
+                Status = "Active",
+                EnrollmentDate = new DateTime(2025, 9, 1)
+            };
+            var math = new Subject
+            {
+                SubjectID = 1,
+                SubjectName = "Math",
+                AcademicYearID = 1,
+                MaxQuarterScore = 50,
+                MaxFinalScore = 75,
+                IsActive = true
+            };
+            var arabic = new Subject
+            {
+                SubjectID = 2,
+                SubjectName = "Arabic",
+                AcademicYearID = 1,
+                MaxQuarterScore = 50,
+                MaxFinalScore = 75,
+                IsActive = true
+            };
+            // Arabic has coursework only in Term 1 (In Progress)
+            var arabicT1Result = new StudentSubjectTermResult
+            {
+                ResultID = 1,
+                StudentID = 9,
+                SubjectID = 2,
+                TermID = 1,
+                AcademicYearID = 1,
+                Quarter1Score = 5,
+                TermTotal = 5,
+                Status = SubjectStatus.InProgress,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            context.AcademicYears.Add(year);
+            context.Terms.AddRange(term1, term2);
+            context.Students.Add(student);
+            context.Subjects.AddRange(math, arabic);
+            context.StudentSubjectTermResults.Add(arabicT1Result);
+            await context.SaveChangesAsync();
+
+            var service = new StudentDashboardService(context);
+            var response = await service.GetFinalGradesAsync(90, "junior");
+
+            Assert.NotNull(response);
+            Assert.Equal(4, response.Grades.Count); // Math T1, Math T2, Arabic T1, Arabic T2
+
+            // Math T1 has no grades entered -> Not Released
+            var mathT1 = response.Grades.First(g => g.Subject == "Math" && g.TermName == "Term 1");
+            Assert.Null(mathT1.CourseworkScore);
+            Assert.Null(mathT1.FinalExamScore);
+            Assert.Null(mathT1.TotalScore);
+            Assert.Null(mathT1.Percentage);
+            Assert.Equal("Not Released", mathT1.Status);
+
+            // Arabic T1 has coursework entered (5) -> In Progress
+            var arabicT1 = response.Grades.First(g => g.Subject == "Arabic" && g.TermName == "Term 1");
+            Assert.Equal(5m, arabicT1.CourseworkScore);
+            Assert.Null(arabicT1.FinalExamScore);
+            Assert.Equal(5m, arabicT1.TotalScore);
+            Assert.Equal("In Progress", arabicT1.Status);
+
+            // Overall metrics should not treat unreleased as 0
+            Assert.Null(response.CumulativeAverage);
+            Assert.Equal("Not Released", response.Standing);
+        }
+
+        [Fact]
+        public async Task GetQuarterGradesAsync_UnreleasedGrades_ReturnsNulls()
+        {
+            await using var context = CreateInMemoryDbContext();
+
+            var year = new AcademicYear { AcademicYearID = 1, YearName = "2025-2026", Stage = EducationStage.Junior, IsActive = true };
+            var term1 = new Term { TermID = 1, TermName = "Term 1", AcademicYearID = 1, StartDate = DateTime.UtcNow, EndDate = DateTime.UtcNow.AddMonths(4) };
+            var student = new Student
+            {
+                StudentID = 10,
+                UserID = 100,
+                NationalID = "31001000000000",
+                Gender = Gender.Male,
+                Status = "Active",
+                EnrollmentDate = new DateTime(2025, 9, 1)
+            };
+            var math = new Subject
+            {
+                SubjectID = 1,
+                SubjectName = "Math",
+                AcademicYearID = 1,
+                MaxQuarterScore = 50,
+                IsActive = true
+            };
+
+            context.AcademicYears.Add(year);
+            context.Terms.Add(term1);
+            context.Students.Add(student);
+            context.Subjects.Add(math);
+            await context.SaveChangesAsync();
+
+            var service = new StudentDashboardService(context);
+            var response = await service.GetQuarterGradesAsync(100, "junior", 1);
+
+            Assert.NotNull(response);
+            Assert.Single(response.Grades);
+            var grade = response.Grades[0];
+            Assert.Null(grade.Quarter1);
+            Assert.Null(grade.CourseworkTotal);
+            Assert.Null(grade.Percentage);
         }
 
         [Fact]

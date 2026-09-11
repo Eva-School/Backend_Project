@@ -100,25 +100,29 @@ namespace GradeManagementSystem.Services.Services
                  c.StatusID.Equals("Competent", StringComparison.OrdinalIgnoreCase) ||
                  c.StatusID.Equals("Completed", StringComparison.OrdinalIgnoreCase)));
 
-            decimal? overallGpa = null;
+            decimal? overallPercentage = null;
             var allResults = await _context.StudentAllResults
+                .Include(r => r.Subject)
                 .Where(r => r.StudentID == student.StudentID && r.FinalSubjectScore.HasValue)
                 .ToListAsync();
 
             if (allResults.Count > 0)
             {
-                var avgScore = allResults.Average(r => r.FinalSubjectScore!.Value);
-                overallGpa = Math.Round((avgScore / 100m) * 4.0m, 2);
+                var totalEarned = allResults.Sum(r => r.FinalSubjectScore!.Value);
+                var totalMax = allResults.Sum(r => (decimal)(r.Subject?.MaxFinalScore ?? 100));
+                overallPercentage = totalMax > 0 ? Math.Round((totalEarned / totalMax) * 100m, 1) : 0m;
             }
             else
             {
                 var termScores = await _context.StudentSubjectTermResults
-                    .Where(r => r.StudentID == student.StudentID && r.TermTotal.HasValue)
+                    .Include(r => r.Subject)
+                    .Where(r => r.StudentID == student.StudentID && (r.TermTotal.HasValue || r.Quarter1Score.HasValue))
                     .ToListAsync();
                 if (termScores.Count > 0)
                 {
-                    var avgScore = termScores.Average(r => r.TermTotal!.Value);
-                    overallGpa = Math.Round((avgScore / 100m) * 4.0m, 2);
+                    var totalEarned = termScores.Sum(r => r.TermTotal ?? ((r.Quarter1Score ?? 0) + (r.Quarter2Score ?? 0) + (r.Quarter3Score ?? 0) + (r.Quarter4Score ?? 0) + (r.FinalExamScore ?? 0)));
+                    var totalMax = termScores.Sum(r => (decimal)((r.Subject?.MaxQuarterScore ?? 25) + (r.Subject?.MaxFinalScore ?? 100)));
+                    overallPercentage = totalMax > 0 ? Math.Round((totalEarned / totalMax) * 100m, 1) : 0m;
                 }
             }
 
@@ -154,7 +158,7 @@ namespace GradeManagementSystem.Services.Services
                 TotalEnrolledSubjects = totalEnrolledSubjects,
                 CompletedCompetencies = completedCompetencies,
                 TotalCompetencies = totalCompetencies,
-                OverallGpa = overallGpa
+                OverallPercentage = overallPercentage
             };
         }
 
@@ -233,29 +237,68 @@ namespace GradeManagementSystem.Services.Services
             var academicYear = await _context.AcademicYears.FindAsync(academicYearId);
             var academicYearName = academicYear?.YearName ?? year;
 
-            var availableTerms = await _context.StudentSubjectTermResults
-                .Where(r => r.StudentID == studentId && r.AcademicYearID == academicYearId && r.TermID.HasValue)
-                .Select(r => r.TermID!.Value)
-                .Distinct()
-                .OrderBy(t => t)
+            var terms = await _context.Terms
+                .Where(t => t.AcademicYearID == academicYearId)
+                .OrderBy(t => t.TermID)
                 .ToListAsync();
 
-            if (availableTerms.Count == 0)
+            // Resolve logical term number (1 or 2) and actual DB TermID
+            int logicalTermNumber = 1;
+            int selectedDbTermId;
+
+            if (terms.Count > 0)
             {
-                availableTerms = new List<int> { 1, 2 };
+                if (termId.HasValue)
+                {
+                    if (termId.Value == 1)
+                    {
+                        logicalTermNumber = 1;
+                        selectedDbTermId = terms[0].TermID;
+                    }
+                    else if (termId.Value == 2 && terms.Count > 1)
+                    {
+                        logicalTermNumber = 2;
+                        selectedDbTermId = terms[1].TermID;
+                    }
+                    else
+                    {
+                        var matchingTermIndex = terms.FindIndex(t => t.TermID == termId.Value);
+                        if (matchingTermIndex >= 0)
+                        {
+                            logicalTermNumber = matchingTermIndex + 1;
+                            selectedDbTermId = terms[matchingTermIndex].TermID;
+                        }
+                        else
+                        {
+                            logicalTermNumber = 1;
+                            selectedDbTermId = terms[0].TermID;
+                        }
+                    }
+                }
+                else
+                {
+                    logicalTermNumber = 1;
+                    selectedDbTermId = terms[0].TermID;
+                }
+            }
+            else
+            {
+                selectedDbTermId = termId ?? 1;
+                logicalTermNumber = termId ?? 1;
             }
 
-            var selectedTerm = termId ?? availableTerms.FirstOrDefault();
+            var availableTerms = terms.Count > 0
+                ? Enumerable.Range(1, terms.Count).ToList()
+                : new List<int> { 1, 2 };
 
-            var query = _context.StudentSubjectTermResults
-                .Where(r => r.StudentID == studentId && r.AcademicYearID == academicYearId);
+            // Dynamic: load all active subjects for this academic year
+            var enrolledSubjects = await _context.Subjects
+                .Where(s => s.AcademicYearID == academicYearId && s.IsActive)
+                .OrderBy(s => s.SubjectID)
+                .ToListAsync();
 
-            if (termId.HasValue)
-            {
-                query = query.Where(r => r.TermID == termId.Value);
-            }
-
-            var termResults = await query
+            var termResults = await _context.StudentSubjectTermResults
+                .Where(r => r.StudentID == studentId && r.AcademicYearID == academicYearId && r.TermID == selectedDbTermId)
                 .Include(r => r.Subject)
                 .ToListAsync();
 
@@ -266,10 +309,11 @@ namespace GradeManagementSystem.Services.Services
 
             var gradesList = new List<StudentQuarterGradeItemDto>();
 
-            foreach (var r in termResults)
+            foreach (var s in enrolledSubjects)
             {
+                var r = termResults.FirstOrDefault(tr => tr.SubjectID == s.SubjectID);
                 var subjectQuizzes = quizGrades
-                    .Where(qg => qg.Quiz.SubjectID == r.SubjectID)
+                    .Where(qg => qg.Quiz.SubjectID == s.SubjectID)
                     .OrderBy(qg => qg.Quiz.QuizDate)
                     .Select(qg => new StudentQuizItemDto
                     {
@@ -282,33 +326,62 @@ namespace GradeManagementSystem.Services.Services
                     })
                     .ToList();
 
-                var q1 = r.Quarter1Score;
-                var q2 = r.Quarter2Score;
-                var q3 = r.Quarter3Score;
-                var q4 = r.Quarter4Score;
+                var q1 = r?.Quarter1Score;
+                var q2 = r?.Quarter2Score;
+                var q3 = r?.Quarter3Score;
+                var q4 = r?.Quarter4Score;
 
-                var courseworkTotal = (q1 ?? 0) + (q2 ?? 0) + (q3 ?? 0) + (q4 ?? 0);
+                var maxQ1 = (decimal?)(s.MaxQuarterQ1Score ?? (s.MaxQuarterScore.HasValue ? s.MaxQuarterScore.Value / 2 : 12));
+                var maxQ2 = (decimal?)(s.MaxQuarterQ2Score ?? (s.MaxQuarterScore.HasValue ? s.MaxQuarterScore.Value - (s.MaxQuarterScore.Value / 2) : 13));
+                var maxQ3 = (decimal?)(s.MaxQuarterQ3Score ?? (s.MaxQuarterScore.HasValue ? s.MaxQuarterScore.Value / 2 : 12));
+                var maxQ4 = (decimal?)(s.MaxQuarterQ4Score ?? (s.MaxQuarterScore.HasValue ? s.MaxQuarterScore.Value - (s.MaxQuarterScore.Value / 2) : 13));
+                var maxQuarter = (decimal?)(s.MaxQuarterScore ?? 25);
 
-                var maxQ1 = (decimal?)r.Subject.MaxQuarterQ1Score;
-                var maxQ2 = (decimal?)r.Subject.MaxQuarterQ2Score;
-                var maxQ3 = (decimal?)r.Subject.MaxQuarterQ3Score;
-                var maxQ4 = (decimal?)r.Subject.MaxQuarterQ4Score;
-                var maxQuarter = (decimal?)(r.Subject.MaxQuarterScore ?? 100);
+                decimal? courseworkTotal = null;
+                decimal totalMaxCoursework;
+                bool hasGrades;
 
-                var totalMaxCoursework = (maxQ1 ?? 0) + (maxQ2 ?? 0) + (maxQ3 ?? 0) + (maxQ4 ?? 0);
-                if (totalMaxCoursework == 0)
+                if (logicalTermNumber == 1)
                 {
-                    totalMaxCoursework = maxQuarter ?? 100;
+                    var hasT1 = q1.HasValue || q2.HasValue;
+                    var hasT2 = q3.HasValue || q4.HasValue;
+                    if (hasT1 && hasT2 && terms.Count <= 1)
+                    {
+                        // Single-term test fixture with all 4 quarters on 1 record
+                        courseworkTotal = (q1 ?? 0) + (q2 ?? 0) + (q3 ?? 0) + (q4 ?? 0);
+                        totalMaxCoursework = (maxQ1 ?? 0) + (maxQ2 ?? 0) + (maxQ3 ?? 0) + (maxQ4 ?? 0);
+                        hasGrades = true;
+                    }
+                    else
+                    {
+                        courseworkTotal = hasT1 ? (q1 ?? 0) + (q2 ?? 0) : null;
+                        totalMaxCoursework = (maxQ1 ?? 0) + (maxQ2 ?? 0);
+                        hasGrades = hasT1;
+                    }
+                }
+                else
+                {
+                    var hasT2 = q3.HasValue || q4.HasValue;
+                    courseworkTotal = hasT2 ? (q3 ?? 0) + (q4 ?? 0) : null;
+                    totalMaxCoursework = (maxQ3 ?? 0) + (maxQ4 ?? 0);
+                    hasGrades = hasT2;
                 }
 
-                var percentage = totalMaxCoursework > 0 ? Math.Round((courseworkTotal / totalMaxCoursework) * 100m, 1) : 0m;
+                if (totalMaxCoursework == 0)
+                {
+                    totalMaxCoursework = maxQuarter ?? 25;
+                }
+
+                var percentage = (r != null && hasGrades && courseworkTotal.HasValue && totalMaxCoursework > 0)
+                    ? Math.Round((courseworkTotal.Value / totalMaxCoursework) * 100m, 1)
+                    : (decimal?)null;
 
                 gradesList.Add(new StudentQuarterGradeItemDto
                 {
-                    SubjectId = r.SubjectID ?? 0,
-                    Subject = r.Subject.SubjectName,
+                    SubjectId = s.SubjectID,
+                    Subject = s.SubjectName,
                     SubjectArabic = null,
-                    SubjectCode = $"SUB-{r.SubjectID:D3}",
+                    SubjectCode = $"SUB-{s.SubjectID:D3}",
                     Quarter1 = q1,
                     Quarter2 = q2,
                     Quarter3 = q3,
@@ -317,7 +390,7 @@ namespace GradeManagementSystem.Services.Services
                     MaxQ2 = maxQ2,
                     MaxQ3 = maxQ3,
                     MaxQ4 = maxQ4,
-                    MaxQuarter = maxQuarter,
+                    MaxQuarter = totalMaxCoursework,
                     CourseworkTotal = courseworkTotal,
                     YourGrade = courseworkTotal,
                     QuarterGrade = courseworkTotal,
@@ -332,7 +405,7 @@ namespace GradeManagementSystem.Services.Services
                 Year = year.ToLowerInvariant(),
                 AcademicYearName = academicYearName,
                 AvailableTerms = availableTerms,
-                SelectedTerm = selectedTerm
+                SelectedTerm = logicalTermNumber
             };
         }
 
@@ -350,118 +423,198 @@ namespace GradeManagementSystem.Services.Services
             var academicYear = await _context.AcademicYears.FindAsync(academicYearId);
             var academicYearName = academicYear?.YearName ?? year;
 
+            var enrolledSubjects = await _context.Subjects
+                .Where(s => s.AcademicYearID == academicYearId && s.IsActive)
+                .OrderBy(s => s.SubjectID)
+                .ToListAsync();
+
+            var terms = await _context.Terms
+                .Where(t => t.AcademicYearID == academicYearId)
+                .OrderBy(t => t.TermID)
+                .ToListAsync();
+
             var allResults = await _context.StudentAllResults
                 .Include(r => r.Subject)
+                .Include(r => r.Term)
                 .Include(r => r.ResultApproval)
                 .Where(r => r.StudentID == studentId && r.AcademicYearID == academicYearId)
                 .ToListAsync();
 
             var termResults = await _context.StudentSubjectTermResults
                 .Include(r => r.Subject)
+                .Include(r => r.Term)
                 .Where(r => r.StudentID == studentId && r.AcademicYearID == academicYearId)
                 .ToListAsync();
 
             var gradesList = new List<StudentFinalGradeItemDto>();
 
-            if (allResults.Count > 0)
+            var targetTerms = new List<(int? TermId, string? TermName)>();
+            if (terms.Count > 0)
             {
-                foreach (var r in allResults)
+                targetTerms.AddRange(terms.Select(t => ((int?)t.TermID, (string?)t.TermName)));
+            }
+            else
+            {
+                var distinctTermIds = allResults.Select(r => r.TermID)
+                    .Concat(termResults.Select(r => r.TermID))
+                    .Where(id => id.HasValue)
+                    .Distinct()
+                    .OrderBy(id => id)
+                    .ToList();
+
+                if (distinctTermIds.Count > 0)
                 {
-                    var matchingTermResult = termResults.FirstOrDefault(tr => tr.SubjectID == r.SubjectID);
-                    var coursework = matchingTermResult != null
-                        ? (matchingTermResult.Quarter1Score ?? 0) + (matchingTermResult.Quarter2Score ?? 0) + (matchingTermResult.Quarter3Score ?? 0) + (matchingTermResult.Quarter4Score ?? 0)
-                        : 0m;
+                    targetTerms.AddRange(distinctTermIds.Select(id => ((int?)id, (string?)$"Term {id}")));
+                }
+                else
+                {
+                    targetTerms.Add((1, "Term 1"));
+                }
+            }
 
-                    var finalExam = matchingTermResult?.FinalExamScore ?? (r.FinalSubjectScore ?? 0);
-                    var total = r.TotalTermScore ?? r.FinalSubjectScore ?? (coursework + finalExam);
-                    var maxFinal = (decimal)(r.Subject.MaxFinalScore ?? 100);
-                    var maxQuarter = (decimal)(r.Subject.MaxQuarterScore ?? 100);
+            foreach (var s in enrolledSubjects)
+            {
+                foreach (var t in targetTerms)
+                {
+                    var matchingAllResult = allResults.FirstOrDefault(r => r.SubjectID == s.SubjectID && (r.TermID == t.TermId || (!r.TermID.HasValue && (targetTerms.Count == 1 || t.TermId == 1))));
+                    var matchingTermResult = termResults.FirstOrDefault(r => r.SubjectID == s.SubjectID && (r.TermID == t.TermId || (!r.TermID.HasValue && (targetTerms.Count == 1 || t.TermId == 1))));
+
+                    decimal maxFinal;
+                    decimal maxQuarter;
+                    if (s.MaxFinalScore.HasValue && s.MaxQuarterScore.HasValue)
+                    {
+                        maxFinal = (decimal)s.MaxFinalScore.Value;
+                        maxQuarter = (decimal)s.MaxQuarterScore.Value;
+                    }
+                    else if (s.MaxFinalScore.HasValue && !s.MaxQuarterScore.HasValue)
+                    {
+                        maxFinal = (decimal)s.MaxFinalScore.Value;
+                        maxQuarter = 0m;
+                    }
+                    else if (!s.MaxFinalScore.HasValue && s.MaxQuarterScore.HasValue)
+                    {
+                        maxFinal = 0m;
+                        maxQuarter = (decimal)s.MaxQuarterScore.Value;
+                    }
+                    else
+                    {
+                        maxFinal = 100m;
+                        maxQuarter = 25m;
+                    }
+
                     var maxTotal = maxQuarter + maxFinal;
-                    if (maxTotal == 0) maxTotal = 100;
+                    if (maxTotal == 0) maxTotal = 100m;
 
-                    var percentage = Math.Round((total / maxTotal) * 100m, 1);
-                    var letterGrade = r.Grade?.ToString() ?? CalculateLetterGrade(percentage);
-                    var isApproved = r.ResultApproval?.Decision == Decision.Approved;
+                    var hasAnyQuarterScore = matchingTermResult != null && (
+                        matchingTermResult.Quarter1Score.HasValue ||
+                        matchingTermResult.Quarter2Score.HasValue ||
+                        matchingTermResult.Quarter3Score.HasValue ||
+                        matchingTermResult.Quarter4Score.HasValue
+                    );
+
+                    decimal? coursework = hasAnyQuarterScore
+                        ? (matchingTermResult!.Quarter1Score ?? 0) +
+                          (matchingTermResult.Quarter2Score ?? 0) +
+                          (matchingTermResult.Quarter3Score ?? 0) +
+                          (matchingTermResult.Quarter4Score ?? 0)
+                        : null;
+
+                    var hasApprovedResult = matchingAllResult?.ResultApproval != null && matchingAllResult.ResultApproval.Decision == Decision.Approved;
+                    var hasExplicitStatus = (matchingAllResult?.SubjectStatus.HasValue == true && matchingAllResult.SubjectStatus != SubjectStatus.InProgress) ||
+                                            (matchingTermResult?.Status.HasValue == true && matchingTermResult.Status != SubjectStatus.InProgress);
+                    var hasFinalScore = (matchingAllResult?.FinalSubjectScore.HasValue == true && matchingAllResult.FinalSubjectScore.Value > 0) ||
+                                        (matchingTermResult?.FinalExamScore.HasValue == true && matchingTermResult.FinalExamScore.Value > 0);
+
+                    decimal? finalExam = hasFinalScore
+                        ? (matchingAllResult?.FinalSubjectScore ?? matchingTermResult?.FinalExamScore)
+                        : null;
+
+                    var isEvaluated = hasApprovedResult || hasExplicitStatus || hasFinalScore;
+
+                    decimal? total;
+                    decimal? percentage;
+                    string status;
+                    string letterGrade;
+                    bool isApproved = hasApprovedResult;
+
+                    if (isEvaluated)
+                    {
+                        total = matchingAllResult?.TotalTermScore ?? matchingAllResult?.FinalSubjectScore ?? matchingTermResult?.TermTotal ?? ((coursework ?? 0) + (finalExam ?? 0));
+                        percentage = Math.Round((total.Value / maxTotal) * 100m, 1);
+                        letterGrade = matchingAllResult?.Grade.HasValue == true
+                            ? matchingAllResult.Grade.Value.ToString()
+                            : CalculateLetterGrade(percentage.Value);
+                        status = (matchingAllResult?.SubjectStatus == SubjectStatus.Passed || matchingTermResult?.Status == SubjectStatus.Passed || percentage.Value >= 50m) ? "Pass" : "Fail";
+                    }
+                    else if (hasAnyQuarterScore)
+                    {
+                        total = coursework;
+                        percentage = Math.Round(((coursework ?? 0) / maxTotal) * 100m, 1);
+                        letterGrade = "—";
+                        status = "In Progress";
+                    }
+                    else
+                    {
+                        total = null;
+                        percentage = null;
+                        letterGrade = "—";
+                        status = "Not Released";
+                    }
 
                     gradesList.Add(new StudentFinalGradeItemDto
                     {
-                        SubjectId = r.SubjectID ?? 0,
-                        Subject = r.Subject.SubjectName,
-                        SubjectCode = $"SUB-{r.SubjectID:D3}",
-                        CreditHours = 3,
+                        SubjectId = s.SubjectID,
+                        Subject = s.SubjectName,
+                        SubjectCode = $"SUB-{s.SubjectID:D3}",
+                        TermId = t.TermId,
+                        TermName = t.TermName,
+                        CreditHours = null,
                         CourseworkScore = coursework,
                         FinalExamScore = finalExam,
                         TotalScore = total,
                         MaxScore = maxTotal,
                         Percentage = percentage,
                         LetterGrade = letterGrade,
-                        Status = r.SubjectStatus?.ToString() ?? (percentage >= 60 ? "Pass" : "Fail"),
+                        Status = status,
                         IsApproved = isApproved,
                         YourGrade = total,
                         QuarterGrade = coursework
                     });
                 }
             }
-            else
-            {
-                foreach (var r in termResults)
-                {
-                    var coursework = (r.Quarter1Score ?? 0) + (r.Quarter2Score ?? 0) + (r.Quarter3Score ?? 0) + (r.Quarter4Score ?? 0);
-                    var finalExam = r.FinalExamScore ?? 0;
-                    var total = r.TermTotal ?? (coursework + finalExam);
 
-                    var maxFinal = (decimal)(r.Subject.MaxFinalScore ?? 100);
-                    var maxQuarter = (decimal)(r.Subject.MaxQuarterScore ?? 100);
-                    var maxTotal = maxQuarter + maxFinal;
-                    if (maxTotal == 0) maxTotal = 100;
-
-                    var percentage = Math.Round((total / maxTotal) * 100m, 1);
-                    var letterGrade = CalculateLetterGrade(percentage);
-
-                    gradesList.Add(new StudentFinalGradeItemDto
-                    {
-                        SubjectId = r.SubjectID ?? 0,
-                        Subject = r.Subject.SubjectName,
-                        SubjectCode = $"SUB-{r.SubjectID:D3}",
-                        CreditHours = 3,
-                        CourseworkScore = coursework,
-                        FinalExamScore = finalExam,
-                        TotalScore = total,
-                        MaxScore = maxTotal,
-                        Percentage = percentage,
-                        LetterGrade = letterGrade,
-                        Status = r.Status?.ToString() ?? (percentage >= 60 ? "Pass" : "Fail"),
-                        IsApproved = false,
-                        YourGrade = total,
-                        QuarterGrade = coursework
-                    });
-                }
-            }
-
-            decimal? termGpa = null;
+            decimal totalEarnedScore = 0m;
+            decimal totalMaxScore = 0m;
             decimal? cumulativeAvg = null;
-            var totalCredits = gradesList.Count * 3;
+            var passedCount = 0;
 
-            if (gradesList.Count > 0)
+            var gradedItems = gradesList.Where(g => g.Status != "In Progress" && g.Status != "Not Released" && g.TotalScore.HasValue).ToList();
+
+            if (gradedItems.Count > 0)
             {
-                cumulativeAvg = Math.Round(gradesList.Average(g => g.Percentage), 1);
-                var totalQualityPoints = gradesList.Sum(g => LetterGradeToPoints(g.LetterGrade) * 3);
-                termGpa = totalCredits > 0 ? Math.Round(totalQualityPoints / totalCredits, 2) : 0m;
+                totalEarnedScore = gradedItems.Sum(g => g.TotalScore!.Value);
+                totalMaxScore = gradedItems.Sum(g => g.MaxScore);
+                cumulativeAvg = totalMaxScore > 0 ? Math.Round((totalEarnedScore / totalMaxScore) * 100m, 1) : 0m;
+                passedCount = gradedItems.Count(g => g.Status.Equals("Pass", StringComparison.OrdinalIgnoreCase) || (g.Percentage.HasValue && g.Percentage.Value >= 50m));
             }
 
-            var standing = (termGpa ?? 0) >= 3.5m ? "Excellent Standing"
-                         : (termGpa ?? 0) >= 3.0m ? "Very Good Standing"
-                         : (termGpa ?? 0) >= 2.0m ? "Good Standing"
-                         : "Academic Warning";
+            var standing = cumulativeAvg == null ? "Not Released"
+                         : cumulativeAvg.Value >= 85m ? "Excellent (ممتاز)"
+                         : cumulativeAvg.Value >= 75m ? "Very Good (جيد جداً)"
+                         : cumulativeAvg.Value >= 65m ? "Good (جيد)"
+                         : cumulativeAvg.Value >= 50m ? "Pass (مقبول)"
+                         : "Needs Improvement";
 
             return new StudentFinalGradesResponseDto
             {
                 Grades = gradesList,
                 Year = year.ToLowerInvariant(),
                 AcademicYearName = academicYearName,
-                TermGpa = termGpa,
                 CumulativeAverage = cumulativeAvg,
-                TotalCredits = totalCredits,
+                TotalEarnedScore = totalEarnedScore,
+                TotalMaxScore = totalMaxScore,
+                TotalSubjects = gradesList.Count,
+                PassedSubjects = passedCount,
                 Standing = standing
             };
         }
@@ -864,21 +1017,6 @@ namespace GradeManagementSystem.Services.Services
                 >= 65m => "C",
                 >= 60m => "D",
                 _ => "F"
-            };
-        }
-
-        private static decimal LetterGradeToPoints(string letterGrade)
-        {
-            return letterGrade.ToUpperInvariant() switch
-            {
-                "A+" => 4.0m,
-                "A" => 3.75m,
-                "B+" => 3.3m,
-                "B" => 3.0m,
-                "C+" => 2.5m,
-                "C" => 2.0m,
-                "D" => 1.0m,
-                _ => 0.0m
             };
         }
     }

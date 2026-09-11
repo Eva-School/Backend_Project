@@ -65,15 +65,13 @@ namespace GradeManagementSystem.Tests
         }
 
         [Theory]
-        [InlineData("", "valid@email.com", "First", "Last")]
-        [InlineData("validuser", "", "First", "Last")]
-        [InlineData("validuser", "valid@email.com", "", "Last")]
-        [InlineData("validuser", "valid@email.com", "First", "")]
-        public void CreateAccountDto_Rejects_Missing_Required_Fields(string username, string email, string first, string last)
+        [InlineData("", "First", "Last")]
+        [InlineData("valid@email.com", "", "Last")]
+        [InlineData("valid@email.com", "First", "")]
+        public void CreateAccountDto_Rejects_Missing_Required_Fields(string email, string first, string last)
         {
             var dto = new CreateAccountDto
             {
-                Username = username,
                 Email = email,
                 FirstName = first,
                 LastName = last,
@@ -85,6 +83,32 @@ namespace GradeManagementSystem.Tests
 
             Assert.False(isValid);
             Assert.NotEmpty(results);
+        }
+
+        [Fact]
+        public void CreateAccountDto_Allows_Null_Or_Empty_Username()
+        {
+            var dto = new CreateAccountDto
+            {
+                Username = null,
+                Email = "teacher@school.edu",
+                Password = "SecurePassword@123",
+                FirstName = "Fatima",
+                LastName = "Zahra",
+                Role = "Teacher"
+            };
+
+            var results = new List<ValidationResult>();
+            var isValid = Validator.TryValidateObject(dto, new ValidationContext(dto), results, true);
+
+            Assert.True(isValid);
+            Assert.Empty(results);
+
+            dto.Username = "";
+            results.Clear();
+            isValid = Validator.TryValidateObject(dto, new ValidationContext(dto), results, true);
+            Assert.True(isValid);
+            Assert.Empty(results);
         }
 
         [Theory]
@@ -245,6 +269,71 @@ namespace GradeManagementSystem.Tests
             bool isBlocked = wouldRemoveActiveAdmin && activeAdminCount <= 1;
 
             Assert.True(isBlocked);
+        }
+
+        [Fact]
+        public void CreateAccountDto_Supports_Student_Class_And_AcademicYear_Assignment()
+        {
+            var dto = new CreateAccountDto
+            {
+                Username = "student.john",
+                Email = "student@school.edu",
+                Password = "Password@123",
+                FirstName = "John",
+                LastName = "Doe",
+                Role = "Student",
+                AcademicYearId = 2,
+                ClassId = 15,
+                DepartmentId = 1
+            };
+
+            var results = new List<ValidationResult>();
+            var isValid = Validator.TryValidateObject(dto, new ValidationContext(dto), results, true);
+
+            Assert.True(isValid);
+            Assert.Empty(results);
+            Assert.Equal(2, dto.AcademicYearId);
+            Assert.Equal(15, dto.ClassId);
+            Assert.Equal(1, dto.DepartmentId);
+        }
+
+        [Fact]
+        public void UpdateAccountProfileDto_Supports_Student_Class_And_AcademicYear_Update()
+        {
+            var dto = new UpdateAccountProfileDto
+            {
+                FirstName = "Jane",
+                LastName = "Doe",
+                Email = "jane.doe@school.edu",
+                PhoneNumber = "+201012345678",
+                AcademicYearId = 3,
+                ClassId = 20,
+                DepartmentId = 2
+            };
+
+            var results = new List<ValidationResult>();
+            var isValid = Validator.TryValidateObject(dto, new ValidationContext(dto), results, true);
+
+            Assert.True(isValid);
+            Assert.Empty(results);
+            Assert.Equal(3, dto.AcademicYearId);
+            Assert.Equal(20, dto.ClassId);
+            Assert.Equal(2, dto.DepartmentId);
+        }
+
+        [Fact]
+        public void AccountFormOptionsDto_Initializes_All_Lists_To_Non_Null()
+        {
+            var options = new AccountFormOptionsDto();
+
+            Assert.NotNull(options.Roles);
+            Assert.NotNull(options.AcademicYears);
+            Assert.NotNull(options.Classes);
+            Assert.NotNull(options.Departments);
+            Assert.Empty(options.Roles);
+            Assert.Empty(options.AcademicYears);
+            Assert.Empty(options.Classes);
+            Assert.Empty(options.Departments);
         }
     }
 }

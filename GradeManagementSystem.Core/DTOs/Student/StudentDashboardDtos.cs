@@ -40,7 +40,7 @@ namespace GradeManagementSystem.Core.DTOs.Student
         public int TotalEnrolledSubjects { get; set; }
         public int CompletedCompetencies { get; set; }
         public int TotalCompetencies { get; set; }
-        public decimal? OverallGpa { get; set; }
+        public decimal? OverallPercentage { get; set; }
     }
 
     public class UpdateStudentContactDto
@@ -84,10 +84,10 @@ namespace GradeManagementSystem.Core.DTOs.Student
         public decimal? MaxQ3 { get; set; }
         public decimal? MaxQ4 { get; set; }
         public decimal? MaxQuarter { get; set; }
-        public decimal CourseworkTotal { get; set; }
-        public decimal YourGrade { get; set; }
-        public decimal QuarterGrade { get; set; }
-        public decimal Percentage { get; set; }
+        public decimal? CourseworkTotal { get; set; }
+        public decimal? YourGrade { get; set; }
+        public decimal? QuarterGrade { get; set; }
+        public decimal? Percentage { get; set; }
         public List<StudentQuizItemDto> Quizzes { get; set; } = new();
     }
 
@@ -97,7 +97,7 @@ namespace GradeManagementSystem.Core.DTOs.Student
         public string Year { get; set; } = string.Empty;
         public string AcademicYearName { get; set; } = string.Empty;
         public List<int> AvailableTerms { get; set; } = new();
-        public int SelectedTerm { get; set; } = 1;
+        public int SelectedTerm { get; set; }
     }
 
     // Keep StudentGradesResponseDto for backward compatibility if needed
@@ -120,17 +120,19 @@ namespace GradeManagementSystem.Core.DTOs.Student
         public string Subject { get; set; } = string.Empty;
         public string? SubjectArabic { get; set; }
         public string? SubjectCode { get; set; }
+        public int? TermId { get; set; }
+        public string? TermName { get; set; }
         public int? CreditHours { get; set; }
-        public decimal CourseworkScore { get; set; }
-        public decimal FinalExamScore { get; set; }
-        public decimal TotalScore { get; set; }
+        public decimal? CourseworkScore { get; set; }
+        public decimal? FinalExamScore { get; set; }
+        public decimal? TotalScore { get; set; }
         public decimal MaxScore { get; set; }
-        public decimal Percentage { get; set; }
+        public decimal? Percentage { get; set; }
         public string LetterGrade { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public bool IsApproved { get; set; }
-        public decimal YourGrade { get; set; }
-        public decimal QuarterGrade { get; set; }
+        public decimal? YourGrade { get; set; }
+        public decimal? QuarterGrade { get; set; }
     }
 
     public class StudentFinalGradesResponseDto
@@ -138,9 +140,11 @@ namespace GradeManagementSystem.Core.DTOs.Student
         public List<StudentFinalGradeItemDto> Grades { get; set; } = new();
         public string Year { get; set; } = string.Empty;
         public string AcademicYearName { get; set; } = string.Empty;
-        public decimal? TermGpa { get; set; }
         public decimal? CumulativeAverage { get; set; }
-        public int TotalCredits { get; set; }
+        public decimal TotalEarnedScore { get; set; }
+        public decimal TotalMaxScore { get; set; }
+        public int TotalSubjects { get; set; }
+        public int PassedSubjects { get; set; }
         public string Standing { get; set; } = string.Empty;
     }
 
